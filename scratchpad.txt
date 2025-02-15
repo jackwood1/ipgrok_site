@@ -1,0 +1,29 @@
+y {
+      const response = await fetch('http://127.0.0.1:5000?url=http://localhost:5008/api/benefitscompare', {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const responseData = await response.json();
+
+      console.log('Comparison API Response:', responseData);
+
+      // Hide loading message and show the result section
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('resultSection').style.display = 'block';
+
+      // Build and display the table using the 'general' key
+      const resultContent = document.getElementById('resultContent');
+      const responseJson = JSON.parse(responseData)
+      const generalData = responseJson.general;
+
+      if (Array.isArray(generalData) && generalData.length > 0) {
+        const columns = Object.keys(generalData[0]);
+        resultContent.innerHTML = buildTable(generalData, 'generalTable', 'resultContent', columns);
+      } else {
+        resultContent.textContent = 'No data available';
+      }
+
+    } catch (error) {

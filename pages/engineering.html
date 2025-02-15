@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Engineering Tools</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="../js/search.js"></script>
+</head>
+<body>
+<div id="header"></div>
+<div class="user-info">
+  <p>My IP: <span id="my-ip"></span></p>
+  <p>My User-Agent: <span id="my-user-agent"></span></p>
+</div>
+<div class="search-container">
+  <form class="search-box" action="/search" method="get">
+    <input type="text" name="query" placeholder="Search...">
+    <button type="submit">Search</button>
+  </form>
+  <div id="loading">
+    <div class="loading-spinner"></div>
+    Loading...
+  </div>
+</div>
+<div id="footer"></div>
+</body>
+</html>

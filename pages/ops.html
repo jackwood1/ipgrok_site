@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Upload Form</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(function(){
+      $("#header").load("../components/header.html");
+      $("#footer").load("../components/footer.html");
+    });
+  </script>
+</head>
+<body>
+<div id="header"></div>
+<div id="fileSelectionSection">
+  <form id="fileForm">
+    <div>
+      <input type="checkbox" id="validateData" name="validateData" checked>
+      <label for="validateData" style="display: inline;">Validate Data</label>
+    </div>
+    <div>
+      <input type="checkbox" id="normalizeData" name="normalizeData" checked>
+      <label for="normalizeData" style="display: inline;">Normalize Data</label>
+    </div>
+    <div>
+      <input type="checkbox" id="hideFileCompareData" name="hideFileCompareData" checked>
+      <label for="hideFileCompareData" style="display: inline;">Do not show File Compare results</label>
+    </div>
+    <div class="step">Step 1: Select the partner file</div>
+    <label for="file1">Partner File:</label>
+    <input type="file" id="file1" name="file1" accept=".csv, .xls, .xlsx" required placeholder="Select Partner File"><br><br>
+    <div class="step">Step 2: Select the Symetra (Enrollment) file</div>
+    <label for="file2">Symetra File:</label>
+    <input type="file" id="file2" name="file2" accept=".csv, .xls, .xlsx" required placeholder="Select Symetra File"><br><br>
+    <div id="dropdownSection">
+      <div id="dropdownContainer1"></div>
+      <div id="dropdownContainer2"></div>
+
+      <button type="submit" id="submitButton">Submit</button>
+    </div>
+  </form>
+</div>
+
+<div id="resultSection" style="display: none;">
+  <div id="error" class="error"></div>
+  <div id="loading" class="loading" style="display: none;">
+    <span class="spinner"></span> Fetching results...
+  </div>
+  <div id="resultContent"></div>
+</div>
+
+<script src="../js/scripts.js"></script>
+</body>
+</html>
