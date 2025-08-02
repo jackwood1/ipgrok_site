@@ -19,7 +19,8 @@ function App() {
     const start = performance.now();
     try {
       // Simulate downloading a 100MB file to estimate download speed
-      await fetch("https://speed.hetzner.de/100MB.bin", { method: "GET" });
+      await fetch("https://speedtest.tele2.net/10MB.zip");///await fetch("https://speed.hetzner.de/100MB.bin", { method: "GET" });
+      
       const end = performance.now();
       const timeSec = (end - start) / 1000;
       const downloadMbps = (100 * 8) / timeSec;
