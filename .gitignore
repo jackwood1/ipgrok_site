@@ -75,6 +75,16 @@ build/Release
 node_modules/
 jspm_packages/
 
+# build output
+dist/
+build/
+
+# system files
+.DS_Store
+
+# env files
+.env
+
 # TypeScript v1 declaration files
 typings/
 
