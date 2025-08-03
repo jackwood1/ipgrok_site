@@ -73,6 +73,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
           pingTest: pingData,
           tracerouteTest: tracerouteData,
         });
+        console.log('NetworkTest: onDataUpdate called successfully');
         lastDataSentRef.current = currentData;
       }
     }
@@ -340,8 +341,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       timestamp: new Date().toISOString()
     };
 
-    // Call onDataUpdate with system info
-    if (onDataUpdate) {
+    // Call onDataUpdate with system info (only if not in quick test mode)
+    if (onDataUpdate && !quickTestMode) {
       onDataUpdate({
         testType: 'systemInfo',
         data: systemInfo
