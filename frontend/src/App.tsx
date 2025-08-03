@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -15,6 +15,7 @@ function App() {
   const [showShare, setShowShare] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
           const [completedTests, setCompletedTests] = useState({
+          quickTest: false,
           networkTest: false,
           mediaTest: false,
           advancedTests: false,
@@ -40,6 +41,11 @@ function App() {
       'mediaData': 'mediaTest',
       'systemData': 'configInfo'
     };
+    
+    // Special handling for quick test completion
+    if (type === 'networkData' && data && data.testType === 'quickTest') {
+      handleTestComplete('quickTest');
+    }
     
     const testName = testMapping[type];
     if (testName && data) {
@@ -178,6 +184,25 @@ function App() {
             <div className="grid grid-cols-1 gap-8">
               <div className="lg:col-span-1">
                 {/* Individual Test Components */}
+                {currentTest === "quickTest" && (
+                  <QuickTest
+                    permissionsStatus={permissionsStatus}
+                    onPermissionsChange={setPermissionsStatus}
+                    onDataUpdate={(data: any) => {
+                      // Handle quick test data - it contains both network and system data
+                      if (data.networkData) {
+                        updateExportData('networkData', data.networkData);
+                      }
+                      if (data.systemData) {
+                        updateExportData('systemData', data.systemData);
+                      }
+                      // Mark quick test as complete when both tests are done
+                      if (data.networkData && data.systemData) {
+                        handleTestComplete('quickTest');
+                      }
+                    }}
+                  />
+                )}
                 {currentTest === "networkTest" && (
                   <NetworkTest 
                     permissionsStatus={permissionsStatus}

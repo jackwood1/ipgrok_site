@@ -2,6 +2,7 @@ import { Card, Badge } from "./ui";
 
 interface TestProgressProps {
   completedTests: {
+    quickTest: boolean;
     networkTest: boolean;
     mediaTest: boolean;
     advancedTests: boolean;
@@ -14,12 +15,20 @@ interface TestProgressProps {
 export function TestProgress({ completedTests, currentTest, onTestClick }: TestProgressProps) {
   const tests = [
     {
+      id: 'quickTest',
+      name: 'Quick Test',
+      description: 'Network speed and system information',
+      icon: '🚀',
+      duration: '1-2 minutes',
+      required: false
+    },
+    {
       id: 'networkTest',
       name: 'Network Tests',
       description: 'Speed, ping, traceroute, and advanced diagnostics',
       icon: '🌐',
       duration: '1-2 minutes',
-      required: true
+      required: false
     },
     {
       id: 'mediaTest',
