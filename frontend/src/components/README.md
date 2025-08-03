@@ -61,12 +61,18 @@ The application now uses a tabbed interface to organize content:
   - **Comprehensive Metrics**: Detailed performance analysis with color-coded indicators
 
 ### 3. Video Tab
-- **Purpose**: Camera and microphone testing
+- **Purpose**: Advanced camera and microphone testing with comprehensive quality analysis
 - **Features**:
-  - Device selection and configuration
-  - Real-time video preview
-  - Microphone activity visualization
-  - Device compatibility testing
+  - **Device Configuration**: Camera and microphone selection with permission management
+  - **Advanced Video Quality Test**: Comprehensive video analysis with detailed metrics
+  - **Video Quality Metrics**: Resolution, frame rate, bitrate, codec, color depth, aspect ratio
+  - **Audio Quality Metrics**: Sample rate, bit depth, channels, codec support
+  - **Codec Support Testing**: Browser compatibility for various video and audio codecs
+  - **Video Recording Test**: Record and analyze video quality with file size and format analysis
+  - **Microphone Activity Test**: Real-time volume visualization with peak and average analysis
+  - **Quality Assessment**: Color-coded quality indicators (excellent, good, fair, poor)
+  - **Real-time Analysis**: Live video and audio quality assessment
+  - **Recording Download**: Save test recordings for further analysis
 
 ### 4. Config Tab
 - **Purpose**: Comprehensive client-side system information
@@ -116,7 +122,7 @@ The application now uses a tabbed interface to organize content:
 
 ### Export Data Structure
 - **Network Data**: Speed test results, ping test data, traceroute information, quality scores
-- **Media Data**: Device information, permissions status, microphone statistics
+- **Media Data**: Device information, permissions status, microphone statistics, video quality metrics, audio quality metrics, codec support, recording test data
 - **System Data**: IP address, browser info, hardware specs, display details
 - **Quick Test Data**: Overall assessment, network status, media status
 - **Metadata**: Timestamps, test completion status, error information
@@ -132,6 +138,51 @@ The application now uses a tabbed interface to organize content:
 - **Netlify Forms**: Built-in form handling for Netlify deployments with automatic email forwarding
 - **Setup Required**: Each service requires initial configuration (service IDs, endpoints, templates)
 - **Fallback Options**: Copy to clipboard and download as text file for immediate use
+
+## Advanced Video Testing Features
+
+### Video Quality Assessment
+- **Resolution Detection**: Automatic detection of camera resolution capabilities
+- **Frame Rate Analysis**: Real-time frame rate measurement and assessment
+- **Bitrate Estimation**: Calculated video bitrate based on resolution and frame rate
+- **Color Depth Analysis**: Detection of color depth capabilities (typically 24-bit)
+- **Aspect Ratio Detection**: Automatic aspect ratio calculation
+- **Quality Grading**: A-F grading system based on resolution and frame rate
+- **Real-time Analysis**: Live video quality assessment during testing
+
+### Audio Quality Assessment
+- **Sample Rate Detection**: Audio sample rate measurement (typically 44.1kHz or 48kHz)
+- **Bit Depth Analysis**: Audio bit depth detection (typically 16-bit)
+- **Channel Count**: Mono/stereo channel detection
+- **Audio Codec Support**: Browser audio codec compatibility testing
+- **Quality Grading**: Quality assessment based on sample rate and channels
+
+### Codec Support Testing
+- **Video Codecs**: WebM, MP4, OGG, AV1, H.264, H.265, VP8, VP9
+- **Audio Codecs**: AAC, Opus, Vorbis
+- **Browser Compatibility**: Comprehensive codec support matrix
+- **Visual Indicators**: Clear support/unsupported indicators for each codec
+
+### Video Recording Test
+- **High-Quality Recording**: WebM format with VP8 video and Opus audio
+- **Configurable Quality**: 2.5 Mbps video, 128 kbps audio bitrates
+- **Duration Tracking**: Real-time recording duration display
+- **File Size Analysis**: Automatic file size calculation and formatting
+- **Download Capability**: Save recordings for further analysis
+- **Quality Preservation**: Maintains original video/audio quality in recordings
+
+### Microphone Activity Test
+- **Real-time Visualization**: Live volume level display with animated bars
+- **Volume Analysis**: Peak and average volume calculation
+- **Sample Collection**: Continuous volume sampling for accurate analysis
+- **Visual Feedback**: Color-coded volume indicators
+- **Statistical Analysis**: Comprehensive microphone performance metrics
+
+### Device Configuration
+- **Permission Management**: Automatic camera and microphone permission requests
+- **Device Selection**: Camera and microphone device selection
+- **Permission Status**: Clear indication of permission status
+- **Error Handling**: Graceful handling of permission denials
 
 ## Advanced Network Testing Features
 
