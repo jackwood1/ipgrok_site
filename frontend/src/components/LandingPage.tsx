@@ -22,6 +22,7 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             onClick={onStartQuickTest}
+            variant="primary"
             size="lg"
             className="text-lg px-8 py-4"
           >
@@ -29,7 +30,7 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
           </Button>
           <Button
             onClick={onStartDetailedTest}
-            variant="secondary"
+            variant="success"
             size="lg"
             className="text-lg px-8 py-4"
           >
