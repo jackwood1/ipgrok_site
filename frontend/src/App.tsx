@@ -33,7 +33,6 @@ function App() {
         });
 
   const updateExportData = (type: string, data: any) => {
-    console.log('updateExportData called for Detailed Analysis:', { type, data, currentTest });
     setExportData(prev => ({
       ...prev,
       [type]: data
@@ -210,6 +209,22 @@ function App() {
     }
   }, []);
 
+  const memoizedMediaTestUpdate = useCallback((data: any) => {
+    updateExportData('mediaData', data);
+  }, []);
+
+  const memoizedNetworkTestUpdate = useCallback((data: any) => {
+    updateExportData('networkData', data);
+  }, []);
+
+  const memoizedAdvancedTestsUpdate = useCallback((data: any) => {
+    updateExportData('advancedTestsData', data);
+  }, []);
+
+  const memoizedSystemDataUpdate = useCallback((data: any) => {
+    updateExportData('systemData', data);
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -297,7 +312,7 @@ function App() {
                 {currentTest === "networkTest" && (
                   <NetworkTest 
                     permissionsStatus={permissionsStatus}
-                    onDataUpdate={(data: any) => updateExportData('networkData', data)}
+                    onDataUpdate={memoizedNetworkTestUpdate}
                     onTestStart={() => handleTestStart('networkTest')}
                     autoStart={true}
                     detailedAnalysisMode={true}
@@ -305,7 +320,7 @@ function App() {
                 )}
                 {currentTest === "advancedTests" && (
                   <AdvancedNetworkTests
-                    onDataUpdate={(data: any) => updateExportData('advancedTestsData', data)}
+                    onDataUpdate={memoizedAdvancedTestsUpdate}
                     onTestStart={() => handleTestStart('advancedTests')}
                     autoStart={true}
                   />
@@ -314,7 +329,7 @@ function App() {
                   <MediaTest
                     permissionsStatus={permissionsStatus}
                     onPermissionsChange={setPermissionsStatus}
-                    onDataUpdate={(data: any) => updateExportData('mediaData', data)}
+                    onDataUpdate={memoizedMediaTestUpdate}
                     onTestStart={() => handleTestStart('mediaTest')}
                     autoStart={true}
                     detailedAnalysisMode={true}
@@ -322,7 +337,7 @@ function App() {
                 )}
                 {currentTest === "configInfo" && (
                   <ConfigInfo 
-                    onDataUpdate={(data: any) => updateExportData('systemData', data)}
+                    onDataUpdate={memoizedSystemDataUpdate}
                   />
                 )}
                 {currentTest === "email" && (
