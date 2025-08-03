@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, QuickTest } from "./components";
+import { Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
 
 function App() {
@@ -7,6 +8,36 @@ function App() {
   const [permissionsStatus, setPermissionsStatus] = useState<string>(
     () => localStorage.getItem("mediaPermissions") || "unknown"
   );
+
+  const tabs = [
+    {
+      id: "quick",
+      label: "Quick Test",
+      content: (
+        <QuickTest 
+          permissionsStatus={permissionsStatus} 
+          onPermissionsChange={setPermissionsStatus}
+        />
+      ),
+    },
+    {
+      id: "network",
+      label: "Network",
+      content: (
+        <NetworkTest permissionsStatus={permissionsStatus} />
+      ),
+    },
+    {
+      id: "video",
+      label: "Video",
+      content: (
+        <MediaTest 
+          permissionsStatus={permissionsStatus} 
+          onPermissionsChange={setPermissionsStatus}
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -22,13 +53,7 @@ function App() {
           </p>
         </div>
 
-        <div className="space-y-8">
-          <NetworkTest permissionsStatus={permissionsStatus} />
-          <MediaTest 
-            permissionsStatus={permissionsStatus} 
-            onPermissionsChange={setPermissionsStatus}
-          />
-        </div>
+        <Tabs tabs={tabs} defaultTab="quick" />
       </main>
 
       <Footer />

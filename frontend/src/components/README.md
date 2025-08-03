@@ -7,7 +7,8 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 ### Core Components
 
 - **Header** (`Header.tsx`) - Application header with logo and dark mode toggle
-- **NetworkTest** (`NetworkTest.tsx`) - Network speed testing functionality with improved UI
+- **QuickTest** (`QuickTest.tsx`) - Combined network and media test for quick system assessment
+- **NetworkTest** (`NetworkTest.tsx`) - Detailed network speed testing functionality
 - **NetworkMetrics** (`NetworkMetrics.tsx`) - Displays network test results in a clean, organized format
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
@@ -19,6 +20,7 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 - **Badge** (`ui/Badge.tsx`) - Status indicator badges with different colors
 - **Select** (`ui/Select.tsx`) - Styled select dropdown with label and error support
 - **Checkbox** (`ui/Checkbox.tsx`) - Styled checkbox with label
+- **Tabs** (`ui/Tabs.tsx`) - Tab navigation component for organizing content
 
 ### Types
 
@@ -27,6 +29,34 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 ### Hooks
 
 - **useDarkMode** (`../hooks/useDarkMode.ts`) - Custom hook for managing dark mode state and localStorage persistence
+
+## Tab Structure
+
+The application now uses a tabbed interface to organize content:
+
+### 1. Quick Test Tab
+- **Purpose**: Provides a quick overview of system readiness
+- **Features**: 
+  - Combined network and media testing
+  - Simplified status indicators
+  - Overall system assessment
+  - One-click testing for both network and media
+
+### 2. Network Tab
+- **Purpose**: Detailed network performance analysis
+- **Features**:
+  - Comprehensive speed testing
+  - Detailed metrics display
+  - Performance recommendations
+  - Historical test results
+
+### 3. Video Tab
+- **Purpose**: Camera and microphone testing
+- **Features**:
+  - Device selection and configuration
+  - Real-time video preview
+  - Microphone activity visualization
+  - Device compatibility testing
 
 ## UI Improvements
 
@@ -37,6 +67,7 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 - **Accessibility**: Focus states, proper contrast, and semantic HTML
 
 ### Layout Improvements
+- **Tabbed Interface**: Content is organized into logical tabs for better user experience
 - **Card-based Layout**: Content is organized in clean, bordered cards
 - **Better Spacing**: Consistent spacing and padding throughout the application
 - **Grid Layouts**: Responsive grid layouts for better content organization
@@ -57,12 +88,14 @@ The application has been refactored from a single large App.tsx file into modula
 3. **Maintainability**: Smaller, focused components are easier to maintain and test
 4. **Type Safety**: TypeScript interfaces ensure proper data flow between components
 5. **Design Consistency**: Unified design system ensures consistent user experience
+6. **Tabbed Organization**: Content is logically organized into tabs for better UX
 
 ## Component Communication
 
 - **Props**: Components communicate through props (e.g., `permissionsStatus`, `onPermissionsChange`)
 - **State Management**: Each component manages its own local state
 - **Custom Hooks**: Shared logic is extracted into custom hooks (e.g., `useDarkMode`)
+- **Tab State**: Tab navigation is managed by the Tabs component
 
 ## File Structure
 
@@ -75,8 +108,10 @@ src/
 │   │   ├── Badge.tsx
 │   │   ├── Select.tsx
 │   │   ├── Checkbox.tsx
+│   │   ├── Tabs.tsx
 │   │   └── index.ts
 │   ├── Header.tsx
+│   ├── QuickTest.tsx
 │   ├── NetworkTest.tsx
 │   ├── NetworkMetrics.tsx
 │   ├── MediaTest.tsx
@@ -96,8 +131,8 @@ src/
 Import components from the index file:
 
 ```typescript
-import { Header, NetworkTest, MediaTest, Footer } from "./components";
-import { Card, Button, Badge } from "./components/ui";
+import { Header, QuickTest, NetworkTest, MediaTest, Footer } from "./components";
+import { Card, Button, Badge, Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks";
 ```
 
@@ -106,4 +141,5 @@ import { useDarkMode } from "./hooks";
 - **Clean & Modern**: Minimalist design with clear visual hierarchy
 - **User-Friendly**: Intuitive interface with helpful tooltips and status indicators
 - **Performance-Focused**: Optimized for speed and responsiveness
-- **Accessible**: WCAG compliant with proper contrast and keyboard navigation 
+- **Accessible**: WCAG compliant with proper contrast and keyboard navigation
+- **Organized**: Tabbed interface for logical content organization 
