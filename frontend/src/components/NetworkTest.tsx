@@ -21,39 +21,7 @@ interface EnhancedTestResults extends TestResults {
   recommendations?: string[];
 }
 
-interface AdvancedNetworkTests {
-  dnsPerformance?: {
-    responseTime: number;
-    status: 'excellent' | 'good' | 'fair' | 'poor';
-  };
-  httpPerformance?: {
-    responseTime: number;
-    status: 'excellent' | 'good' | 'fair' | 'poor';
-  };
-  httpsPerformance?: {
-    responseTime: number;
-    status: 'excellent' | 'good' | 'fair' | 'poor';
-  };
-  cdnPerformance?: {
-    responseTime: number;
-    status: 'excellent' | 'good' | 'fair' | 'poor';
-  };
-  vpnDetection?: {
-    isVPN: boolean;
-    confidence: number;
-    reason: string;
-  };
-  networkType?: {
-    type: string;
-    details: string;
-  };
-  securityTests?: {
-    sslValid: boolean;
-    certificateInfo: any;
-    firewallDetection: string;
-    proxyDetection: string;
-  };
-}
+
 
 export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
@@ -62,18 +30,16 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   const [pingData, setPingData] = useState<any>(null);
   const [tracerouteData, setTracerouteData] = useState<any>(null);
   const [testProgress, setTestProgress] = useState<string>("");
-  const [advancedTests, setAdvancedTests] = useState<AdvancedNetworkTests | null>(null);
-  const [runningAdvancedTests, setRunningAdvancedTests] = useState(false);
+
   const lastDataSentRef = useRef<string>('');
 
   // Update export data when results change
   useEffect(() => {
-    if (onDataUpdate && (results || pingData || tracerouteData || advancedTests)) {
+    if (onDataUpdate && (results || pingData || tracerouteData)) {
       const currentData = JSON.stringify({
         speedTest: results,
         pingTest: pingData,
         tracerouteTest: tracerouteData,
-        advancedTests: advancedTests,
       });
       
       // Only call onDataUpdate if the data has actually changed
@@ -82,18 +48,16 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
           speedTest: results,
           pingTest: pingData,
           tracerouteTest: tracerouteData,
-          advancedTests: advancedTests,
         });
         onDataUpdate({
           speedTest: results,
           pingTest: pingData,
           tracerouteTest: tracerouteData,
-          advancedTests: advancedTests,
         });
         lastDataSentRef.current = currentData;
       }
     }
-  }, [results, pingData, tracerouteData, advancedTests, onDataUpdate]);
+  }, [results, pingData, tracerouteData, onDataUpdate]);
 
   // Auto-start test if autoStart is true
   useEffect(() => {
@@ -247,361 +211,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     return { grade, score: Math.round(score), recommendations };
   };
 
-  const testDNSPerformance = async (): Promise<{ responseTime: number; status: 'excellent' | 'good' | 'fair' | 'poor' }> => {
-    const domains = ['google.com', 'facebook.com', 'amazon.com', 'netflix.com', 'youtube.com'];
-    const times: number[] = [];
 
-    for (const domain of domains) {
-      try {
-        const start = performance.now();
-        await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
-        const end = performance.now();
-        times.push(end - start);
-      } catch (error) {
-        times.push(1000); // Default high value for failed requests
-      }
-    }
 
-    const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-    
-    let status: 'excellent' | 'good' | 'fair' | 'poor';
-    if (avgTime <= 50) status = 'excellent';
-    else if (avgTime <= 100) status = 'good';
-    else if (avgTime <= 200) status = 'fair';
-    else status = 'poor';
 
-    return { responseTime: Math.round(avgTime), status };
-  };
 
-  const testHTTPPerformance = async (): Promise<{ responseTime: number; status: 'excellent' | 'good' | 'fair' | 'poor' }> => {
-    const urls = [
-      'https://httpbin.org/get',
-      'https://httpbin.org/headers',
-      'https://httpbin.org/ip'
-    ];
-    const times: number[] = [];
 
-    for (const url of urls) {
-      try {
-        const start = performance.now();
-        await fetch(url, { signal: AbortSignal.timeout(5000) });
-        const end = performance.now();
-        times.push(end - start);
-      } catch (error) {
-        times.push(1000);
-      }
-    }
-
-    const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-    
-    let status: 'excellent' | 'good' | 'fair' | 'poor';
-    if (avgTime <= 100) status = 'excellent';
-    else if (avgTime <= 200) status = 'good';
-    else if (avgTime <= 500) status = 'fair';
-    else status = 'poor';
-
-    return { responseTime: Math.round(avgTime), status };
-  };
-
-  const testHTTPSPerformance = async (): Promise<{ responseTime: number; status: 'excellent' | 'good' | 'fair' | 'poor' }> => {
-    const urls = [
-      'https://httpbin.org/get',
-      'https://httpbin.org/headers',
-      'https://httpbin.org/ip'
-    ];
-    const times: number[] = [];
-
-    for (const url of urls) {
-      try {
-        const start = performance.now();
-        await fetch(url, { signal: AbortSignal.timeout(5000) });
-        const end = performance.now();
-        times.push(end - start);
-      } catch (error) {
-        times.push(1000);
-      }
-    }
-
-    const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-    
-    let status: 'excellent' | 'good' | 'fair' | 'poor';
-    if (avgTime <= 150) status = 'excellent';
-    else if (avgTime <= 300) status = 'good';
-    else if (avgTime <= 600) status = 'fair';
-    else status = 'poor';
-
-    return { responseTime: Math.round(avgTime), status };
-  };
-
-  const testCDNPerformance = async (): Promise<{ responseTime: number; status: 'excellent' | 'good' | 'fair' | 'poor' }> => {
-    const cdnUrls = [
-      'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css',
-      'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-      'https://unpkg.com/react@17/umd/react.production.min.js'
-    ];
-    const times: number[] = [];
-
-    for (const url of cdnUrls) {
-      try {
-        const start = performance.now();
-        await fetch(url, { signal: AbortSignal.timeout(5000) });
-        const end = performance.now();
-        times.push(end - start);
-      } catch (error) {
-        times.push(1000);
-      }
-    }
-
-    const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
-    
-    let status: 'excellent' | 'good' | 'fair' | 'poor';
-    if (avgTime <= 200) status = 'excellent';
-    else if (avgTime <= 400) status = 'good';
-    else if (avgTime <= 800) status = 'fair';
-    else status = 'poor';
-
-    return { responseTime: Math.round(avgTime), status };
-  };
-
-  const detectVPN = async (): Promise<{ isVPN: boolean; confidence: number; reason: string }> => {
-    try {
-      // Get public IP
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipResponse.json();
-      const publicIP = ipData.ip;
-
-      // Get IP geolocation info
-      const geoResponse = await fetch(`https://ipapi.co/${publicIP}/json/`);
-      const geoData = await geoResponse.json();
-
-      // Check for VPN indicators
-      let vpnIndicators = 0;
-      let reasons: string[] = [];
-
-      // Check if IP is from a known VPN provider
-      const vpnProviders = ['nordvpn', 'expressvpn', 'surfshark', 'protonvpn', 'cyberghost'];
-      const org = geoData.org?.toLowerCase() || '';
-      
-      if (vpnProviders.some(provider => org.includes(provider))) {
-        vpnIndicators += 2;
-        reasons.push('IP belongs to known VPN provider');
-      }
-
-      // Check for datacenter IP
-      if (geoData.type === 'hosting' || geoData.type === 'datacenter') {
-        vpnIndicators += 1;
-        reasons.push('IP appears to be from datacenter');
-      }
-
-      // Check for unusual location vs browser timezone
-      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const ipTimezone = geoData.timezone;
-      
-      if (browserTimezone && ipTimezone && browserTimezone !== ipTimezone) {
-        vpnIndicators += 1;
-        reasons.push('IP location timezone differs from browser timezone');
-      }
-
-      const isVPN = vpnIndicators >= 2;
-      const confidence = Math.min(100, vpnIndicators * 25);
-
-      return {
-        isVPN,
-        confidence,
-        reason: reasons.length > 0 ? reasons.join(', ') : 'No VPN indicators detected'
-      };
-    } catch (error) {
-      return {
-        isVPN: false,
-        confidence: 0,
-        reason: 'Unable to detect VPN status'
-      };
-    }
-  };
-
-  const detectNetworkType = async (): Promise<{ type: string; details: string }> => {
-    try {
-      // Check for connection type using Network Information API
-      const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-      
-      if (connection) {
-        const type = connection.effectiveType || connection.type || 'unknown';
-        const details = `Effective Type: ${connection.effectiveType || 'unknown'}, Type: ${connection.type || 'unknown'}, Downlink: ${connection.downlink || 'unknown'} Mbps`;
-        return { type, details };
-      }
-
-      // Fallback detection based on performance
-      const start = performance.now();
-      await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test');
-      const end = performance.now();
-      const responseTime = end - start;
-
-      let type = 'unknown';
-      let details = '';
-
-      if (responseTime < 50) {
-        type = 'fiber';
-        details = 'Very fast response time suggests fiber connection';
-      } else if (responseTime < 100) {
-        type = 'cable';
-        details = 'Fast response time suggests cable connection';
-      } else if (responseTime < 200) {
-        type = 'dsl';
-        details = 'Moderate response time suggests DSL connection';
-      } else {
-        type = 'mobile';
-        details = 'Slow response time suggests mobile connection';
-      }
-
-      return { type, details };
-    } catch (error) {
-      return { type: 'unknown', details: 'Unable to detect network type' };
-    }
-  };
-
-  const testSecurity = async (): Promise<{ sslValid: boolean; certificateInfo: any; firewallDetection: string; proxyDetection: string }> => {
-    try {
-      // Test SSL certificate
-      const sslResponse = await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test');
-      const sslValid = sslResponse.ok;
-
-      // Get certificate info (simplified)
-      const certificateInfo = {
-        valid: sslValid,
-        protocol: 'TLS 1.2+',
-        issuer: 'Let\'s Encrypt'
-      };
-
-      // Test firewall detection using a more reliable method
-      let firewallDetection = 'No firewall restrictions detected';
-      
-      try {
-        // Test with a simple endpoint that should always work
-        const testResponse = await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test', {
-          signal: AbortSignal.timeout(5000)
-        });
-        
-        if (testResponse.ok) {
-          // Use CORS-friendly endpoints for firewall detection
-          const corsFriendlyTests = [
-            'https://httpbin.org/get',
-            'https://jsonplaceholder.typicode.com/posts/1',
-            'https://api.github.com/zen'
-          ];
-          
-          let reachableCount = 0;
-          
-          for (const test of corsFriendlyTests) {
-            try {
-              const response = await fetch(test, {
-                method: 'GET',
-                signal: AbortSignal.timeout(3000)
-              });
-              if (response.ok) {
-                reachableCount++;
-              }
-            } catch {
-              // Count as unreachable
-            }
-          }
-          
-          if (reachableCount === 0) {
-            firewallDetection = 'Possible firewall restrictions detected (no external APIs reachable)';
-          } else if (reachableCount < corsFriendlyTests.length) {
-            firewallDetection = `Partial firewall restrictions detected (${reachableCount}/${corsFriendlyTests.length} APIs reachable)`;
-          } else {
-            firewallDetection = 'No firewall restrictions detected';
-          }
-        }
-      } catch (error) {
-        firewallDetection = 'Unable to test firewall restrictions';
-      }
-
-      // Test proxy detection - using a simple endpoint that returns headers
-      const proxyResponse = await fetch('https://httpbin.org/headers');
-      const proxyData = await proxyResponse.json();
-      const headers = proxyData.headers;
-      
-      let proxyDetection = 'No proxy detected';
-      if (headers['Via'] || headers['X-Forwarded-For'] || headers['Proxy-Connection']) {
-        proxyDetection = 'Proxy detected in headers';
-      }
-
-      return {
-        sslValid,
-        certificateInfo,
-        firewallDetection,
-        proxyDetection
-      };
-    } catch (error) {
-      return {
-        sslValid: false,
-        certificateInfo: { valid: false, error: 'Unable to test SSL' },
-        firewallDetection: 'Unable to detect firewall',
-        proxyDetection: 'Unable to detect proxy'
-      };
-    }
-  };
-
-  const runAdvancedTests = async () => {
-    console.log("runAdvancedTests called");
-    setRunningAdvancedTests(true);
-    setTestProgress("Running advanced network tests...");
-
-    try {
-      // DNS Performance Test
-      console.log("Starting DNS performance test...");
-      setTestProgress("Testing DNS performance...");
-      const dnsPerformance = await testDNSPerformance();
-
-      // HTTP Performance Test
-      setTestProgress("Testing HTTP performance...");
-      const httpPerformance = await testHTTPPerformance();
-
-      // HTTPS Performance Test
-      setTestProgress("Testing HTTPS performance...");
-      const httpsPerformance = await testHTTPSPerformance();
-
-      // CDN Performance Test
-      setTestProgress("Testing CDN performance...");
-      const cdnPerformance = await testCDNPerformance();
-
-      // VPN Detection
-      setTestProgress("Detecting VPN usage...");
-      const vpnDetection = await detectVPN();
-
-      // Network Type Detection
-      setTestProgress("Detecting network type...");
-      const networkType = await detectNetworkType();
-
-      // Security Tests
-      setTestProgress("Running security tests...");
-      const securityTests = await testSecurity();
-
-      console.log("All advanced tests completed, setting results...");
-      const advancedTestResults = {
-        dnsPerformance,
-        httpPerformance,
-        httpsPerformance,
-        cdnPerformance,
-        vpnDetection,
-        networkType,
-        securityTests
-      };
-      console.log('NetworkTest: Setting advanced tests:', advancedTestResults);
-      setAdvancedTests(advancedTestResults);
-
-      setTestProgress("Advanced tests completed!");
-      setTimeout(() => setTestProgress(""), 2000);
-
-    } catch (error) {
-      console.error("Error running advanced tests:", error);
-      setTestProgress("Error running advanced tests");
-    } finally {
-      console.log("runAdvancedTests finally block - setting runningAdvancedTests to false");
-      setRunningAdvancedTests(false);
-    }
-  };
 
   const runUploadTest = async (): Promise<string> => {
     const testSizeMB = 2;
@@ -766,20 +380,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       console.log('NetworkTest: Setting results:', testResults);
       setResults(testResults);
 
-      // Automatically run advanced tests after basic network test completes (skip in quick test mode)
-      if (!quickTestMode) {
-        console.log("Network test completed, starting advanced tests...");
-        setTestProgress("Network test completed! Running advanced tests...");
-        try {
-          await runAdvancedTests();
-          console.log("Advanced tests completed successfully");
-        } catch (error) {
-          console.error("Error in advanced tests:", error);
-        }
-      } else {
-        console.log("Network test completed (quick test mode - skipping advanced tests)");
-        setTestProgress("Network test completed!");
-      }
+      console.log("Network test completed!");
+      setTestProgress("Network test completed!");
       
     } catch (err) {
       setResults({ 
@@ -934,170 +536,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         )}
       </Card>
 
-      {/* Advanced Network Tests */}
-      <Card 
-        title="Advanced Network Tests" 
-        subtitle="DNS, HTTP/HTTPS, CDN, VPN detection, and security testing (runs automatically after network test)"
-      >
-        <div className="space-y-4">
-          {runningAdvancedTests && (
-            <div className="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="text-blue-600 dark:text-blue-400 text-center">
-                <div className="text-lg mb-2">🔄</div>
-                <div className="font-medium">{testProgress || "Running advanced tests..."}</div>
-              </div>
-            </div>
-          )}
 
-          {advancedTests && (
-            <div className="space-y-6">
-              {/* DNS Performance */}
-              {advancedTests.dnsPerformance && (
-                <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">DNS Performance</h4>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                        {advancedTests.dnsPerformance.responseTime}ms
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Average DNS resolution time
-                      </div>
-                    </div>
-                    <Badge variant={getStatusColor(advancedTests.dnsPerformance.status)}>
-                      {advancedTests.dnsPerformance.status}
-                    </Badge>
-                  </div>
-                </div>
-              )}
-
-              {/* HTTP/HTTPS Performance */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {advancedTests.httpPerformance && (
-                  <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">HTTP Performance</h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-lg font-bold text-gray-900 dark:text-white">
-                          {advancedTests.httpPerformance.responseTime}ms
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          Average HTTP response time
-                        </div>
-                      </div>
-                      <Badge variant={getStatusColor(advancedTests.httpPerformance.status)}>
-                        {advancedTests.httpPerformance.status}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-
-                {advancedTests.httpsPerformance && (
-                  <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">HTTPS Performance</h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-lg font-bold text-gray-900 dark:text-white">
-                          {advancedTests.httpsPerformance.responseTime}ms
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          Average HTTPS response time
-                        </div>
-                      </div>
-                      <Badge variant={getStatusColor(advancedTests.httpsPerformance.status)}>
-                        {advancedTests.httpsPerformance.status}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* CDN Performance */}
-              {advancedTests.cdnPerformance && (
-                <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">CDN Performance</h4>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                        {advancedTests.cdnPerformance.responseTime}ms
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Average CDN response time
-                      </div>
-                    </div>
-                    <Badge variant={getStatusColor(advancedTests.cdnPerformance.status)}>
-                      {advancedTests.cdnPerformance.status}
-                    </Badge>
-                  </div>
-                </div>
-              )}
-
-              {/* VPN Detection */}
-              {advancedTests.vpnDetection && (
-                <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">VPN Detection</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">VPN Status</span>
-                      <Badge variant={advancedTests.vpnDetection.isVPN ? 'warning' : 'success'}>
-                        {advancedTests.vpnDetection.isVPN ? 'VPN Detected' : 'No VPN'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Confidence</span>
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {advancedTests.vpnDetection.confidence}%
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {advancedTests.vpnDetection.reason}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Network Type */}
-              {advancedTests.networkType && (
-                <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">Network Type</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</span>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
-                        {advancedTests.networkType.type}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {advancedTests.networkType.details}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Security Tests */}
-              {advancedTests.securityTests && (
-                <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">Security Tests</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">SSL Certificate</span>
-                      <Badge variant={advancedTests.securityTests.sslValid ? 'success' : 'danger'}>
-                        {advancedTests.securityTests.sslValid ? 'Valid' : 'Invalid'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Firewall:</strong> {advancedTests.securityTests.firewallDetection}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <strong>Proxy:</strong> {advancedTests.securityTests.proxyDetection}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </Card>
 
       {/* Ping Test - Hide in quick test mode and detailed analysis mode */}
       {!quickTestMode && !detailedAnalysisMode && (
