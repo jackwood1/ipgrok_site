@@ -205,14 +205,169 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
               )}
 
               {currentStep === 'complete' && (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    Quick Test Complete!
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Your network and system have been tested successfully.
-                  </p>
+                <div className="space-y-6">
+                  {/* Success Message */}
+                  <div className="text-center py-6">
+                    <div className="text-6xl mb-4">🎉</div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Quick Test Complete!
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Your network and system have been tested successfully.
+                    </p>
+                  </div>
+
+                  {/* Results Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Network Summary */}
+                    {networkData && (
+                      <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">
+                          🌐 Network Results
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-blue-800 dark:text-blue-200">Download Speed</span>
+                            <span className="font-medium text-blue-900 dark:text-blue-100">
+                              {networkData.speedTest?.download || 'N/A'} Mbps
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-blue-800 dark:text-blue-200">Upload Speed</span>
+                            <span className="font-medium text-blue-900 dark:text-blue-100">
+                              {networkData.speedTest?.upload || 'N/A'} Mbps
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-blue-800 dark:text-blue-200">Latency</span>
+                            <span className="font-medium text-blue-900 dark:text-blue-100">
+                              {networkData.speedTest?.latency || 'N/A'} ms
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-blue-800 dark:text-blue-200">Connection Quality</span>
+                            <span className={`font-medium px-2 py-1 rounded text-xs ${
+                              networkData.speedTest?.connectionQuality === 'A' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                              networkData.speedTest?.connectionQuality === 'B' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                              networkData.speedTest?.connectionQuality === 'C' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                              networkData.speedTest?.connectionQuality === 'D' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+                              'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            }`}>
+                              {networkData.speedTest?.connectionQuality || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* System Summary */}
+                    {systemData && (
+                      <div className="p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <h4 className="font-medium text-green-900 dark:text-green-100 mb-4 flex items-center gap-2">
+                          ⚙️ System Information
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-800 dark:text-green-200">Platform</span>
+                            <span className="font-medium text-green-900 dark:text-green-100 text-right">
+                              {systemData.platform || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-800 dark:text-green-200">Screen Resolution</span>
+                            <span className="font-medium text-green-900 dark:text-green-100 text-right">
+                              {systemData.screenResolution || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-800 dark:text-green-200">WebGL Support</span>
+                            <span className={`font-medium px-2 py-1 rounded text-xs ${
+                              systemData.webGL ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            }`}>
+                              {systemData.webGL ? 'Supported' : 'Not Supported'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-800 dark:text-green-200">IP Address</span>
+                            <span className="font-medium text-green-900 dark:text-green-100 text-right">
+                              {systemData.ipAddress || 'N/A'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Overall Assessment */}
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      📊 Overall Assessment
+                    </h4>
+                    <div className="space-y-3">
+                      {networkData?.speedTest && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Network Performance</span>
+                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                            parseFloat(networkData.speedTest.download) > 25 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                            parseFloat(networkData.speedTest.download) > 10 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}>
+                            {parseFloat(networkData.speedTest.download) > 25 ? 'Excellent' :
+                             parseFloat(networkData.speedTest.download) > 10 ? 'Good' : 'Needs Improvement'}
+                          </span>
+                        </div>
+                      )}
+                      {systemData && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">System Compatibility</span>
+                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                            systemData.webGL ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}>
+                            {systemData.webGL ? 'Compatible' : 'Limited Support'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Video Call Readiness</span>
+                        <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 
+                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 'Ready' :
+                           networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 'Fair' : 'Not Ready'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-4 flex items-center gap-2">
+                      💡 Recommendations
+                    </h4>
+                    <div className="text-sm text-yellow-800 dark:text-yellow-200 space-y-2">
+                      {networkData?.speedTest && parseFloat(networkData.speedTest.download) < 10 && (
+                        <p>• Your download speed may be too slow for high-quality video calls. Consider upgrading your internet plan.</p>
+                      )}
+                      {networkData?.speedTest && networkData.speedTest.latency > 100 && (
+                        <p>• High latency detected. This may cause delays in video calls. Try connecting via Ethernet if possible.</p>
+                      )}
+                      {systemData && !systemData.webGL && (
+                        <p>• WebGL is not supported on your system. Some video call features may be limited.</p>
+                      )}
+                      {networkData?.speedTest && parseFloat(networkData.speedTest.download) > 25 && systemData?.webGL && (
+                        <p>• Excellent! Your system is well-suited for high-quality video calls.</p>
+                      )}
+                      {(!networkData?.speedTest || !systemData) && (
+                        <p>• Run additional tests for a more comprehensive assessment of your system.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button
                       onClick={() => window.location.reload()}
