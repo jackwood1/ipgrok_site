@@ -458,33 +458,48 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         issuer: 'Let\'s Encrypt'
       };
 
-      // Test firewall detection
-      const firewallTests = [
-        'https://httpbin.org/status/403',
-        'https://httpbin.org/status/404',
-        'https://httpbin.org/status/500'
-      ];
-
+      // Test firewall detection using a more reliable method
       let firewallDetection = 'No firewall restrictions detected';
-      let blockedCount = 0;
       
-      for (const test of firewallTests) {
-        try {
-          const response = await fetch(test);
-          // These endpoints are expected to return error status codes
-          // If we get a response (even with error status), it means no firewall blocking
-          if (response.status >= 400) {
-            // Expected behavior - endpoint returned error status
-            continue;
+      try {
+        // Test with a simple endpoint that should always work
+        const testResponse = await fetch('https://httpbin.org/get', {
+          signal: AbortSignal.timeout(5000)
+        });
+        
+        if (testResponse.ok) {
+          // If we can reach httpbin.org, test for specific restrictions
+          const restrictedTests = [
+            'https://httpbin.org/status/403',
+            'https://httpbin.org/status/404', 
+            'https://httpbin.org/status/500'
+          ];
+          
+          let blockedCount = 0;
+          
+          for (const test of restrictedTests) {
+            try {
+              const response = await fetch(test, {
+                signal: AbortSignal.timeout(3000)
+              });
+              // These endpoints are expected to return error status codes
+              // If we get a response (even with error status), it means no firewall blocking
+              if (response.status >= 400) {
+                // Expected behavior - endpoint returned error status
+                continue;
+              }
+            } catch {
+              // If we can't reach the endpoint at all, it might be firewall blocked
+              blockedCount++;
+            }
           }
-        } catch (error) {
-          // If we can't reach the endpoint at all, it might be firewall blocked
-          blockedCount++;
+          
+          if (blockedCount > 0) {
+            firewallDetection = `Possible firewall restrictions detected (${blockedCount} endpoints blocked)`;
+          }
         }
-      }
-      
-      if (blockedCount > 0) {
-        firewallDetection = `Possible firewall restrictions detected (${blockedCount} endpoints blocked)`;
+      } catch (error) {
+        firewallDetection = 'Unable to test firewall restrictions';
       }
 
       // Test proxy detection
