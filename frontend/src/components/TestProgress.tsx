@@ -25,9 +25,17 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
     {
       id: 'networkTest',
       name: 'Network Tests',
-      description: 'Speed, ping, traceroute, and advanced diagnostics',
+      description: 'Speed, latency, and connection quality tests',
       icon: '🌐',
       duration: '1-2 minutes',
+      required: true
+    },
+    {
+      id: 'advancedTests',
+      name: 'Advanced Network Tests',
+      description: 'DNS, HTTP/HTTPS, CDN, VPN detection, and security tests',
+      icon: '🔬',
+      duration: '30-60 seconds',
       required: true
     }
   ];

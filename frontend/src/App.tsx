@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -41,7 +41,8 @@ function App() {
     const testMapping: { [key: string]: string } = {
       'networkData': 'networkTest',
       'mediaData': 'mediaTest',
-      'systemData': 'configInfo'
+      'systemData': 'configInfo',
+      'advancedTestsData': 'advancedTests'
     };
     
     // Special handling for quick test completion
@@ -64,9 +65,12 @@ function App() {
         handleTestComplete('configInfo');
       }
       
-      // Auto-progression for Detailed Analysis: configInfo -> networkTest
+      // Auto-progression for Detailed Analysis: configInfo -> networkTest -> advancedTests
       if (type === 'systemData' && currentTest === 'configInfo') {
         setCurrentTest('networkTest');
+      }
+      if (type === 'networkData' && currentTest === 'networkTest') {
+        setCurrentTest('advancedTests');
       }
     }
   };
@@ -273,6 +277,12 @@ function App() {
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('networkData', data)}
                     detailedAnalysisMode={true}
+                  />
+                )}
+                {currentTest === "advancedTests" && (
+                  <AdvancedNetworkTests
+                    onDataUpdate={(data: any) => updateExportData('advancedTestsData', data)}
+                    autoStart={true}
                   />
                 )}
                 {currentTest === "mediaTest" && (

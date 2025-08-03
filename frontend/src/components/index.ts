@@ -15,4 +15,5 @@ export { TestProgress } from "./TestProgress";
 export { ResultsDashboard } from "./ResultsDashboard";
 export { Footer } from "./Footer";
 export { ManualTest } from "./ManualTest";
-export { DetailedTestConfirm } from "./DetailedTestConfirm"; 
+export { DetailedTestConfirm } from "./DetailedTestConfirm";
+export { AdvancedNetworkTests } from "./AdvancedNetworkTests"; 
