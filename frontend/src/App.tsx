@@ -91,10 +91,12 @@ function App() {
   };
 
   const startDetailedTest = () => {
+    console.log('Starting Detailed Test, current states before:', { showLanding, showResults, showShare, showDetailedConfirm, currentTest });
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
     setShowDetailedConfirm(true);
+    console.log('Detailed Test started, showDetailedConfirm set to true');
   };
 
   const startManualTest = () => {
@@ -202,6 +204,10 @@ function App() {
       <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {(() => {
+          console.log('Rendering decision:', { showHelp, showLanding, showDetailedConfirm, showResults, showShare, currentTest });
+          return null;
+        })()}
         {showHelp ? (
           <Help />
         ) : showLanding ? (
