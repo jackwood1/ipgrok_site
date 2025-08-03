@@ -37,7 +37,7 @@ export function DetailedTestConfirm({
             <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
               <div className="flex items-center gap-2">
                 <span>🌐</span>
-                <span>Network Speed Test (Download, Upload, Latency, Advanced Tests)</span>
+                <span>Detailed Advanced Analysis (Network, System, Advanced Tests, Media)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span>📹</span>

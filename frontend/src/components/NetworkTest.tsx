@@ -455,7 +455,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     <div className="space-y-8">
       {/* Speed Test */}
       <Card 
-        title="Network Speed Test" 
+        title="Detailed Advanced Analysis" 
         subtitle="Test your internet connection for video calls"
       >
         {permissionsStatus !== "granted" && (

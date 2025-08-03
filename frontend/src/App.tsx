@@ -65,11 +65,11 @@ function App() {
         handleTestComplete('configInfo');
       }
       
-      // Auto-progression for Detailed Analysis: configInfo -> networkTest -> advancedTests -> mediaTest
-      if (type === 'systemData' && currentTest === 'configInfo') {
-        setCurrentTest('networkTest');
-      }
+      // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
       if (type === 'networkData' && currentTest === 'networkTest') {
+        setCurrentTest('configInfo');
+      }
+      if (type === 'systemData' && currentTest === 'configInfo') {
         setCurrentTest('advancedTests');
       }
       if (type === 'advancedTestsData' && currentTest === 'advancedTests') {
@@ -121,7 +121,7 @@ function App() {
     }
     
     setShowDetailedConfirm(false);
-    setCurrentTest("configInfo"); // Start with System Info first
+    setCurrentTest("networkTest"); // Start with Network Tests first
   };
 
   const showResultsDashboard = () => {

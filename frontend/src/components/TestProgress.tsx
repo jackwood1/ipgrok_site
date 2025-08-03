@@ -15,19 +15,19 @@ interface TestProgressProps {
 export function TestProgress({ completedTests, currentTest, onTestClick }: TestProgressProps) {
   const tests = [
     {
-      id: 'configInfo',
-      name: 'System Info',
-      description: 'Device and browser configuration details',
-      icon: '⚙️',
-      duration: 'Instant',
-      required: true
-    },
-    {
       id: 'networkTest',
       name: 'Network Tests',
       description: 'Speed, latency, and connection quality tests',
       icon: '🌐',
       duration: '1-2 minutes',
+      required: true
+    },
+    {
+      id: 'configInfo',
+      name: 'System Info',
+      description: 'Device and browser configuration details',
+      icon: '⚙️',
+      duration: 'Instant',
       required: true
     },
     {
