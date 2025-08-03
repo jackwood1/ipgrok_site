@@ -13,4 +13,5 @@ export { LandingPage } from "./LandingPage";
 export { ShareResults } from "./ShareResults";
 export { TestProgress } from "./TestProgress";
 export { ResultsDashboard } from "./ResultsDashboard";
-export { Footer } from "./Footer"; 
+export { Footer } from "./Footer";
+export { ManualTest } from "./ManualTest"; 

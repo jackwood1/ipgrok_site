@@ -195,6 +195,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={handleNetworkComplete}
                     autoStart={true}
+                    quickTestMode={true}
                   />
                 </div>
               )}

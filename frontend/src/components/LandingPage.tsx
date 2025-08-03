@@ -3,9 +3,10 @@ import { Button } from "./ui";
 interface LandingPageProps {
   onStartQuickTest: () => void;
   onStartDetailedTest: () => void;
+  onStartManualTest: () => void;
 }
 
-export function LandingPage({ onStartQuickTest, onStartDetailedTest }: LandingPageProps) {
+export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManualTest }: LandingPageProps) {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -33,6 +34,14 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest }: LandingPa
             className="text-lg px-8 py-4"
           >
             🔍 Detailed Analysis (2-3 minutes)
+          </Button>
+          <Button
+            onClick={onStartManualTest}
+            variant="info"
+            size="lg"
+            className="text-lg px-8 py-4"
+          >
+            ⚙️ Manual Test
           </Button>
         </div>
       </div>

@@ -9,6 +9,7 @@ interface NetworkTestProps {
   permissionsStatus: string;
   onDataUpdate?: (data: any) => void;
   autoStart?: boolean;
+  quickTestMode?: boolean;
 }
 
 interface EnhancedTestResults extends TestResults {
@@ -53,7 +54,7 @@ interface AdvancedNetworkTests {
   };
 }
 
-export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false, quickTestMode = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<EnhancedTestResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -699,14 +700,19 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       console.log('NetworkTest: Setting results:', testResults);
       setResults(testResults);
 
-      // Automatically run advanced tests after basic network test completes
-      console.log("Network test completed, starting advanced tests...");
-      setTestProgress("Network test completed! Running advanced tests...");
-      try {
-        await runAdvancedTests();
-        console.log("Advanced tests completed successfully");
-      } catch (error) {
-        console.error("Error in advanced tests:", error);
+      // Automatically run advanced tests after basic network test completes (skip in quick test mode)
+      if (!quickTestMode) {
+        console.log("Network test completed, starting advanced tests...");
+        setTestProgress("Network test completed! Running advanced tests...");
+        try {
+          await runAdvancedTests();
+          console.log("Advanced tests completed successfully");
+        } catch (error) {
+          console.error("Error in advanced tests:", error);
+        }
+      } else {
+        console.log("Network test completed (quick test mode - skipping advanced tests)");
+        setTestProgress("Network test completed!");
       }
       
     } catch (err) {
@@ -1027,11 +1033,15 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         </div>
       </Card>
 
-      {/* Ping Test */}
-      <PingTest onDataUpdate={setPingData} />
+      {/* Ping Test - Hide in quick test mode */}
+      {!quickTestMode && (
+        <PingTest onDataUpdate={setPingData} />
+      )}
 
-      {/* Traceroute Test */}
-      <TracerouteTest onDataUpdate={setTracerouteData} />
+      {/* Traceroute Test - Hide in quick test mode */}
+      {!quickTestMode && (
+        <TracerouteTest onDataUpdate={setTracerouteData} />
+      )}
     </div>
   );
 } 

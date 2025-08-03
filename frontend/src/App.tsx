@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -76,6 +76,13 @@ function App() {
     setCurrentTest("networkTest");
   };
 
+  const startManualTest = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setCurrentTest("manualTest");
+  };
+
   const showResultsDashboard = () => {
     setShowResults(true);
     setShowShare(false);
@@ -108,7 +115,7 @@ function App() {
       systemData: exportData.systemData,
     };
 
-    // Export as JSON
+    // Export as JSON only
     const jsonData = JSON.stringify(exportDataObj, null, 2);
     const blob = new Blob([jsonData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -120,67 +127,9 @@ function App() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    // Also export as CSV if network data exists
-    if (exportData.networkData) {
-      const csvData = generateCSV(exportDataObj);
-      const csvBlob = new Blob([csvData], { type: 'text/csv' });
-      const csvUrl = URL.createObjectURL(csvBlob);
-      
-      const csvA = document.createElement('a');
-      csvA.href = csvUrl;
-      csvA.download = `ipgrok-test-results-${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(csvA);
-      csvA.click();
-      document.body.removeChild(csvA);
-      URL.revokeObjectURL(csvUrl);
-    }
   };
 
-  const generateCSV = (data: any) => {
-    const rows = [];
-    
-    // Add header
-    rows.push(['Test Type', 'Metric', 'Value', 'Unit']);
-    
-    // Network data
-    if (data.networkData?.speedTest) {
-      const speedTest = data.networkData.speedTest;
-      rows.push(['Network', 'Download Speed', speedTest.download, 'Mbps']);
-      rows.push(['Network', 'Upload Speed', speedTest.upload, 'Mbps']);
-      rows.push(['Network', 'Latency', speedTest.latency, 'ms']);
-      rows.push(['Network', 'Jitter', speedTest.jitter, 'ms']);
-      rows.push(['Network', 'Connection Quality', speedTest.connectionQuality, 'Grade']);
-      rows.push(['Network', 'Quality Score', speedTest.qualityScore, '/100']);
-    }
-    
-    // System data
-    if (data.systemData) {
-      rows.push(['System', 'IP Address', data.systemData.ipAddress, '']);
-      rows.push(['System', 'Platform', data.systemData.platform, '']);
-      rows.push(['System', 'Screen Resolution', data.systemData.screenResolution, '']);
-      rows.push(['System', 'Timezone', data.systemData.timezone, '']);
-      rows.push(['System', 'WebGL Support', data.systemData.webGL ? 'Yes' : 'No', '']);
-      rows.push(['System', 'CPU Cores', data.systemData.cores, '']);
-    }
-    
-    // Media data
-    if (data.mediaData?.videoQuality) {
-      const videoQuality = data.mediaData.videoQuality;
-      rows.push(['Media', 'Video Resolution', videoQuality.resolution, '']);
-      rows.push(['Media', 'Frame Rate', videoQuality.frameRate, 'fps']);
-      rows.push(['Media', 'Video Quality Grade', videoQuality.qualityGrade, '']);
-    }
-    
-    if (data.mediaData?.audioQuality) {
-      const audioQuality = data.mediaData.audioQuality;
-      rows.push(['Media', 'Sample Rate', audioQuality.sampleRate, 'Hz']);
-      rows.push(['Media', 'Audio Channels', audioQuality.channels, '']);
-      rows.push(['Media', 'Audio Quality Grade', audioQuality.qualityGrade, '']);
-    }
-    
-    return rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-  };
+
 
   const goHome = () => {
     setShowLanding(true);
@@ -203,6 +152,7 @@ function App() {
           <LandingPage 
             onStartQuickTest={startQuickTest}
             onStartDetailedTest={startDetailedTest}
+            onStartManualTest={startManualTest}
           />
         ) : showResults ? (
           <ResultsDashboard
@@ -300,6 +250,22 @@ function App() {
                     networkData={exportData.networkData}
                     mediaData={exportData.mediaData}
                     systemData={exportData.systemData}
+                  />
+                )}
+                {currentTest === "manualTest" && (
+                  <ManualTest
+                    permissionsStatus={permissionsStatus}
+                    onPermissionsChange={setPermissionsStatus}
+                    onDataUpdate={(data: any) => {
+                      // Handle manual test data
+                      if (data.testName === 'network') {
+                        updateExportData('networkData', data.data);
+                      } else if (data.testName === 'media') {
+                        updateExportData('mediaData', data.data);
+                      } else if (data.testName === 'system') {
+                        updateExportData('systemData', data.data);
+                      }
+                    }}
                   />
                 )}
               </div>
