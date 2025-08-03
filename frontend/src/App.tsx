@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, QuickTest } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, QuickTest, EmailResults } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { ExportStats } from "./components/ExportStats";
 import { Tabs } from "./components/ui";
@@ -65,6 +65,18 @@ function App() {
       content: (
         <ConfigInfo 
           onDataUpdate={(data: any) => updateExportData('systemData', data)}
+        />
+      ),
+    },
+    {
+      id: "email",
+      label: "Email",
+      content: (
+        <EmailResults
+          networkData={exportData.networkData}
+          mediaData={exportData.mediaData}
+          systemData={exportData.systemData}
+          quickTestData={exportData.quickTestData}
         />
       ),
     },

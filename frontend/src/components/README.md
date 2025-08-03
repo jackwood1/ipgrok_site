@@ -14,6 +14,7 @@ This directory contains the React components for the ipgrok Network & Media Test
 - **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation with IP and FQDN display
 - **ConfigInfo** (`ConfigInfo.tsx`) - Comprehensive client-side system information display
 - **ExportStats** (`ExportStats.tsx`) - Comprehensive export functionality for all test results
+- **EmailResults** (`EmailResults.tsx`) - Email functionality for sending test results
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
 
@@ -79,7 +80,18 @@ The application now uses a tabbed interface to organize content:
   - **Real-time Data**: Live IP address detection and system status
   - **Visual Status Indicators**: Color-coded badges for different states
 
-## Export Functionality
+### 5. Email Tab
+- **Purpose**: Send test results via email with multiple service options
+- **Features**:
+  - **Multiple Email Services**: EmailJS, Formspree, and Netlify Forms integration
+  - **Customizable Content**: Recipient email, subject, and additional message
+  - **Comprehensive Data**: All test results formatted for email
+  - **Alternative Actions**: Copy to clipboard and download as text file
+  - **Setup Instructions**: Detailed guidance for configuring email services
+  - **Real-time Feedback**: Success/error states with loading indicators
+  - **Service Information**: Links to learn more about each email service
+
+## Export and Email Functionality
 
 ### ExportStats Component
 - **Purpose**: Comprehensive data export from all tabs
@@ -90,6 +102,17 @@ The application now uses a tabbed interface to organize content:
   - **Real-time Updates**: Export data updates as tests are completed
   - **Timestamped Files**: Automatic file naming with timestamps
   - **Comprehensive Coverage**: Includes all test results, system info, and metadata
+
+### EmailResults Component
+- **Purpose**: Send test results via email with multiple service integrations
+- **Features**:
+  - **Multiple Email Services**: Support for EmailJS, Formspree, and Netlify Forms
+  - **Customizable Email**: Recipient, subject, and additional message fields
+  - **Formatted Content**: Comprehensive test results formatted for email readability
+  - **Alternative Actions**: Copy to clipboard and download as text file
+  - **Service Integration**: Ready-to-use integration with popular email services
+  - **Setup Guidance**: Detailed instructions for configuring each service
+  - **Error Handling**: Comprehensive error handling and user feedback
 
 ### Export Data Structure
 - **Network Data**: Speed test results, ping test data, traceroute information, quality scores
@@ -102,6 +125,13 @@ The application now uses a tabbed interface to organize content:
 - **JSON Format**: Complete structured data with all test results and metadata
 - **CSV Format**: Tabular format with test type, parameter, value, and timestamp columns
 - **File Naming**: Automatic naming with format `video_call_test_results_[timestamp].[json|csv]`
+
+### Email Service Integration
+- **EmailJS**: Client-side email service with free tier and template support
+- **Formspree**: Form handling service with email forwarding and spam protection
+- **Netlify Forms**: Built-in form handling for Netlify deployments with automatic email forwarding
+- **Setup Required**: Each service requires initial configuration (service IDs, endpoints, templates)
+- **Fallback Options**: Copy to clipboard and download as text file for immediate use
 
 ## Advanced Network Testing Features
 
@@ -313,4 +343,5 @@ import { useDarkMode } from "./hooks";
 - **Educational**: Helpful explanations and interpretation guides
 - **Informative**: Rich system configuration and capability data
 - **Exportable**: Comprehensive data export for analysis and reporting
-- **Analytical**: Advanced network quality scoring and intelligent recommendations 
+- **Analytical**: Advanced network quality scoring and intelligent recommendations
+- **Shareable**: Email functionality for sharing results with others 

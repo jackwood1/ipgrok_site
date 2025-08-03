@@ -7,4 +7,5 @@ export { PingTest } from "./PingTest";
 export { TracerouteTest } from "./TracerouteTest";
 export { ConfigInfo } from "./ConfigInfo";
 export { ExportStats } from "./ExportStats";
+export { EmailResults } from "./EmailResults";
 export { Footer } from "./Footer"; 
