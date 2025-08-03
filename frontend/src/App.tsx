@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Header, NetworkTest, MediaTest, Footer, QuickTest, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { ExportStats } from "./components/ExportStats";
-import { Tabs, Button } from "./components/ui";
+import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
 
 function App() {
@@ -116,61 +116,7 @@ function App() {
     setCurrentTest("");
   };
 
-  const tabs = [
-    {
-      id: "quick",
-      label: "Quick Test",
-      content: (
-        <QuickTest
-          permissionsStatus={permissionsStatus}
-          onPermissionsChange={setPermissionsStatus}
-          onDataUpdate={(data: any) => updateExportData('quickTestData', data)}
-        />
-      ),
-    },
-    {
-      id: "network",
-      label: "Network",
-      content: (
-        <NetworkTest 
-          permissionsStatus={permissionsStatus}
-          onDataUpdate={(data: any) => updateExportData('networkData', data)}
-        />
-      ),
-    },
-    {
-      id: "video",
-      label: "Video",
-      content: (
-        <MediaTest
-          permissionsStatus={permissionsStatus}
-          onPermissionsChange={setPermissionsStatus}
-          onDataUpdate={(data: any) => updateExportData('mediaData', data)}
-        />
-      ),
-    },
-    {
-      id: "config",
-      label: "Config",
-      content: (
-        <ConfigInfo 
-          onDataUpdate={(data: any) => updateExportData('systemData', data)}
-        />
-      ),
-    },
-    {
-      id: "email",
-      label: "Email",
-      content: (
-        <EmailResults
-          networkData={exportData.networkData}
-          mediaData={exportData.mediaData}
-          systemData={exportData.systemData}
-          quickTestData={exportData.quickTestData}
-        />
-      ),
-    },
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -237,7 +183,40 @@ function App() {
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <Tabs tabs={tabs} defaultTab={currentTest} />
+                {/* Individual Test Components */}
+                {currentTest === "quickTest" && (
+                  <QuickTest
+                    permissionsStatus={permissionsStatus}
+                    onPermissionsChange={setPermissionsStatus}
+                    onDataUpdate={(data: any) => updateExportData('quickTestData', data)}
+                  />
+                )}
+                {currentTest === "networkTest" && (
+                  <NetworkTest 
+                    permissionsStatus={permissionsStatus}
+                    onDataUpdate={(data: any) => updateExportData('networkData', data)}
+                  />
+                )}
+                {currentTest === "mediaTest" && (
+                  <MediaTest
+                    permissionsStatus={permissionsStatus}
+                    onPermissionsChange={setPermissionsStatus}
+                    onDataUpdate={(data: any) => updateExportData('mediaData', data)}
+                  />
+                )}
+                {currentTest === "configInfo" && (
+                  <ConfigInfo 
+                    onDataUpdate={(data: any) => updateExportData('systemData', data)}
+                  />
+                )}
+                {currentTest === "email" && (
+                  <EmailResults
+                    networkData={exportData.networkData}
+                    mediaData={exportData.mediaData}
+                    systemData={exportData.systemData}
+                    quickTestData={exportData.quickTestData}
+                  />
+                )}
               </div>
               <div className="lg:col-span-1">
                 {/* Export Stats Section */}
