@@ -481,11 +481,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
   };
 
   const runAdvancedTests = async () => {
+    console.log("runAdvancedTests called");
     setRunningAdvancedTests(true);
     setTestProgress("Running advanced network tests...");
 
     try {
       // DNS Performance Test
+      console.log("Starting DNS performance test...");
       setTestProgress("Testing DNS performance...");
       const dnsPerformance = await testDNSPerformance();
 
@@ -513,6 +515,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
       setTestProgress("Running security tests...");
       const securityTests = await testSecurity();
 
+      console.log("All advanced tests completed, setting results...");
       setAdvancedTests({
         dnsPerformance,
         httpPerformance,
@@ -530,6 +533,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
       console.error("Error running advanced tests:", error);
       setTestProgress("Error running advanced tests");
     } finally {
+      console.log("runAdvancedTests finally block - setting runningAdvancedTests to false");
       setRunningAdvancedTests(false);
     }
   };
@@ -559,11 +563,19 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
     try {
       // Download test
       setTestProgress("Testing download speed...");
+      console.log("Starting download test...");
       const start = performance.now();
-      await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test");
-      const end = performance.now();
-      const timeSec = (end - start) / 1000;
-      const downloadMbps = (5 * 8) / timeSec;
+      let downloadMbps: number;
+      try {
+        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test");
+        const end = performance.now();
+        const timeSec = (end - start) / 1000;
+        downloadMbps = (5 * 8) / timeSec;
+        console.log("Download test completed, speed:", downloadMbps, "Mbps");
+      } catch (downloadError) {
+        console.error("Download test failed:", downloadError);
+        throw downloadError;
+      }
       
       // Upload test
       setTestProgress("Testing upload speed...");
@@ -597,8 +609,14 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
       });
 
       // Automatically run advanced tests after basic network test completes
+      console.log("Network test completed, starting advanced tests...");
       setTestProgress("Network test completed! Running advanced tests...");
-      await runAdvancedTests();
+      try {
+        await runAdvancedTests();
+        console.log("Advanced tests completed successfully");
+      } catch (error) {
+        console.error("Error in advanced tests:", error);
+      }
       
     } catch (err) {
       setResults({ 
