@@ -8,6 +8,7 @@ import { TracerouteTest } from "./TracerouteTest";
 interface NetworkTestProps {
   permissionsStatus: string;
   onDataUpdate?: (data: any) => void;
+  autoStart?: boolean;
 }
 
 interface EnhancedTestResults extends TestResults {
@@ -52,7 +53,7 @@ interface AdvancedNetworkTests {
   };
 }
 
-export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<EnhancedTestResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
       });
     }
   }, [results, pingData, tracerouteData, advancedTests, onDataUpdate]);
+
+  // Auto-start test if autoStart is true
+  useEffect(() => {
+    if (autoStart && !testStarted && !loading) {
+      runTest();
+    }
+  }, [autoStart, testStarted, loading]);
 
   const calculateBandwidthScore = (downloadMbps: number, uploadMbps: number): string => {
     const downloadScore = Math.min(100, (downloadMbps / 100) * 100);
