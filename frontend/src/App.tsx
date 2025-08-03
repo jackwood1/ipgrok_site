@@ -15,7 +15,7 @@ function App() {
   const [showShare, setShowShare] = useState(false);
   const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
-  const [resetPrevious, setResetPrevious] = useState(true);
+  const [resetPrevious, setResetPrevious] = useState(false);
             const [completedTests, setCompletedTests] = useState({
     quickTest: false,
     networkTest: false,
@@ -33,10 +33,15 @@ function App() {
         });
 
   const updateExportData = (type: string, data: any) => {
-    setExportData(prev => ({
-      ...prev,
-      [type]: data
-    }));
+    console.log('updateExportData called:', { type, data });
+    setExportData(prev => {
+      const newData = {
+        ...prev,
+        [type]: data
+      };
+      console.log('Updated exportData:', newData);
+      return newData;
+    });
     
     // Mark test as completed when data is received
     const testMapping: { [key: string]: string } = {
