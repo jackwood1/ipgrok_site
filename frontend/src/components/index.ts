@@ -9,4 +9,8 @@ export { ConfigInfo } from "./ConfigInfo";
 export { ExportStats } from "./ExportStats";
 export { EmailResults } from "./EmailResults";
 export { Help } from "./Help";
+export { LandingPage } from "./LandingPage";
+export { ShareResults } from "./ShareResults";
+export { TestProgress } from "./TestProgress";
+export { ResultsDashboard } from "./ResultsDashboard";
 export { Footer } from "./Footer"; 

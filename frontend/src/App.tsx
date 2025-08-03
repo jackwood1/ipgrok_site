@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, QuickTest, EmailResults, Help } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, QuickTest, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { ExportStats } from "./components/ExportStats";
-import { Tabs } from "./components/ui";
+import { Tabs, Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
 
 function App() {
@@ -11,6 +11,17 @@ function App() {
     () => localStorage.getItem("mediaPermissions") || "unknown"
   );
   const [showHelp, setShowHelp] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
+  const [showResults, setShowResults] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [currentTest, setCurrentTest] = useState<string>("");
+  const [completedTests, setCompletedTests] = useState({
+    quickTest: false,
+    networkTest: false,
+    mediaTest: false,
+    advancedTests: false,
+    configInfo: false,
+  });
 
   // Data management for export functionality
   const [exportData, setExportData] = useState({
@@ -29,6 +40,43 @@ function App() {
 
   const toggleHelp = () => {
     setShowHelp(!showHelp);
+  };
+
+  const startQuickTest = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setCurrentTest("quickTest");
+  };
+
+  const startDetailedTest = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setCurrentTest("networkTest");
+  };
+
+  const showResultsDashboard = () => {
+    setShowResults(true);
+    setShowShare(false);
+  };
+
+  const showShareResults = () => {
+    setShowShare(true);
+    setShowResults(false);
+  };
+
+  const handleTestComplete = (testName: string) => {
+    setCompletedTests(prev => ({
+      ...prev,
+      [testName]: true
+    }));
+  };
+
+  const handleTestClick = (testName: string) => {
+    setCurrentTest(testName);
+    setShowResults(false);
+    setShowShare(false);
   };
 
   const tabs = [
@@ -94,39 +142,89 @@ function App() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {showHelp ? (
           <Help />
+        ) : showLanding ? (
+          <LandingPage 
+            onStartQuickTest={startQuickTest}
+            onStartDetailedTest={startDetailedTest}
+          />
+        ) : showResults ? (
+          <ResultsDashboard
+            networkData={exportData.networkData}
+            mediaData={exportData.mediaData}
+            systemData={exportData.systemData}
+            quickTestData={exportData.quickTestData}
+            onShareResults={showShareResults}
+            onExportResults={() => {/* Export logic */}}
+          />
+        ) : showShare ? (
+          <ShareResults
+            networkData={exportData.networkData}
+            mediaData={exportData.mediaData}
+            systemData={exportData.systemData}
+            quickTestData={exportData.quickTestData}
+          />
         ) : (
-          <>
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Network & Media Tester
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Test your internet connection and media devices for optimal video call performance
-              </p>
+          <div className="space-y-8">
+            {/* Navigation */}
+            <div className="flex flex-wrap gap-4">
+              <Button
+                onClick={() => setShowLanding(true)}
+                variant="secondary"
+                size="sm"
+              >
+                🏠 Home
+              </Button>
+              <Button
+                onClick={showResultsDashboard}
+                variant="secondary"
+                size="sm"
+              >
+                📊 Results
+              </Button>
+              <Button
+                onClick={showShareResults}
+                variant="secondary"
+                size="sm"
+              >
+                📤 Share
+              </Button>
             </div>
 
-            {/* Export Stats Section */}
-            <div className="mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Export Test Results
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Export comprehensive test results from all tabs in JSON or CSV format
-                  </p>
+            {/* Test Progress */}
+            <TestProgress
+              completedTests={completedTests}
+              currentTest={currentTest}
+              onTestClick={handleTestClick}
+            />
+
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Tabs tabs={tabs} defaultTab={currentTest} />
+              </div>
+              <div className="lg:col-span-1">
+                {/* Export Stats Section */}
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                        Export Test Results
+                      </h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Export comprehensive test results
+                      </p>
+                    </div>
+                    <ExportStats
+                      networkData={exportData.networkData}
+                      mediaData={exportData.mediaData}
+                      systemData={exportData.systemData}
+                      quickTestData={exportData.quickTestData}
+                    />
+                  </div>
                 </div>
-                <ExportStats
-                  networkData={exportData.networkData}
-                  mediaData={exportData.mediaData}
-                  systemData={exportData.systemData}
-                  quickTestData={exportData.quickTestData}
-                />
               </div>
             </div>
-
-            <Tabs tabs={tabs} defaultTab="quick" />
-          </>
+          </div>
         )}
       </main>
 
