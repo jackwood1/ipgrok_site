@@ -111,7 +111,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     for (let i = 0; i < testCount; i++) {
       try {
         const start = performance.now();
-        await fetch("https://httpbin.org/get", {
+        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test", {
           method: 'GET',
           signal: AbortSignal.timeout(5000), // 5 second timeout
         });
@@ -418,7 +418,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
 
       // Fallback detection based on performance
       const start = performance.now();
-      await fetch('https://httpbin.org/get');
+      await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test');
       const end = performance.now();
       const responseTime = end - start;
 
@@ -448,7 +448,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   const testSecurity = async (): Promise<{ sslValid: boolean; certificateInfo: any; firewallDetection: string; proxyDetection: string }> => {
     try {
       // Test SSL certificate
-      const sslResponse = await fetch('https://httpbin.org/get');
+      const sslResponse = await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test');
       const sslValid = sslResponse.ok;
 
       // Get certificate info (simplified)
@@ -463,7 +463,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       
       try {
         // Test with a simple endpoint that should always work
-        const testResponse = await fetch('https://httpbin.org/get', {
+        const testResponse = await fetch('https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test', {
           signal: AbortSignal.timeout(5000)
         });
         
@@ -502,7 +502,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         firewallDetection = 'Unable to test firewall restrictions';
       }
 
-      // Test proxy detection
+      // Test proxy detection - using a simple endpoint that returns headers
       const proxyResponse = await fetch('https://httpbin.org/headers');
       const proxyData = await proxyResponse.json();
       const headers = proxyData.headers;
@@ -593,15 +593,20 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     const blob = new Blob([new Uint8Array(testSizeMB * 1024 * 1024)]);
     const start = performance.now();
     try {
-      await fetch("https://httpbin.org/post", {
-        method: "POST",
+      // Use S3 for upload test - more reliable and realistic
+      await fetch("https://upload-test-files-ipgrok.s3.us-east-2.amazonaws.com/upload-test", {
+        method: "PUT",
         body: blob,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
       });
       const end = performance.now();
       const timeSec = (end - start) / 1000;
       const uploadMbps = (testSizeMB * 8) / timeSec;
       return uploadMbps.toFixed(2);
-    } catch {
+    } catch (error) {
+      console.error("Upload test failed:", error);
       return "0";
     }
   };
