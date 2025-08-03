@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { TestResults } from "../types";
+import { Card, Button, Badge } from "./ui";
+import { NetworkMetrics } from "./NetworkMetrics";
 
 interface NetworkTestProps {
   permissionsStatus: string;
@@ -51,45 +53,34 @@ export function NetworkTest({ permissionsStatus }: NetworkTestProps) {
     }
   };
 
-  const statusLabel = () => {
-    if (!results || results.error) return null;
-    const { download, upload, latency } = results;
-    if (+download > 10 && +upload > 5 && latency < 100) {
-      return <span className="text-green-600 dark:text-green-400">✅ Ready for HD video calls</span>;
-    } else {
-      return <span className="text-yellow-600 dark:text-yellow-400">⚠️ Might have performance issues</span>;
-    }
-  };
-
   return (
-    <div>
+    <Card 
+      title="Network Speed Test" 
+      subtitle="Test your internet connection for video calls"
+    >
       {permissionsStatus !== "granted" && (
-        <div className="mb-4 text-yellow-600 dark:text-yellow-400">
-          ⚠️ Camera and mic permissions are not granted.
+        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+          <div className="flex items-center">
+            <Badge variant="warning" className="mr-2">⚠️</Badge>
+            <span className="text-sm text-yellow-800 dark:text-yellow-200">
+              Camera and mic permissions are not granted.
+            </span>
+          </div>
         </div>
       )}
 
-      <button
-        onClick={runTest}
-        disabled={loading}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
-      >
-        {loading ? "Running test..." : testStarted ? "Re-run Test" : "Start Test"}
-      </button>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Button
+          onClick={runTest}
+          loading={loading}
+          size="lg"
+          className="flex-1"
+        >
+          {loading ? "Running test..." : testStarted ? "Re-run Test" : "Start Speed Test"}
+        </Button>
+      </div>
 
-      {results && (
-        <div className="mt-6 bg-gray-100 dark:bg-gray-800 p-4 rounded">
-          {results.error ? <p className="text-red-500">{results.error}</p> : (
-            <ul className="space-y-2">
-              <li>Download: {results.download} Mbps</li>
-              <li>Upload: {results.upload} Mbps</li>
-              <li>Latency: {results.latency} ms</li>
-              <li>Jitter: {results.jitter} ms</li>
-            </ul>
-          )}
-          <div className="mt-4">{statusLabel()}</div>
-        </div>
-      )}
-    </div>
+      {results && <NetworkMetrics results={results} />}
+    </Card>
   );
 } 

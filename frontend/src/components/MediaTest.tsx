@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Card, Button, Select, Checkbox, Badge } from "./ui";
 
 interface MediaTestProps {
   permissionsStatus: string;
@@ -134,73 +135,106 @@ export function MediaTest({ permissionsStatus, onPermissionsChange }: MediaTestP
   };
 
   return (
-    <div className="mt-10">
-      <h2 className="text-2xl font-semibold mb-2">Webcam & Microphone Test</h2>
+    <Card 
+      title="Webcam & Microphone Test" 
+      subtitle="Test your camera and microphone for video calls"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <Select
+            label="Microphone"
+            value={selectedInputId || ""}
+            onChange={(e) => setSelectedInputId(e.target.value)}
+          >
+            {inputDevices.map(device => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Microphone ${device.deviceId}`}
+              </option>
+            ))}
+          </Select>
+        </div>
 
-      <label className="block mb-2">Select Microphone:</label>
-      <select
-        value={selectedInputId || ""}
-        onChange={(e) => setSelectedInputId(e.target.value)}
-        className="mb-4 px-3 py-2 border rounded"
-      >
-        {inputDevices.map(device => (
-          <option key={device.deviceId} value={device.deviceId}>
-            {device.label || `Microphone ${device.deviceId}`}
-          </option>
-        ))}
-      </select>
-
-      <label className="block mb-2">Select Camera:</label>
-      <select
-        value={selectedVideoId || ""}
-        onChange={(e) => setSelectedVideoId(e.target.value)}
-        className="mb-4 px-3 py-2 border rounded"
-      >
-        {videoDevices.map(device => (
-          <option key={device.deviceId} value={device.deviceId}>
-            {device.label || `Camera ${device.deviceId}`}
-          </option>
-        ))}
-      </select>
-
-      <div className="mb-3 flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={showMicVisualizer}
-          onChange={() => setShowMicVisualizer(!showMicVisualizer)}
-        />
-        <label>Show Mic Activity Bar</label>
+        <div>
+          <Select
+            label="Camera"
+            value={selectedVideoId || ""}
+            onChange={(e) => setSelectedVideoId(e.target.value)}
+          >
+            {videoDevices.map(device => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${device.deviceId}`}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
-      <button
-        onClick={startMediaPreview}
-        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-      >
-        Start Camera & Mic Test
-      </button>
+      <div className="mb-6">
+        <Checkbox
+          checked={showMicVisualizer}
+          onChange={() => setShowMicVisualizer(!showMicVisualizer)}
+        >
+          Show microphone activity visualization
+        </Checkbox>
+      </div>
 
-      {mediaError && <p className="text-red-500 mt-2">{mediaError}</p>}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Button
+          onClick={startMediaPreview}
+          variant="secondary"
+          className="flex-1"
+        >
+          Start Camera & Mic Test
+        </Button>
+        
+        <Button
+          onClick={exportMicStats}
+          variant="info"
+          size="md"
+        >
+          Export Stats
+        </Button>
+      </div>
 
-      <video ref={videoRef} autoPlay playsInline muted className="mt-4 w-full max-w-md h-64 bg-black rounded" />
-
-      {showMicVisualizer && (
-        <div className="mt-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm">Mic Activity
-              <span className="ml-1 cursor-help" title="Green = current waveform. Yellow = recent peak.">ⓘ</span>
-            </span>
-            {isSilent && <span className="text-yellow-500 text-sm">⚠️ Very low mic input</span>}
+      {mediaError && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+          <div className="flex items-center">
+            <Badge variant="danger" className="mr-2">❌</Badge>
+            <span className="text-sm text-red-800 dark:text-red-200">{mediaError}</span>
           </div>
-          <canvas ref={canvasRef} className="w-full h-12 bg-black rounded mt-1" />
         </div>
       )}
 
-      <button
-        onClick={exportMicStats}
-        className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-      >
-        Export Mic Stats (JSON)
-      </button>
-    </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Camera Preview</h4>
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            className="w-full h-48 bg-black rounded-lg border border-gray-200 dark:border-gray-700" 
+          />
+        </div>
+
+        {showMicVisualizer && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Microphone Activity
+                <span className="ml-1 cursor-help text-gray-400" title="Green = current waveform. Yellow = recent peak.">ⓘ</span>
+              </h4>
+              {isSilent && (
+                <Badge variant="warning" size="sm">⚠️ Very low input</Badge>
+              )}
+            </div>
+            <canvas 
+              ref={canvasRef} 
+              className="w-full h-12 bg-black rounded-lg border border-gray-200 dark:border-gray-700" 
+            />
+          </div>
+        )}
+      </div>
+    </Card>
   );
 } 

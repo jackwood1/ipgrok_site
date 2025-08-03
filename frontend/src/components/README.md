@@ -6,10 +6,19 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 
 ### Core Components
 
-- **Header** (`Header.tsx`) - Application header with logo, title, and dark mode toggle
-- **NetworkTest** (`NetworkTest.tsx`) - Network speed testing functionality (download/upload/latency)
-- **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection
+- **Header** (`Header.tsx`) - Application header with logo and dark mode toggle
+- **NetworkTest** (`NetworkTest.tsx`) - Network speed testing functionality with improved UI
+- **NetworkMetrics** (`NetworkMetrics.tsx`) - Displays network test results in a clean, organized format
+- **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
+
+### UI Components (`ui/`)
+
+- **Card** (`ui/Card.tsx`) - Reusable card container with title and subtitle support
+- **Button** (`ui/Button.tsx`) - Button component with multiple variants and loading states
+- **Badge** (`ui/Badge.tsx`) - Status indicator badges with different colors
+- **Select** (`ui/Select.tsx`) - Styled select dropdown with label and error support
+- **Checkbox** (`ui/Checkbox.tsx`) - Styled checkbox with label
 
 ### Types
 
@@ -19,14 +28,35 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 
 - **useDarkMode** (`../hooks/useDarkMode.ts`) - Custom hook for managing dark mode state and localStorage persistence
 
+## UI Improvements
+
+### Design System
+- **Consistent Styling**: All components use a unified design system with Tailwind CSS
+- **Dark Mode Support**: Full dark mode support across all components
+- **Responsive Design**: Mobile-first responsive design with proper breakpoints
+- **Accessibility**: Focus states, proper contrast, and semantic HTML
+
+### Layout Improvements
+- **Card-based Layout**: Content is organized in clean, bordered cards
+- **Better Spacing**: Consistent spacing and padding throughout the application
+- **Grid Layouts**: Responsive grid layouts for better content organization
+- **Visual Hierarchy**: Clear typography hierarchy with proper heading sizes
+
+### Component Features
+- **Loading States**: Buttons show loading spinners during async operations
+- **Error Handling**: Consistent error display with colored badges and messages
+- **Status Indicators**: Color-coded badges for different states (success, warning, error)
+- **Interactive Elements**: Hover states, focus rings, and smooth transitions
+
 ## Architecture
 
 The application has been refactored from a single large App.tsx file into modular components:
 
 1. **Separation of Concerns**: Each component handles a specific feature
-2. **Reusability**: Components can be easily reused or modified independently
+2. **Reusability**: UI components can be easily reused across the application
 3. **Maintainability**: Smaller, focused components are easier to maintain and test
 4. **Type Safety**: TypeScript interfaces ensure proper data flow between components
+5. **Design Consistency**: Unified design system ensures consistent user experience
 
 ## Component Communication
 
@@ -39,8 +69,16 @@ The application has been refactored from a single large App.tsx file into modula
 ```
 src/
 ├── components/
+│   ├── ui/
+│   │   ├── Card.tsx
+│   │   ├── Button.tsx
+│   │   ├── Badge.tsx
+│   │   ├── Select.tsx
+│   │   ├── Checkbox.tsx
+│   │   └── index.ts
 │   ├── Header.tsx
 │   ├── NetworkTest.tsx
+│   ├── NetworkMetrics.tsx
 │   ├── MediaTest.tsx
 │   ├── Footer.tsx
 │   ├── index.ts
@@ -59,5 +97,13 @@ Import components from the index file:
 
 ```typescript
 import { Header, NetworkTest, MediaTest, Footer } from "./components";
+import { Card, Button, Badge } from "./components/ui";
 import { useDarkMode } from "./hooks";
-``` 
+```
+
+## Design Principles
+
+- **Clean & Modern**: Minimalist design with clear visual hierarchy
+- **User-Friendly**: Intuitive interface with helpful tooltips and status indicators
+- **Performance-Focused**: Optimized for speed and responsiveness
+- **Accessible**: WCAG compliant with proper contrast and keyboard navigation 
