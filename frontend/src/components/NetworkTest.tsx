@@ -595,6 +595,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
         qualityScore: quality.score,
         recommendations: quality.recommendations,
       });
+
+      // Automatically run advanced tests after basic network test completes
+      setTestProgress("Network test completed! Running advanced tests...");
+      await runAdvancedTests();
+      
     } catch (err) {
       setResults({ 
         download: "0", 
@@ -751,20 +756,17 @@ export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProp
       {/* Advanced Network Tests */}
       <Card 
         title="Advanced Network Tests" 
-        subtitle="DNS, HTTP/HTTPS, CDN, VPN detection, and security testing"
+        subtitle="DNS, HTTP/HTTPS, CDN, VPN detection, and security testing (runs automatically after network test)"
       >
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={runAdvancedTests}
-              loading={runningAdvancedTests}
-              disabled={runningAdvancedTests}
-              variant="secondary"
-              className="flex-1"
-            >
-              {runningAdvancedTests ? testProgress || "Running advanced tests..." : "Run Advanced Tests"}
-            </Button>
-          </div>
+          {runningAdvancedTests && (
+            <div className="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="text-blue-600 dark:text-blue-400 text-center">
+                <div className="text-lg mb-2">🔄</div>
+                <div className="font-medium">{testProgress || "Running advanced tests..."}</div>
+              </div>
+            </div>
+          )}
 
           {advancedTests && (
             <div className="space-y-6">
