@@ -14,4 +14,5 @@ export { ShareResults } from "./ShareResults";
 export { TestProgress } from "./TestProgress";
 export { ResultsDashboard } from "./ResultsDashboard";
 export { Footer } from "./Footer";
-export { ManualTest } from "./ManualTest"; 
+export { ManualTest } from "./ManualTest";
+export { DetailedTestConfirm } from "./DetailedTestConfirm"; 

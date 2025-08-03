@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -13,7 +13,9 @@ function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
+  const [resetPrevious, setResetPrevious] = useState(true);
           const [completedTests, setCompletedTests] = useState({
           quickTest: false,
           networkTest: false,
@@ -73,7 +75,7 @@ function App() {
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
-    setCurrentTest("networkTest");
+    setShowDetailedConfirm(true);
   };
 
   const startManualTest = () => {
@@ -81,6 +83,27 @@ function App() {
     setShowResults(false);
     setShowShare(false);
     setCurrentTest("manualTest");
+  };
+
+  const confirmDetailedTest = () => {
+    // Reset previous data if checkbox is checked
+    if (resetPrevious) {
+      setExportData({
+        networkData: null,
+        mediaData: null,
+        systemData: null,
+      });
+      setCompletedTests({
+        quickTest: false,
+        networkTest: false,
+        mediaTest: false,
+        advancedTests: false,
+        configInfo: false,
+      });
+    }
+    
+    setShowDetailedConfirm(false);
+    setCurrentTest("networkTest");
   };
 
   const showResultsDashboard = () => {
@@ -153,6 +176,13 @@ function App() {
             onStartQuickTest={startQuickTest}
             onStartDetailedTest={startDetailedTest}
             onStartManualTest={startManualTest}
+          />
+        ) : showDetailedConfirm ? (
+          <DetailedTestConfirm
+            resetPrevious={resetPrevious}
+            onResetPreviousChange={setResetPrevious}
+            onConfirm={confirmDetailedTest}
+            onCancel={goHome}
           />
         ) : showResults ? (
           <ResultsDashboard
