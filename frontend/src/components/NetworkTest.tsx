@@ -39,6 +39,17 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   // Component mount effect
   useEffect(() => {
     console.log('NetworkTest: Component mounted, autoStart:', autoStart);
+    
+    // Force start test in quick test mode after a short delay
+    if (quickTestMode && autoStart) {
+      console.log('NetworkTest: Quick test mode detected, forcing test start');
+      setTimeout(() => {
+        if (!testStarted && !loading) {
+          console.log('NetworkTest: Force starting test in quick test mode');
+          runTest();
+        }
+      }, 500);
+    }
   }, []);
 
   // Update export data when results change
@@ -72,16 +83,22 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     console.log('Auto-start effect triggered:', { autoStart, testStarted, loading });
     if (autoStart && !testStarted && !loading) {
       console.log('Auto-starting network test...');
-      // Use a longer timeout to ensure component is fully mounted
+      // Start immediately and also with a timeout as backup
+      if (!testStarted && !loading) {
+        console.log('Calling runTest immediately...');
+        runTest();
+      }
+      
+      // Backup timeout in case immediate start doesn't work
       setTimeout(() => {
         console.log('Executing runTest after timeout...');
         if (!testStarted && !loading) {
-          console.log('Calling runTest...');
+          console.log('Calling runTest from timeout...');
           runTest();
         } else {
           console.log('Test already started or loading, skipping runTest');
         }
-      }, 1000);
+      }, 2000);
     }
   }, [autoStart]);
 
