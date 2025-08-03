@@ -98,10 +98,14 @@ function App() {
   };
 
   const startManualTest = () => {
+    console.log('Starting Manual Test, currentTest before:', currentTest);
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
+    setShowDetailedConfirm(false);
     setCurrentTest("manualTest");
+    setRunningTests([]);
+    console.log('Manual Test started, currentTest set to: manualTest');
   };
 
   const confirmDetailedTest = () => {
@@ -180,11 +184,15 @@ function App() {
 
 
   const goHome = () => {
+    console.log('Going home, currentTest before:', currentTest);
     setShowLanding(true);
     setShowResults(false);
     setShowShare(false);
     setShowHelp(false);
+    setShowDetailedConfirm(false);
     setCurrentTest("");
+    setRunningTests([]);
+    console.log('Home state set, currentTest reset to empty string');
   };
 
 
