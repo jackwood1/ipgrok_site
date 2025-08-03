@@ -64,12 +64,10 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     console.log('Auto-start effect:', { autoStart, testStarted, loading });
     if (autoStart && !testStarted && !loading) {
       console.log('Auto-starting network test...');
-      // Use setTimeout to ensure runTest is available
       setTimeout(() => {
-        if (!testStarted && !loading) {
-          runTest();
-        }
-      }, 100);
+        console.log('Executing runTest after timeout...');
+        runTest();
+      }, 500);
     }
   }, [autoStart, testStarted, loading]);
 
@@ -340,7 +338,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/100MB.test");
         const end = performance.now();
         const timeSec = (end - start) / 1000;
-        downloadMbps = (5 * 8) / timeSec;
+        downloadMbps = (100 * 8) / timeSec; // Fixed: 100MB file, not 5MB
         console.log("Download test completed, speed:", downloadMbps, "Mbps");
       } catch (downloadError) {
         console.error("Download test failed:", downloadError);
