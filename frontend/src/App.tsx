@@ -57,6 +57,14 @@ function App() {
       if (type === 'networkData' && data.advancedTests) {
         handleTestComplete('advancedTests');
       }
+      
+      // Auto-progress from System Info to Network Test in detailed analysis
+      if (type === 'systemData' && currentTest === 'configInfo') {
+        // Small delay to show completion, then move to network test
+        setTimeout(() => {
+          setCurrentTest('networkTest');
+        }, 1000);
+      }
     }
   };
 
@@ -103,7 +111,7 @@ function App() {
     }
     
     setShowDetailedConfirm(false);
-    setCurrentTest("networkTest");
+    setCurrentTest("configInfo"); // Start with System Info first
   };
 
   const showResultsDashboard = () => {

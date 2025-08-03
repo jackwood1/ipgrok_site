@@ -15,12 +15,12 @@ interface TestProgressProps {
 export function TestProgress({ completedTests, currentTest, onTestClick }: TestProgressProps) {
   const tests = [
     {
-      id: 'quickTest',
-      name: 'Quick Test',
-      description: 'Network speed and system information',
-      icon: '🚀',
-      duration: '1-2 minutes',
-      required: false
+      id: 'configInfo',
+      name: 'System Info',
+      description: 'Device and browser configuration details',
+      icon: '⚙️',
+      duration: 'Instant',
+      required: true
     },
     {
       id: 'networkTest',
@@ -28,31 +28,7 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
       description: 'Speed, ping, traceroute, and advanced diagnostics',
       icon: '🌐',
       duration: '1-2 minutes',
-      required: false
-    },
-    {
-      id: 'mediaTest',
-      name: 'Media Tests',
-      description: 'Camera, microphone, and video quality analysis',
-      icon: '📹',
-      duration: '1-2 minutes',
-      required: false
-    },
-    {
-      id: 'advancedTests',
-      name: 'Advanced Tests',
-      description: 'DNS, CDN, VPN detection, and security analysis',
-      icon: '🔬',
-      duration: '30-60 seconds',
-      required: false
-    },
-    {
-      id: 'configInfo',
-      name: 'System Info',
-      description: 'Device and browser configuration details',
-      icon: '⚙️',
-      duration: 'Instant',
-      required: false
+      required: true
     }
   ];
 
