@@ -36,6 +36,24 @@ function App() {
       ...prev,
       [type]: data
     }));
+    
+    // Mark test as completed when data is received
+    const testMapping: { [key: string]: string } = {
+      'quickTestData': 'quickTest',
+      'networkData': 'networkTest',
+      'mediaData': 'mediaTest',
+      'systemData': 'configInfo'
+    };
+    
+    const testName = testMapping[type];
+    if (testName && data) {
+      handleTestComplete(testName);
+      
+      // If network data includes advanced tests, mark advanced tests as complete
+      if (type === 'networkData' && data.advancedTests) {
+        handleTestComplete('advancedTests');
+      }
+    }
   };
 
   const toggleHelp = () => {
@@ -77,6 +95,17 @@ function App() {
     setCurrentTest(testName);
     setShowResults(false);
     setShowShare(false);
+  };
+
+  const handleExportResults = () => {
+    // Trigger the export functionality
+    const exportStatsElement = document.querySelector('[data-export-stats]');
+    if (exportStatsElement) {
+      const exportButton = exportStatsElement.querySelector('button');
+      if (exportButton) {
+        exportButton.click();
+      }
+    }
   };
 
   const tabs = [
@@ -154,7 +183,7 @@ function App() {
             systemData={exportData.systemData}
             quickTestData={exportData.quickTestData}
             onShareResults={showShareResults}
-            onExportResults={() => {/* Export logic */}}
+            onExportResults={handleExportResults}
           />
         ) : showShare ? (
           <ShareResults
