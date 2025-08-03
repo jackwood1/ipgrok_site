@@ -65,7 +65,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
 
   // Update export data when results change
   useEffect(() => {
-    if (onDataUpdate) {
+    if (onDataUpdate && (results || pingData || tracerouteData || advancedTests)) {
+      console.log('NetworkTest: Calling onDataUpdate with data:', {
+        speedTest: results,
+        pingTest: pingData,
+        tracerouteTest: tracerouteData,
+        advancedTests: advancedTests,
+      });
       onDataUpdate({
         speedTest: results,
         pingTest: pingData,
@@ -255,9 +261,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
 
   const testHTTPPerformance = async (): Promise<{ responseTime: number; status: 'excellent' | 'good' | 'fair' | 'poor' }> => {
     const urls = [
-      'http://httpbin.org/get',
-      'http://httpbin.org/headers',
-      'http://httpbin.org/ip'
+      'https://httpbin.org/get',
+      'https://httpbin.org/headers',
+      'https://httpbin.org/ip'
     ];
     const times: number[] = [];
 
@@ -460,13 +466,25 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       ];
 
       let firewallDetection = 'No firewall restrictions detected';
+      let blockedCount = 0;
+      
       for (const test of firewallTests) {
         try {
-          await fetch(test);
+          const response = await fetch(test);
+          // These endpoints are expected to return error status codes
+          // If we get a response (even with error status), it means no firewall blocking
+          if (response.status >= 400) {
+            // Expected behavior - endpoint returned error status
+            continue;
+          }
         } catch (error) {
-          firewallDetection = 'Possible firewall restrictions detected';
-          break;
+          // If we can't reach the endpoint at all, it might be firewall blocked
+          blockedCount++;
         }
+      }
+      
+      if (blockedCount > 0) {
+        firewallDetection = `Possible firewall restrictions detected (${blockedCount} endpoints blocked)`;
       }
 
       // Test proxy detection
@@ -531,7 +549,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       const securityTests = await testSecurity();
 
       console.log("All advanced tests completed, setting results...");
-      setAdvancedTests({
+      const advancedTestResults = {
         dnsPerformance,
         httpPerformance,
         httpsPerformance,
@@ -539,7 +557,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         vpnDetection,
         networkType,
         securityTests
-      });
+      };
+      console.log('NetworkTest: Setting advanced tests:', advancedTestResults);
+      setAdvancedTests(advancedTestResults);
 
       setTestProgress("Advanced tests completed!");
       setTimeout(() => setTestProgress(""), 2000);
@@ -612,7 +632,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         packetLossRate
       );
 
-      setResults({
+      const testResults = {
         download: downloadMbps.toFixed(2),
         upload: uploadMbps,
         latency,
@@ -622,7 +642,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         connectionQuality: quality.grade,
         qualityScore: quality.score,
         recommendations: quality.recommendations,
-      });
+      };
+      console.log('NetworkTest: Setting results:', testResults);
+      setResults(testResults);
 
       // Automatically run advanced tests after basic network test completes
       console.log("Network test completed, starting advanced tests...");
