@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TestResults } from "../types";
 import { Card, Button, Badge } from "./ui";
 import { NetworkMetrics } from "./NetworkMetrics";
@@ -63,22 +63,34 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   const [testProgress, setTestProgress] = useState<string>("");
   const [advancedTests, setAdvancedTests] = useState<AdvancedNetworkTests | null>(null);
   const [runningAdvancedTests, setRunningAdvancedTests] = useState(false);
+  const lastDataSentRef = useRef<string>('');
 
   // Update export data when results change
   useEffect(() => {
     if (onDataUpdate && (results || pingData || tracerouteData || advancedTests)) {
-      console.log('NetworkTest: Calling onDataUpdate with data:', {
+      const currentData = JSON.stringify({
         speedTest: results,
         pingTest: pingData,
         tracerouteTest: tracerouteData,
         advancedTests: advancedTests,
       });
-      onDataUpdate({
-        speedTest: results,
-        pingTest: pingData,
-        tracerouteTest: tracerouteData,
-        advancedTests: advancedTests,
-      });
+      
+      // Only call onDataUpdate if the data has actually changed
+      if (currentData !== lastDataSentRef.current) {
+        console.log('NetworkTest: Calling onDataUpdate with data:', {
+          speedTest: results,
+          pingTest: pingData,
+          tracerouteTest: tracerouteData,
+          advancedTests: advancedTests,
+        });
+        onDataUpdate({
+          speedTest: results,
+          pingTest: pingData,
+          tracerouteTest: tracerouteData,
+          advancedTests: advancedTests,
+        });
+        lastDataSentRef.current = currentData;
+      }
     }
   }, [results, pingData, tracerouteData, advancedTests, onDataUpdate]);
 
