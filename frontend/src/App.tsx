@@ -58,13 +58,13 @@ function App() {
         handleTestComplete('advancedTests');
       }
       
-      // Auto-progress from System Info to Network Test in detailed analysis
-      if (type === 'systemData' && currentTest === 'configInfo') {
-        // Small delay to show completion, then move to network test
-        setTimeout(() => {
-          setCurrentTest('networkTest');
-        }, 1000);
+      // Handle system info from NetworkTest component
+      if (data && data.testType === 'systemInfo') {
+        updateExportData('systemData', data.data);
+        handleTestComplete('configInfo');
       }
+      
+      // Note: Auto-progression removed since NetworkTest now handles both system info and network test
     }
   };
 
@@ -111,7 +111,7 @@ function App() {
     }
     
     setShowDetailedConfirm(false);
-    setCurrentTest("configInfo"); // Start with System Info first
+    setCurrentTest("networkTest"); // NetworkTest will handle both system info and network test
   };
 
   const showResultsDashboard = () => {
@@ -269,6 +269,7 @@ function App() {
                   <NetworkTest 
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('networkData', data)}
+                    detailedAnalysisMode={true}
                   />
                 )}
                 {currentTest === "mediaTest" && (

@@ -10,6 +10,7 @@ interface NetworkTestProps {
   onDataUpdate?: (data: any) => void;
   autoStart?: boolean;
   quickTestMode?: boolean;
+  detailedAnalysisMode?: boolean;
 }
 
 interface EnhancedTestResults extends TestResults {
@@ -54,7 +55,7 @@ interface AdvancedNetworkTests {
   };
 }
 
-export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false, quickTestMode = false }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<EnhancedTestResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -657,12 +658,65 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     }
   };
 
+  const gatherSystemInfo = async () => {
+    setTestProgress("Gathering system information...");
+    
+    // Get IP address
+    let ipAddress = 'Unknown';
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      ipAddress = data.ip;
+    } catch (error) {
+      console.error('Failed to get IP address:', error);
+    }
+
+    // Get geolocation
+    let location = 'Unknown';
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      location = `${data.city}, ${data.country_name}`;
+    } catch (error) {
+      console.error('Failed to get location:', error);
+    }
+
+    const systemInfo = {
+      platform: navigator.platform,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      languages: navigator.languages,
+      cookieEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine,
+      screenResolution: `${screen.width}x${screen.height}`,
+      colorDepth: screen.colorDepth,
+      pixelDepth: screen.pixelDepth,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ipAddress,
+      location,
+      timestamp: new Date().toISOString()
+    };
+
+    // Call onDataUpdate with system info
+    if (onDataUpdate) {
+      onDataUpdate({
+        testType: 'systemInfo',
+        data: systemInfo
+      });
+    }
+
+    return systemInfo;
+  };
+
   const runTest = async () => {
     console.log('runTest called');
     setTestStarted(true);
     setLoading(true);
     
     try {
+      // First gather system information
+      await gatherSystemInfo();
+      
       // Download test
       setTestProgress("Testing download speed...");
       console.log("Starting download test...");
@@ -790,7 +844,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
             size="lg"
             className="flex-1"
           >
-            {loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Speed Test"}
+            {loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Tests"}
           </Button>
         </div>
 
@@ -1045,13 +1099,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         </div>
       </Card>
 
-      {/* Ping Test - Hide in quick test mode */}
-      {!quickTestMode && (
+      {/* Ping Test - Hide in quick test mode and detailed analysis mode */}
+      {!quickTestMode && !detailedAnalysisMode && (
         <PingTest onDataUpdate={setPingData} />
       )}
 
-      {/* Traceroute Test - Hide in quick test mode */}
-      {!quickTestMode && (
+      {/* Traceroute Test - Hide in quick test mode and detailed analysis mode */}
+      {!quickTestMode && !detailedAnalysisMode && (
         <TracerouteTest onDataUpdate={setTracerouteData} />
       )}
     </div>
