@@ -64,7 +64,10 @@ function App() {
         handleTestComplete('configInfo');
       }
       
-      // Note: Auto-progression removed since NetworkTest now handles both system info and network test
+      // Auto-progression for Detailed Analysis: configInfo -> networkTest
+      if (type === 'systemData' && currentTest === 'configInfo') {
+        setCurrentTest('networkTest');
+      }
     }
   };
 
@@ -111,7 +114,7 @@ function App() {
     }
     
     setShowDetailedConfirm(false);
-    setCurrentTest("networkTest"); // NetworkTest will handle both system info and network test
+    setCurrentTest("configInfo"); // Start with System Info first
   };
 
   const showResultsDashboard = () => {
