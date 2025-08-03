@@ -108,6 +108,14 @@ function App() {
     }
   };
 
+  const goHome = () => {
+    setShowLanding(true);
+    setShowResults(false);
+    setShowShare(false);
+    setShowHelp(false);
+    setCurrentTest("");
+  };
+
   const tabs = [
     {
       id: "quick",
@@ -166,7 +174,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} />
+      <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {showHelp ? (
@@ -197,7 +205,7 @@ function App() {
             {/* Navigation */}
             <div className="flex flex-wrap gap-4">
               <Button
-                onClick={() => setShowLanding(true)}
+                onClick={goHome}
                 variant="secondary"
                 size="sm"
               >
