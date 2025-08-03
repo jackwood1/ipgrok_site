@@ -8,6 +8,7 @@ import { TracerouteTest } from "./TracerouteTest";
 interface NetworkTestProps {
   permissionsStatus: string;
   onDataUpdate?: (data: any) => void;
+  onTestStart?: () => void;
   autoStart?: boolean;
   quickTestMode?: boolean;
   detailedAnalysisMode?: boolean;
@@ -23,7 +24,7 @@ interface EnhancedTestResults extends TestResults {
 
 
 
-export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<EnhancedTestResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -356,6 +357,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
     console.log('runTest called - starting network test');
     setTestStarted(true);
     setLoading(true);
+    
+    // Notify parent that test has started
+    if (onTestStart) {
+      onTestStart();
+    }
     
     try {
       // First gather system information

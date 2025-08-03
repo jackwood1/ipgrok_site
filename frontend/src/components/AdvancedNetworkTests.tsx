@@ -3,6 +3,7 @@ import { Card, Button, Badge } from './ui';
 
 interface AdvancedNetworkTestsProps {
   onDataUpdate?: (data: any) => void;
+  onTestStart?: () => void;
   autoStart?: boolean;
 }
 
@@ -39,7 +40,7 @@ interface AdvancedNetworkTests {
   };
 }
 
-export function AdvancedNetworkTests({ onDataUpdate, autoStart = false }: AdvancedNetworkTestsProps) {
+export function AdvancedNetworkTests({ onDataUpdate, onTestStart, autoStart = false }: AdvancedNetworkTestsProps) {
   const [results, setResults] = useState<AdvancedNetworkTests | null>(null);
   const [loading, setLoading] = useState(false);
   const [testProgress, setTestProgress] = useState('');
@@ -199,6 +200,11 @@ export function AdvancedNetworkTests({ onDataUpdate, autoStart = false }: Advanc
   const runAdvancedTests = async () => {
     setLoading(true);
     setTestStarted(true);
+    
+    // Notify parent that test has started
+    if (onTestStart) {
+      onTestStart();
+    }
     
     const advancedTests: AdvancedNetworkTests = {};
     

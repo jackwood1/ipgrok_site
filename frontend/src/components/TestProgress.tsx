@@ -9,10 +9,11 @@ interface TestProgressProps {
     configInfo: boolean;
   };
   currentTest?: string;
+  runningTests?: string[];
   onTestClick: (testName: string) => void;
 }
 
-export function TestProgress({ completedTests, currentTest, onTestClick }: TestProgressProps) {
+export function TestProgress({ completedTests, currentTest, runningTests = [], onTestClick }: TestProgressProps) {
   const tests = [
     {
       id: 'networkTest',
@@ -74,6 +75,7 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
           {tests.map((test) => {
             const isCompleted = completedTests[test.id as keyof typeof completedTests];
             const isCurrent = currentTest === test.id;
+            const isRunning = runningTests.includes(test.id);
             
             return (
               <div
@@ -105,7 +107,7 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
                             ✅ Complete
                           </Badge>
                         )}
-                        {isCurrent && (
+                        {isRunning && (
                           <Badge variant="info" className="text-xs">
                             🔄 Running
                           </Badge>
@@ -123,7 +125,7 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
                     {isCompleted && (
                       <div className="text-green-600 dark:text-green-400 text-2xl">✓</div>
                     )}
-                    {isCurrent && (
+                    {isRunning && (
                       <div className="text-blue-600 dark:text-blue-400 text-2xl animate-pulse">⟳</div>
                     )}
                   </div>

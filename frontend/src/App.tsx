@@ -16,13 +16,14 @@ function App() {
   const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [resetPrevious, setResetPrevious] = useState(true);
-          const [completedTests, setCompletedTests] = useState({
-          quickTest: false,
-          networkTest: false,
-          mediaTest: false,
-          advancedTests: false,
-          configInfo: false,
-        });
+            const [completedTests, setCompletedTests] = useState({
+    quickTest: false,
+    networkTest: false,
+    mediaTest: false,
+    advancedTests: false,
+    configInfo: false,
+  });
+  const [runningTests, setRunningTests] = useState<string[]>([]);
 
   // Data management for export functionality
           const [exportData, setExportData] = useState({
@@ -139,6 +140,12 @@ function App() {
       ...prev,
       [testName]: true
     }));
+    // Remove from running tests when completed
+    setRunningTests(prev => prev.filter(test => test !== testName));
+  };
+
+  const handleTestStart = (testName: string) => {
+    setRunningTests(prev => [...prev, testName]);
   };
 
   const handleTestClick = (testName: string) => {
@@ -248,6 +255,7 @@ function App() {
               <TestProgress
                 completedTests={completedTests}
                 currentTest={currentTest}
+                runningTests={runningTests}
                 onTestClick={handleTestClick}
               />
             )}
@@ -279,12 +287,14 @@ function App() {
                   <NetworkTest 
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('networkData', data)}
+                    onTestStart={() => handleTestStart('networkTest')}
                     detailedAnalysisMode={true}
                   />
                 )}
                 {currentTest === "advancedTests" && (
                   <AdvancedNetworkTests
                     onDataUpdate={(data: any) => updateExportData('advancedTestsData', data)}
+                    onTestStart={() => handleTestStart('advancedTests')}
                     autoStart={true}
                   />
                 )}
@@ -293,6 +303,7 @@ function App() {
                     permissionsStatus={permissionsStatus}
                     onPermissionsChange={setPermissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('mediaData', data)}
+                    onTestStart={() => handleTestStart('mediaTest')}
                     autoStart={true}
                   />
                 )}

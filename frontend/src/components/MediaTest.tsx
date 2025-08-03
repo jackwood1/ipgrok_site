@@ -5,6 +5,7 @@ interface MediaTestProps {
   permissionsStatus: string;
   onPermissionsChange: (status: string) => void;
   onDataUpdate?: (data: any) => void;
+  onTestStart?: () => void;
   autoStart?: boolean;
 }
 
@@ -34,7 +35,7 @@ interface RecordingTest {
   audioQuality: AudioQualityMetrics;
 }
 
-export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate, autoStart = false }: MediaTestProps) {
+export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate, onTestStart, autoStart = false }: MediaTestProps) {
   const [devices, setDevices] = useState<{ microphone: string; camera: string }>({
     microphone: "",
     camera: "",
@@ -86,6 +87,11 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
       const startMediaTests = async () => {
         setIsTesting(true);
         setTestProgress("Starting media tests...");
+        
+        // Notify parent that test has started
+        if (onTestStart) {
+          onTestStart();
+        }
         
         try {
           // Request permissions first
