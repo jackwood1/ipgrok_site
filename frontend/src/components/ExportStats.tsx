@@ -16,6 +16,39 @@ interface ExportData {
       qualityScore?: number;
       recommendations?: string[];
     };
+    advancedTests?: {
+      dnsPerformance?: {
+        responseTime: number;
+        status: 'excellent' | 'good' | 'fair' | 'poor';
+      };
+      httpPerformance?: {
+        responseTime: number;
+        status: 'excellent' | 'good' | 'fair' | 'poor';
+      };
+      httpsPerformance?: {
+        responseTime: number;
+        status: 'excellent' | 'good' | 'fair' | 'poor';
+      };
+      cdnPerformance?: {
+        responseTime: number;
+        status: 'excellent' | 'good' | 'fair' | 'poor';
+      };
+      vpnDetection?: {
+        isVPN: boolean;
+        confidence: number;
+        reason: string;
+      };
+      networkType?: {
+        type: string;
+        details: string;
+      };
+      securityTests?: {
+        sslValid: boolean;
+        certificateInfo: any;
+        firewallDetection: string;
+        proxyDetection: string;
+      };
+    };
     pingTest?: {
       host: string;
       results: Array<{
@@ -75,6 +108,7 @@ interface ExportStatsProps {
     speedTest?: any;
     pingTest?: any;
     tracerouteTest?: any;
+    advancedTests?: any;
   };
   mediaData?: {
     devices?: any;
@@ -152,6 +186,40 @@ export function ExportStats({
           networkData.speedTest.recommendations.forEach((rec: string, index: number) => {
             csvContent += `Speed Test,Recommendation ${index + 1},"${rec}",${new Date().toISOString()}\n`;
           });
+        }
+      }
+
+      // Add advanced network tests data
+      if (networkData?.advancedTests) {
+        if (networkData.advancedTests.dnsPerformance) {
+          csvContent += `Advanced Test,DNS Performance,${networkData.advancedTests.dnsPerformance.responseTime}ms,${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,DNS Status,${networkData.advancedTests.dnsPerformance.status},${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.httpPerformance) {
+          csvContent += `Advanced Test,HTTP Performance,${networkData.advancedTests.httpPerformance.responseTime}ms,${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,HTTP Status,${networkData.advancedTests.httpPerformance.status},${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.httpsPerformance) {
+          csvContent += `Advanced Test,HTTPS Performance,${networkData.advancedTests.httpsPerformance.responseTime}ms,${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,HTTPS Status,${networkData.advancedTests.httpsPerformance.status},${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.cdnPerformance) {
+          csvContent += `Advanced Test,CDN Performance,${networkData.advancedTests.cdnPerformance.responseTime}ms,${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,CDN Status,${networkData.advancedTests.cdnPerformance.status},${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.vpnDetection) {
+          csvContent += `Advanced Test,VPN Detected,${networkData.advancedTests.vpnDetection.isVPN},${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,VPN Confidence,${networkData.advancedTests.vpnDetection.confidence}%,${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,VPN Reason,"${networkData.advancedTests.vpnDetection.reason}",${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.networkType) {
+          csvContent += `Advanced Test,Network Type,${networkData.advancedTests.networkType.type},${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,Network Details,"${networkData.advancedTests.networkType.details}",${new Date().toISOString()}\n`;
+        }
+        if (networkData.advancedTests.securityTests) {
+          csvContent += `Advanced Test,SSL Valid,${networkData.advancedTests.securityTests.sslValid},${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,Firewall Detection,"${networkData.advancedTests.securityTests.firewallDetection}",${new Date().toISOString()}\n`;
+          csvContent += `Advanced Test,Proxy Detection,"${networkData.advancedTests.securityTests.proxyDetection}",${new Date().toISOString()}\n`;
         }
       }
       
