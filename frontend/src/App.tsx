@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
@@ -33,15 +33,10 @@ function App() {
         });
 
   const updateExportData = (type: string, data: any) => {
-    console.log('updateExportData called:', { type, data });
-    setExportData(prev => {
-      const newData = {
-        ...prev,
-        [type]: data
-      };
-      console.log('Updated exportData:', newData);
-      return newData;
-    });
+    setExportData(prev => ({
+      ...prev,
+      [type]: data
+    }));
     
     // Mark test as completed when data is received
     const testMapping: { [key: string]: string } = {
@@ -96,12 +91,10 @@ function App() {
   };
 
   const startDetailedTest = () => {
-    console.log('Starting Detailed Test, current states before:', { showLanding, showResults, showShare, showDetailedConfirm, currentTest });
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
     setShowDetailedConfirm(true);
-    console.log('Detailed Test started, showDetailedConfirm set to true');
   };
 
   const startManualTest = () => {
@@ -202,6 +195,19 @@ function App() {
     console.log('Home state set, currentTest reset to empty string');
   };
 
+  const memoizedQuickTestUpdate = useCallback((data: any) => {
+    // Handle quick test data - it contains both network and system data
+    if (data.networkData) {
+      updateExportData('networkData', data.networkData);
+    }
+    if (data.systemData) {
+      updateExportData('systemData', data.systemData);
+    }
+    // Mark quick test as complete when both tests are done
+    if (data.networkData && data.systemData) {
+      handleTestComplete('quickTest');
+    }
+  }, []);
 
 
   return (
@@ -209,10 +215,7 @@ function App() {
       <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {(() => {
-          console.log('Rendering decision:', { showHelp, showLanding, showDetailedConfirm, showResults, showShare, currentTest });
-          return null;
-        })()}
+
         {showHelp ? (
           <Help />
         ) : showLanding ? (
@@ -287,19 +290,7 @@ function App() {
                   <QuickTest
                     permissionsStatus={permissionsStatus}
                     onPermissionsChange={setPermissionsStatus}
-                    onDataUpdate={(data: any) => {
-                      // Handle quick test data - it contains both network and system data
-                      if (data.networkData) {
-                        updateExportData('networkData', data.networkData);
-                      }
-                      if (data.systemData) {
-                        updateExportData('systemData', data.systemData);
-                      }
-                      // Mark quick test as complete when both tests are done
-                      if (data.networkData && data.systemData) {
-                        handleTestComplete('quickTest');
-                      }
-                    }}
+                    onDataUpdate={memoizedQuickTestUpdate}
                   />
                 )}
                 {currentTest === "networkTest" && (

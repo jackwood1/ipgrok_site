@@ -16,9 +16,6 @@ export function ResultsDashboard({
   onExportResults 
 }: ResultsDashboardProps) {
   
-  // Debug logging
-  console.log('ResultsDashboard received data:', { networkData, mediaData, systemData });
-  
   const getQualityColor = (grade: string) => {
     switch (grade) {
       case 'A': return 'success';
