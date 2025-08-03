@@ -5,6 +5,7 @@ interface MediaTestProps {
   permissionsStatus: string;
   onPermissionsChange: (status: string) => void;
   onDataUpdate?: (data: any) => void;
+  autoStart?: boolean;
 }
 
 interface VideoQualityMetrics {
@@ -33,7 +34,7 @@ interface RecordingTest {
   audioQuality: AudioQualityMetrics;
 }
 
-export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate }: MediaTestProps) {
+export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate, autoStart = false }: MediaTestProps) {
   const [devices, setDevices] = useState<{ microphone: string; camera: string }>({
     microphone: "",
     camera: "",
@@ -78,6 +79,42 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
       });
     }
   }, [devices, permissionsStatus, micStats, videoQuality, audioQuality, codecSupport, recordingTest, onDataUpdate]);
+
+  // Auto-start test if autoStart is true
+  useEffect(() => {
+    if (autoStart && !isTesting) {
+      const startMediaTests = async () => {
+        setIsTesting(true);
+        setTestProgress("Starting media tests...");
+        
+        try {
+          // Request permissions first
+          await requestPermissions();
+          
+          // Get available devices
+          await getAvailableDevices();
+          
+          // Start video test
+          await startVideoTest();
+          
+          // Start microphone test
+          await startMicrophoneTest();
+          
+          // Test codec support
+          testCodecSupport();
+          
+          setTestProgress("Media tests completed!");
+        } catch (error) {
+          console.error("Media tests failed:", error);
+          setTestProgress("Media tests failed");
+        } finally {
+          setIsTesting(false);
+        }
+      };
+      
+      startMediaTests();
+    }
+  }, [autoStart]);
 
   const getAvailableDevices = async () => {
     try {

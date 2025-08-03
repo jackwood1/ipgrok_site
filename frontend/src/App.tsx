@@ -65,12 +65,15 @@ function App() {
         handleTestComplete('configInfo');
       }
       
-      // Auto-progression for Detailed Analysis: configInfo -> networkTest -> advancedTests
+      // Auto-progression for Detailed Analysis: configInfo -> networkTest -> advancedTests -> mediaTest
       if (type === 'systemData' && currentTest === 'configInfo') {
         setCurrentTest('networkTest');
       }
       if (type === 'networkData' && currentTest === 'networkTest') {
         setCurrentTest('advancedTests');
+      }
+      if (type === 'advancedTestsData' && currentTest === 'advancedTests') {
+        setCurrentTest('mediaTest');
       }
     }
   };
@@ -290,6 +293,7 @@ function App() {
                     permissionsStatus={permissionsStatus}
                     onPermissionsChange={setPermissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('mediaData', data)}
+                    autoStart={true}
                   />
                 )}
                 {currentTest === "configInfo" && (

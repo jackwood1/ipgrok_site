@@ -37,6 +37,14 @@ export function TestProgress({ completedTests, currentTest, onTestClick }: TestP
       icon: '🔬',
       duration: '30-60 seconds',
       required: true
+    },
+    {
+      id: 'mediaTest',
+      name: 'Media Tests',
+      description: 'Camera, microphone, and video quality assessment',
+      icon: '📹',
+      duration: '1-2 minutes',
+      required: true
     }
   ];
 
