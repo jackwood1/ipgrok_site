@@ -4,7 +4,6 @@ interface ResultsDashboardProps {
   networkData: any;
   mediaData: any;
   systemData: any;
-  quickTestData: any;
   onShareResults: () => void;
   onExportResults: () => void;
 }
@@ -13,7 +12,6 @@ export function ResultsDashboard({
   networkData, 
   mediaData, 
   systemData, 
-  quickTestData, 
   onShareResults, 
   onExportResults 
 }: ResultsDashboardProps) {
@@ -43,7 +41,7 @@ export function ResultsDashboard({
     }
   };
 
-  const hasData = networkData || mediaData || systemData || quickTestData;
+  const hasData = networkData || mediaData || systemData;
 
   if (!hasData) {
     return (
@@ -67,7 +65,7 @@ export function ResultsDashboard({
       <Card title="Overall Performance Score" subtitle="Your comprehensive internet health score">
         <div className="text-center py-8">
           <div className="text-6xl font-bold text-gray-900 dark:text-white mb-4">
-            {networkData?.speedTest?.connectionQuality || quickTestData?.overallStatus || 'N/A'}
+            {networkData?.speedTest?.connectionQuality || 'N/A'}
           </div>
           <Badge variant={getQualityColor(networkData?.speedTest?.connectionQuality || 'F')} className="text-lg">
             {networkData?.speedTest?.qualityScore || 'N/A'}/100

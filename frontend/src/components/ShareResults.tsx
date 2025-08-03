@@ -5,10 +5,9 @@ interface ShareResultsProps {
   networkData: any;
   mediaData: any;
   systemData: any;
-  quickTestData: any;
 }
 
-export function ShareResults({ networkData, mediaData, systemData, quickTestData }: ShareResultsProps) {
+export function ShareResults({ networkData, mediaData, systemData }: ShareResultsProps) {
   const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
@@ -18,7 +17,7 @@ export function ShareResults({ networkData, mediaData, systemData, quickTestData
     const report = {
       timestamp,
       summary: {
-        networkQuality: quickTestData?.overallStatus || "Unknown",
+        networkQuality: "Unknown",
         downloadSpeed: networkData?.speedTest?.download || "N/A",
         uploadSpeed: networkData?.speedTest?.upload || "N/A",
         latency: networkData?.speedTest?.latency || "N/A",
@@ -28,7 +27,7 @@ export function ShareResults({ networkData, mediaData, systemData, quickTestData
         network: networkData,
         media: mediaData,
         system: systemData,
-        quickTest: quickTestData,
+    
       }
     };
 
@@ -80,7 +79,7 @@ export function ShareResults({ networkData, mediaData, systemData, quickTestData
       networkData,
       mediaData,
       systemData,
-      quickTestData,
+  
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -94,7 +93,7 @@ export function ShareResults({ networkData, mediaData, systemData, quickTestData
     URL.revokeObjectURL(url);
   };
 
-  const hasData = networkData || mediaData || systemData || quickTestData;
+  const hasData = networkData || mediaData || systemData;
 
   if (!hasData) {
     return (
