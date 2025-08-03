@@ -468,19 +468,19 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
         });
         
         if (testResponse.ok) {
-          // Simplified firewall detection - just check if we can reach external services
-          const externalTests = [
-            'https://www.google.com',
-            'https://www.cloudflare.com',
-            'https://www.amazon.com'
+          // Use CORS-friendly endpoints for firewall detection
+          const corsFriendlyTests = [
+            'https://httpbin.org/get',
+            'https://jsonplaceholder.typicode.com/posts/1',
+            'https://api.github.com/zen'
           ];
           
           let reachableCount = 0;
           
-          for (const test of externalTests) {
+          for (const test of corsFriendlyTests) {
             try {
               const response = await fetch(test, {
-                method: 'HEAD', // Use HEAD to avoid downloading content
+                method: 'GET',
                 signal: AbortSignal.timeout(3000)
               });
               if (response.ok) {
@@ -492,9 +492,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
           }
           
           if (reachableCount === 0) {
-            firewallDetection = 'Possible firewall restrictions detected (no external sites reachable)';
-          } else if (reachableCount < externalTests.length) {
-            firewallDetection = `Partial firewall restrictions detected (${reachableCount}/${externalTests.length} sites reachable)`;
+            firewallDetection = 'Possible firewall restrictions detected (no external APIs reachable)';
+          } else if (reachableCount < corsFriendlyTests.length) {
+            firewallDetection = `Partial firewall restrictions detected (${reachableCount}/${corsFriendlyTests.length} APIs reachable)`;
           } else {
             firewallDetection = 'No firewall restrictions detected';
           }
