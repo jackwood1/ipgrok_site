@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Header, NetworkTest, MediaTest, Footer, QuickTest } from "./components";
+import { ConfigInfo } from "./components/ConfigInfo";
 import { Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
 
@@ -14,8 +15,8 @@ function App() {
       id: "quick",
       label: "Quick Test",
       content: (
-        <QuickTest 
-          permissionsStatus={permissionsStatus} 
+        <QuickTest
+          permissionsStatus={permissionsStatus}
           onPermissionsChange={setPermissionsStatus}
         />
       ),
@@ -31,11 +32,16 @@ function App() {
       id: "video",
       label: "Video",
       content: (
-        <MediaTest 
-          permissionsStatus={permissionsStatus} 
+        <MediaTest
+          permissionsStatus={permissionsStatus}
           onPermissionsChange={setPermissionsStatus}
         />
       ),
+    },
+    {
+      id: "config",
+      label: "Config",
+      content: <ConfigInfo />,
     },
   ];
 

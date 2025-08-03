@@ -12,6 +12,7 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 - **NetworkMetrics** (`NetworkMetrics.tsx`) - Displays network test results in a clean, organized format
 - **PingTest** (`PingTest.tsx`) - Client-side ping test to measure connectivity and response time
 - **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation to trace network path
+- **ConfigInfo** (`ConfigInfo.tsx`) - Comprehensive client-side system information display
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
 
@@ -62,6 +63,18 @@ The application now uses a tabbed interface to organize content:
   - Microphone activity visualization
   - Device compatibility testing
 
+### 4. Config Tab
+- **Purpose**: Comprehensive client-side system information
+- **Features**:
+  - **Network Information**: IP address, online status, connection type, downlink, RTT
+  - **Browser Information**: User Agent string, platform, language, cookies, Do Not Track
+  - **Display Information**: Screen resolution, color depth, WebGL support and vendor
+  - **System Information**: Timezone, current time, CPU cores, device memory, battery status
+  - **Storage Information**: Local storage and session storage capabilities
+  - **Language Support**: Browser language preferences
+  - **Real-time Data**: Live IP address detection and system status
+  - **Visual Status Indicators**: Color-coded badges for different states
+
 ## Network Testing Features
 
 ### Speed Test
@@ -88,6 +101,42 @@ The application now uses a tabbed interface to organize content:
 - **Visual Status**: Icons for success (✅), timeout (⏱️), and error (❌)
 - **HTTP Simulation**: Uses HTTP requests with increasing timeouts to simulate traceroute
 
+## Configuration Information Features
+
+### Network Information
+- **IP Address Detection**: Uses multiple APIs (ipify.org, httpbin.org) for reliable IP detection
+- **Connection Status**: Real-time online/offline status
+- **Network Type**: Connection type and effective type detection
+- **Performance Metrics**: Downlink speed and RTT when available
+- **Public IP Badge**: Visual indicator for successfully detected public IP
+
+### Browser Information
+- **User Agent String**: Complete browser identification string in code block
+- **Platform Detection**: Operating system and platform information
+- **Language Settings**: Primary and secondary language preferences
+- **Privacy Settings**: Cookie status and Do Not Track preferences
+- **Feature Detection**: Browser capability assessment
+
+### Display Information
+- **Screen Resolution**: Current display resolution
+- **Color Depth**: Display color depth in bits
+- **WebGL Support**: Graphics acceleration capability
+- **WebGL Details**: Vendor and renderer information when available
+- **Hardware Acceleration**: Graphics card and driver information
+
+### System Information
+- **Timezone**: Current timezone setting
+- **Current Time**: Local date and time
+- **Hardware Specs**: CPU cores and device memory when available
+- **Battery Status**: Battery level and charging status (mobile devices)
+- **Performance Metrics**: Hardware capability assessment
+
+### Storage Information
+- **Local Storage**: Browser local storage capability
+- **Session Storage**: Browser session storage capability
+- **Storage Testing**: Actual storage availability testing
+- **Feature Support**: Storage API compatibility
+
 ## UI Improvements
 
 ### Design System
@@ -110,6 +159,7 @@ The application now uses a tabbed interface to organize content:
 - **Interactive Elements**: Hover states, focus rings, and smooth transitions
 - **Real-time Updates**: Results update as tests complete
 - **Progressive Disclosure**: Information is revealed as tests progress
+- **Information Cards**: Organized sections for different types of system data
 
 ## Architecture
 
@@ -121,6 +171,7 @@ The application has been refactored from a single large App.tsx file into modula
 4. **Type Safety**: TypeScript interfaces ensure proper data flow between components
 5. **Design Consistency**: Unified design system ensures consistent user experience
 6. **Tabbed Organization**: Content is logically organized into tabs for better UX
+7. **Comprehensive Information**: Detailed system configuration and capability assessment
 
 ## Component Communication
 
@@ -128,6 +179,7 @@ The application has been refactored from a single large App.tsx file into modula
 - **State Management**: Each component manages its own local state
 - **Custom Hooks**: Shared logic is extracted into custom hooks (e.g., `useDarkMode`)
 - **Tab State**: Tab navigation is managed by the Tabs component
+- **API Integration**: External APIs for IP detection and system information
 
 ## File Structure
 
@@ -148,6 +200,7 @@ src/
 │   ├── NetworkMetrics.tsx
 │   ├── PingTest.tsx
 │   ├── TracerouteTest.tsx
+│   ├── ConfigInfo.tsx
 │   ├── MediaTest.tsx
 │   ├── Footer.tsx
 │   ├── index.ts
@@ -165,7 +218,7 @@ src/
 Import components from the index file:
 
 ```typescript
-import { Header, QuickTest, NetworkTest, MediaTest, Footer, PingTest, TracerouteTest } from "./components";
+import { Header, QuickTest, NetworkTest, MediaTest, Footer, PingTest, TracerouteTest, ConfigInfo } from "./components";
 import { Card, Button, Badge, Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks";
 ```
@@ -177,5 +230,6 @@ import { useDarkMode } from "./hooks";
 - **Performance-Focused**: Optimized for speed and responsiveness
 - **Accessible**: WCAG compliant with proper contrast and keyboard navigation
 - **Organized**: Tabbed interface for logical content organization
-- **Comprehensive**: Multiple testing methods for thorough network analysis
-- **Educational**: Helpful explanations and interpretation guides 
+- **Comprehensive**: Multiple testing methods and detailed system information
+- **Educational**: Helpful explanations and interpretation guides
+- **Informative**: Rich system configuration and capability data 

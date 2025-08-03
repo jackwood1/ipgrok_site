@@ -5,4 +5,5 @@ export { MediaTest } from "./MediaTest";
 export { QuickTest } from "./QuickTest";
 export { PingTest } from "./PingTest";
 export { TracerouteTest } from "./TracerouteTest";
+export { ConfigInfo } from "./ConfigInfo";
 export { Footer } from "./Footer"; 
