@@ -29,6 +29,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
 
   // Handle network test completion
   const handleNetworkComplete = (data: any) => {
+    console.log('QuickTest: Network test completed with data:', data);
     setNetworkData(data);
     setCurrentStep('system');
   };
@@ -41,6 +42,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
 
   // Start the quick test sequence
   const startQuickTest = () => {
+    console.log('QuickTest: Starting quick test sequence');
     setIsRunning(true);
     setCurrentStep('network');
     setNetworkData(null);

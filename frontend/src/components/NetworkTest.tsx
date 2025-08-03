@@ -77,8 +77,15 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
 
   // Auto-start test if autoStart is true
   useEffect(() => {
+    console.log('Auto-start effect:', { autoStart, testStarted, loading });
     if (autoStart && !testStarted && !loading) {
-      runTest();
+      console.log('Auto-starting network test...');
+      // Use setTimeout to ensure runTest is available
+      setTimeout(() => {
+        if (!testStarted && !loading) {
+          runTest();
+        }
+      }, 100);
     }
   }, [autoStart, testStarted, loading]);
 
@@ -565,6 +572,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   };
 
   const runTest = async () => {
+    console.log('runTest called');
     setTestStarted(true);
     setLoading(true);
     
