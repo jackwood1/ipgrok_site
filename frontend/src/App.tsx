@@ -173,12 +173,14 @@ function App() {
               </Button>
             </div>
 
-            {/* Test Progress */}
-            <TestProgress
-              completedTests={completedTests}
-              currentTest={currentTest}
-              onTestClick={handleTestClick}
-            />
+            {/* Test Progress - Hide when running Quick Test */}
+            {currentTest !== "quickTest" && (
+              <TestProgress
+                completedTests={completedTests}
+                currentTest={currentTest}
+                onTestClick={handleTestClick}
+              />
+            )}
 
             {/* Main Content */}
             <div className="grid grid-cols-1 gap-8">
