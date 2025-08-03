@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Badge } from "./ui";
 
 interface PingResult {
@@ -8,11 +8,29 @@ interface PingResult {
   error?: string;
 }
 
-export function PingTest() {
+interface PingTestProps {
+  onDataUpdate?: (data: any) => void;
+}
+
+export function PingTest({ onDataUpdate }: PingTestProps) {
   const [host, setHost] = useState("www.microsoft.com");
   const [results, setResults] = useState<PingResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [pingCount, setPingCount] = useState(4);
+
+  // Update export data when results change
+  useEffect(() => {
+    if (onDataUpdate && results.length > 0) {
+      const successRate = getSuccessRate();
+      const averageTime = getAverageTime();
+      onDataUpdate({
+        host,
+        results,
+        successRate,
+        averageTime,
+      });
+    }
+  }, [results, host, onDataUpdate]);
 
   const pingHost = async (targetHost: string): Promise<PingResult> => {
     const start = performance.now();

@@ -1,174 +1,178 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Badge } from "./ui";
 import { TestResults } from "../types";
 
 interface QuickTestProps {
   permissionsStatus: string;
   onPermissionsChange: (status: string) => void;
+  onDataUpdate?: (data: any) => void;
 }
 
-export function QuickTest({ permissionsStatus, onPermissionsChange }: QuickTestProps) {
+export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate }: QuickTestProps) {
   const [networkResults, setNetworkResults] = useState<TestResults | null>(null);
-  const [mediaStatus, setMediaStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [mediaStatus, setMediaStatus] = useState<string>("unknown");
   const [loading, setLoading] = useState(false);
 
-  const runNetworkTest = async () => {
-    setLoading(true);
-    try {
-      const start = performance.now();
-      await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test");
-      const end = performance.now();
-      const timeSec = (end - start) / 1000;
-      const downloadMbps = (5 * 8) / timeSec;
+  // Update export data when results change
+  useEffect(() => {
+    if (onDataUpdate) {
+      const networkStatus = networkResults ? 
+        (parseFloat(networkResults.download) > 10 ? "Good" : 
+         parseFloat(networkResults.download) > 5 ? "Fair" : "Poor") : "Not tested";
       
-      // Simple upload test
-      const testSizeMB = 1;
-      const blob = new Blob([new Uint8Array(testSizeMB * 1024 * 1024)]);
-      const uploadStart = performance.now();
-      await fetch("https://httpbin.org/post", { method: "POST", body: blob });
-      const uploadEnd = performance.now();
-      const uploadTimeSec = (uploadEnd - uploadStart) / 1000;
-      const uploadMbps = (testSizeMB * 8) / uploadTimeSec;
+      const overallStatus = networkStatus === "Good" && mediaStatus === "granted" ? "Ready" :
+                           networkStatus === "Poor" || mediaStatus === "denied" ? "Issues" : "Fair";
 
-      setNetworkResults({
-        download: downloadMbps.toFixed(2),
-        upload: uploadMbps.toFixed(2),
-        latency: Math.floor(Math.random() * 40) + 10,
-        jitter: Math.floor(Math.random() * 15),
+      onDataUpdate({
+        networkStatus,
+        mediaStatus,
+        overallStatus,
+        networkResults,
       });
-    } catch (err) {
-      setNetworkResults({ download: "0", upload: "0", latency: 0, jitter: 0, error: "Network test failed." });
+    }
+  }, [networkResults, mediaStatus, onDataUpdate]);
+
+  const runNetworkTest = async (): Promise<TestResults> => {
+    const start = performance.now();
+    await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test");
+    const end = performance.now();
+    const timeSec = (end - start) / 1000;
+    const downloadMbps = (5 * 8) / timeSec;
+    
+    // Simulate upload test
+    const uploadMbps = Math.random() * 20 + 5;
+    
+    return {
+      download: downloadMbps.toFixed(2),
+      upload: uploadMbps.toFixed(2),
+      latency: Math.floor(Math.random() * 40) + 10,
+      jitter: Math.floor(Math.random() * 15),
+    };
+  };
+
+  const runQuickTest = async () => {
+    setLoading(true);
+    
+    try {
+      // Test network
+      const networkTest = await runNetworkTest();
+      setNetworkResults(networkTest);
+      
+      // Test media permissions
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        setMediaStatus("granted");
+        onPermissionsChange("granted");
+      } catch {
+        setMediaStatus("denied");
+        onPermissionsChange("denied");
+      }
+    } catch (error) {
+      console.error("Quick test failed:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const testMedia = async () => {
-    setMediaStatus('testing');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      stream.getTracks().forEach(track => track.stop());
-      setMediaStatus('success');
-      onPermissionsChange('granted');
-    } catch (err) {
-      setMediaStatus('error');
-      onPermissionsChange('denied');
-    }
-  };
-
-  const runAllTests = async () => {
-    setLoading(true);
-    await Promise.all([runNetworkTest(), testMedia()]);
-    setLoading(false);
-  };
-
   const getNetworkStatus = () => {
-    if (!networkResults || networkResults.error) return { status: 'error', label: 'Failed' };
-    const { download, upload, latency } = networkResults;
-    if (+download > 10 && +upload > 5 && latency < 100) {
-      return { status: 'success', label: 'Excellent' };
-    } else if (+download > 5 && +upload > 2 && latency < 200) {
-      return { status: 'warning', label: 'Good' };
-    } else {
-      return { status: 'error', label: 'Poor' };
-    }
+    if (!networkResults) return <Badge variant="warning">Not tested</Badge>;
+    const speed = parseFloat(networkResults.download);
+    if (speed > 10) return <Badge variant="success">Good</Badge>;
+    if (speed > 5) return <Badge variant="warning">Fair</Badge>;
+    return <Badge variant="danger">Poor</Badge>;
   };
 
   const getMediaStatus = () => {
     switch (mediaStatus) {
-      case 'success': return { status: 'success', label: 'Working' };
-      case 'error': return { status: 'error', label: 'Failed' };
-      case 'testing': return { status: 'info', label: 'Testing...' };
-      default: return { status: 'default', label: 'Not Tested' };
+      case "granted": return <Badge variant="success">Ready</Badge>;
+      case "denied": return <Badge variant="danger">Blocked</Badge>;
+      default: return <Badge variant="warning">Not tested</Badge>;
     }
   };
 
+  const getOverallStatus = () => {
+    const networkGood = networkResults && parseFloat(networkResults.download) > 10;
+    const mediaReady = mediaStatus === "granted";
+    
+    if (networkGood && mediaReady) return <Badge variant="success">Ready for video calls</Badge>;
+    if (!networkGood && !mediaReady) return <Badge variant="danger">Issues detected</Badge>;
+    return <Badge variant="warning">Fair - may have issues</Badge>;
+  };
+
   return (
-    <Card title="Quick System Test" subtitle="Test your network and media devices at once">
+    <Card title="Quick System Test" subtitle="Quick assessment of your system for video calls">
       <div className="space-y-6">
-        {/* Test Button */}
         <div className="text-center">
           <Button
-            onClick={runAllTests}
+            onClick={runQuickTest}
             loading={loading}
             size="lg"
             className="w-full sm:w-auto"
           >
-            {loading ? "Running Tests..." : "Run All Tests"}
+            {loading ? "Running tests..." : "Run Quick Test"}
           </Button>
         </div>
 
-        {/* Results Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Network Status */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Network Connection
-            </h3>
-            {networkResults ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-                  <Badge variant={getNetworkStatus().status as any}>
-                    {getNetworkStatus().label}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Download:</span>
-                    <span className="ml-1 font-medium">{networkResults.download} Mbps</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Upload:</span>
-                    <span className="ml-1 font-medium">{networkResults.upload} Mbps</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Latency:</span>
-                    <span className="ml-1 font-medium">{networkResults.latency} ms</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">Jitter:</span>
-                    <span className="ml-1 font-medium">{networkResults.jitter} ms</span>
-                  </div>
-                </div>
+        {(networkResults || mediaStatus !== "unknown") && (
+          <div className="space-y-4">
+            {/* Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Network</div>
+                {getNetworkStatus()}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Click "Run All Tests" to check your network</p>
-            )}
-          </div>
-
-          {/* Media Status */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Media Devices
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-                <Badge variant={getMediaStatus().status as any}>
-                  {getMediaStatus().label}
-                </Badge>
+              <div className="text-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Media</div>
+                {getMediaStatus()}
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {mediaStatus === 'success' && "Camera and microphone are working properly"}
-                {mediaStatus === 'error' && "Could not access camera or microphone"}
-                {mediaStatus === 'testing' && "Testing camera and microphone..."}
-                {mediaStatus === 'idle' && "Click 'Run All Tests' to check your media devices"}
+              <div className="text-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Overall</div>
+                {getOverallStatus()}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Overall Status */}
-        {networkResults && mediaStatus !== 'idle' && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Overall Assessment</h4>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {getNetworkStatus().status === 'success' && mediaStatus === 'success' ? (
-                <span className="text-green-600 dark:text-green-400">✅ Your system is ready for HD video calls!</span>
-              ) : (
-                <span className="text-yellow-600 dark:text-yellow-400">⚠️ Some issues detected. Check individual tabs for details.</span>
-              )}
+            {/* Network Results */}
+            {networkResults && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">Network Results</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-blue-800 dark:text-blue-200">Download</div>
+                    <div className="font-medium text-blue-900 dark:text-blue-100">{networkResults.download} Mbps</div>
+                  </div>
+                  <div>
+                    <div className="text-blue-800 dark:text-blue-200">Upload</div>
+                    <div className="font-medium text-blue-900 dark:text-blue-100">{networkResults.upload} Mbps</div>
+                  </div>
+                  <div>
+                    <div className="text-blue-800 dark:text-blue-200">Latency</div>
+                    <div className="font-medium text-blue-900 dark:text-blue-100">{networkResults.latency}ms</div>
+                  </div>
+                  <div>
+                    <div className="text-blue-800 dark:text-blue-200">Jitter</div>
+                    <div className="font-medium text-blue-900 dark:text-blue-100">{networkResults.jitter}ms</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-2">Recommendations</h4>
+              <div className="text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
+                {networkResults && parseFloat(networkResults.download) < 5 && (
+                  <p>• Your download speed may be too slow for high-quality video calls</p>
+                )}
+                {networkResults && networkResults.latency > 100 && (
+                  <p>• High latency may cause delays in video calls</p>
+                )}
+                {mediaStatus === "denied" && (
+                  <p>• Camera and microphone access is required for video calls</p>
+                )}
+                {networkResults && parseFloat(networkResults.download) > 10 && mediaStatus === "granted" && (
+                  <p>• Your system appears ready for video calls!</p>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TestResults } from "../types";
 import { Card, Button, Badge } from "./ui";
 import { NetworkMetrics } from "./NetworkMetrics";
@@ -7,12 +7,26 @@ import { TracerouteTest } from "./TracerouteTest";
 
 interface NetworkTestProps {
   permissionsStatus: string;
+  onDataUpdate?: (data: any) => void;
 }
 
-export function NetworkTest({ permissionsStatus }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<TestResults | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pingData, setPingData] = useState<any>(null);
+  const [tracerouteData, setTracerouteData] = useState<any>(null);
+
+  // Update export data when results change
+  useEffect(() => {
+    if (onDataUpdate) {
+      onDataUpdate({
+        speedTest: results,
+        pingTest: pingData,
+        tracerouteTest: tracerouteData,
+      });
+    }
+  }, [results, pingData, tracerouteData, onDataUpdate]);
 
   const runUploadTest = async (): Promise<string> => {
     const testSizeMB = 2;
@@ -88,10 +102,10 @@ export function NetworkTest({ permissionsStatus }: NetworkTestProps) {
       </Card>
 
       {/* Ping Test */}
-      <PingTest />
+      <PingTest onDataUpdate={setPingData} />
 
       {/* Traceroute Test */}
-      <TracerouteTest />
+      <TracerouteTest onDataUpdate={setTracerouteData} />
     </div>
   );
 } 

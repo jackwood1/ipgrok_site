@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Badge } from "./ui";
 
 interface TracerouteHop {
@@ -9,11 +9,28 @@ interface TracerouteHop {
   ip?: string;
 }
 
-export function TracerouteTest() {
+interface TracerouteTestProps {
+  onDataUpdate?: (data: any) => void;
+}
+
+export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
   const [host, setHost] = useState("www.microsoft.com");
   const [results, setResults] = useState<TracerouteHop[]>([]);
   const [loading, setLoading] = useState(false);
   const [maxHops, setMaxHops] = useState(15);
+
+  // Update export data when results change
+  useEffect(() => {
+    if (onDataUpdate && results.length > 0) {
+      const successfulHops = results.filter(r => r.status === 'success').length;
+      onDataUpdate({
+        host,
+        results,
+        totalHops: results.length,
+        successfulHops,
+      });
+    }
+  }, [results, host, onDataUpdate]);
 
   const simulateHop = async (targetHost: string, hopNumber: number): Promise<TracerouteHop> => {
     const start = performance.now();

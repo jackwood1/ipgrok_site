@@ -1,117 +1,97 @@
-import { useEffect, useRef, useState } from "react";
-import { Card, Button, Select, Checkbox, Badge } from "./ui";
+import { useState, useRef, useEffect } from "react";
+import { Card, Button, Badge, Select, Checkbox } from "./ui";
 
 interface MediaTestProps {
   permissionsStatus: string;
   onPermissionsChange: (status: string) => void;
+  onDataUpdate?: (data: any) => void;
 }
 
-export function MediaTest({ permissionsStatus, onPermissionsChange }: MediaTestProps) {
-  // Mic/Webcam
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate }: MediaTestProps) {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const [micVolume, setMicVolume] = useState(0);
-  const [micPeak, setMicPeak] = useState(0);
-  const [isSilent, setIsSilent] = useState(false);
-  const micSamplesRef = useRef<{ timestamp: number; volume: number }[]>([]);
-  const [showMicVisualizer, setShowMicVisualizer] = useState(true);
-
-  // Input device selector
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedInputId, setSelectedInputId] = useState<string | null>(() => localStorage.getItem("selectedInputId"));
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(() => localStorage.getItem("selectedVideoId"));
+  const [selectedInputId, setSelectedInputId] = useState<string>("");
+  const [selectedVideoId, setSelectedVideoId] = useState<string>("");
+  const [mediaError, setMediaError] = useState<string>("");
+  const [showMicVisualizer, setShowMicVisualizer] = useState(false);
+  const [micSamples, setMicSamples] = useState<{ timestamp: number; volume: number }[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micSamplesRef = useRef<{ timestamp: number; volume: number }[]>([]);
+  const animationFrameRef = useRef<number | undefined>(undefined);
+
+  // Update export data when media data changes
+  useEffect(() => {
+    if (onDataUpdate) {
+      const micStats = micSamplesRef.current.length > 0 ? {
+        averageVolume: micSamplesRef.current.reduce((acc, s) => acc + s.volume, 0) / micSamplesRef.current.length,
+        peakVolume: Math.max(...micSamplesRef.current.map(s => s.volume), 0),
+        samples: micSamplesRef.current,
+      } : undefined;
+
+      onDataUpdate({
+        devices: {
+          microphone: selectedInputId,
+          camera: selectedVideoId,
+        },
+        permissions: permissionsStatus,
+        micStats,
+      });
+    }
+  }, [selectedInputId, selectedVideoId, permissionsStatus, micSamples, onDataUpdate]);
 
   useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then(devices => {
-      const audioInputs = devices.filter(d => d.kind === "audioinput");
-      const videoInputs = devices.filter(d => d.kind === "videoinput");
-      setInputDevices(audioInputs);
-      setVideoDevices(videoInputs);
-      if (!selectedInputId && audioInputs.length > 0) setSelectedInputId(audioInputs[0].deviceId);
-      if (!selectedVideoId && videoInputs.length > 0) setSelectedVideoId(videoInputs[0].deviceId);
-    });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      mediaStream?.getTracks().forEach(track => track.stop());
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    const getDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter(device => device.kind === "audioinput");
+        const videos = devices.filter(device => device.kind === "videoinput");
+        
+        setInputDevices(inputs);
+        setVideoDevices(videos);
+        
+        if (inputs.length > 0 && !selectedInputId) {
+          setSelectedInputId(inputs[0].deviceId);
+        }
+        if (videos.length > 0 && !selectedVideoId) {
+          setSelectedVideoId(videos[0].deviceId);
+        }
+      } catch (err) {
+        console.error("Error getting devices:", err);
+      }
     };
-  }, [mediaStream]);
 
-  useEffect(() => {
-    if (selectedInputId) {
-      localStorage.setItem("selectedInputId", selectedInputId);
-    }
-  }, [selectedInputId]);
-
-  useEffect(() => {
-    if (selectedVideoId) {
-      localStorage.setItem("selectedVideoId", selectedVideoId);
-    }
-  }, [selectedVideoId]);
-
-  useEffect(() => {
-    if (permissionsStatus === "unknown") {
-      startMediaPreview();
-    }
-  }, [permissionsStatus]);
+    getDevices();
+  }, [selectedInputId, selectedVideoId]);
 
   const startMediaPreview = async () => {
     try {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: selectedVideoId ? { deviceId: { exact: selectedVideoId } } : true,
         audio: selectedInputId ? { deviceId: { exact: selectedInputId } } : true,
+        video: selectedVideoId ? { deviceId: { exact: selectedVideoId } } : true,
       });
+
+      setMediaStream(stream);
+      setMediaError("");
       localStorage.setItem("mediaPermissions", "granted");
       onPermissionsChange("granted");
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setMediaStream(stream);
-      setMediaError(null);
 
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      source.connect(analyser);
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
 
-      const updateVolume = () => {
-        analyser.getByteTimeDomainData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const value = (dataArray[i] - 128) / 128;
-          sum += value * value;
-        }
-        const volume = Math.sqrt(sum / dataArray.length);
-        setMicVolume(volume);
-        setMicPeak(prev => Math.max(volume, prev * 0.95));
-        setIsSilent(volume < 0.01);
-        micSamplesRef.current.push({ timestamp: Date.now(), volume });
-        if (micSamplesRef.current.length > 500) micSamplesRef.current.shift();
-
-        const ctx = canvasRef.current?.getContext("2d");
-        if (ctx && canvasRef.current) {
-          const { width, height } = canvasRef.current;
-          ctx.clearRect(0, 0, width, height);
-          ctx.beginPath();
-          for (let i = 0; i < dataArray.length; i++) {
-            const x = (i / dataArray.length) * width;
-            const y = (dataArray[i] / 255) * height;
-            ctx.lineTo(x, y);
-          }
-          ctx.strokeStyle = "#00FF00";
-          ctx.stroke();
-        }
-
-        animationFrameRef.current = requestAnimationFrame(updateVolume);
-      };
-
-      updateVolume();
+      // Start microphone visualization if enabled
+      if (showMicVisualizer) {
+        startMicVisualization(stream);
+      }
     } catch (err) {
       localStorage.setItem("mediaPermissions", "denied");
       onPermissionsChange("denied");
@@ -119,20 +99,67 @@ export function MediaTest({ permissionsStatus, onPermissionsChange }: MediaTestP
     }
   };
 
-  const exportMicStats = () => {
-    const samples = micSamplesRef.current;
-    const peak = Math.max(...samples.map(s => s.volume));
-    const avg = samples.reduce((acc, s) => acc + s.volume, 0) / samples.length;
-    const blob = new Blob([JSON.stringify({ avg, peak, samples }, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `mic_stats_${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const startMicVisualization = (stream: MediaStream) => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+
+    const audioContext = audioContextRef.current;
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+    
+    setIsRecording(true);
+    micSamplesRef.current = [];
+    
+    const updateVolume = () => {
+      if (!analyserRef.current || !isRecording) return;
+      
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+      const volume = (average / 255) * 100;
+      
+      const sample = { timestamp: Date.now(), volume };
+      micSamplesRef.current.push(sample);
+      setMicSamples(prev => [...prev, sample]);
+      
+      // Keep only last 100 samples
+      if (micSamplesRef.current.length > 100) {
+        micSamplesRef.current = micSamplesRef.current.slice(-100);
+        setMicSamples(prev => prev.slice(-100));
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(updateVolume);
+    };
+    
+    updateVolume();
   };
+
+  const stopMicVisualization = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    setIsRecording(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [mediaStream]);
 
   return (
     <Card 
@@ -186,14 +213,6 @@ export function MediaTest({ permissionsStatus, onPermissionsChange }: MediaTestP
         >
           Start Camera & Mic Test
         </Button>
-        
-        <Button
-          onClick={exportMicStats}
-          variant="info"
-          size="md"
-        >
-          Export Stats
-        </Button>
       </div>
 
       {mediaError && (
@@ -212,26 +231,44 @@ export function MediaTest({ permissionsStatus, onPermissionsChange }: MediaTestP
             ref={videoRef} 
             autoPlay 
             playsInline 
-            muted 
-            className="w-full h-48 bg-black rounded-lg border border-gray-200 dark:border-gray-700" 
+            muted
+            className="w-full h-48 bg-gray-100 dark:bg-gray-800 rounded-lg object-cover"
           />
         </div>
 
         {showMicVisualizer && (
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Microphone Activity
-                <span className="ml-1 cursor-help text-gray-400" title="Green = current waveform. Yellow = recent peak.">ⓘ</span>
-              </h4>
-              {isSilent && (
-                <Badge variant="warning" size="sm">⚠️ Very low input</Badge>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Microphone Activity
+              {isRecording && <Badge variant="success" className="ml-2">Recording</Badge>}
+            </h4>
+            <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-hidden">
+              {micSamples.length > 0 ? (
+                <div className="flex items-end justify-between h-full space-x-1">
+                  {micSamples.slice(-20).map((sample, index) => (
+                    <div
+                      key={index}
+                      className="bg-blue-500 rounded-t"
+                      style={{
+                        width: '4px',
+                        height: `${Math.min(sample.volume, 100)}%`,
+                        minHeight: '2px'
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Start test to see microphone activity
+                </div>
               )}
             </div>
-            <canvas 
-              ref={canvasRef} 
-              className="w-full h-12 bg-black rounded-lg border border-gray-200 dark:border-gray-700" 
-            />
+            {micSamples.length > 0 && (
+              <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                Peak: {Math.max(...micSamples.map(s => s.volume)).toFixed(1)}% | 
+                Avg: {(micSamples.reduce((acc, s) => acc + s.volume, 0) / micSamples.length).toFixed(1)}%
+              </div>
+            )}
           </div>
         )}
       </div>

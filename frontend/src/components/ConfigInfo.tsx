@@ -29,10 +29,21 @@ interface SystemInfo {
   memory?: number;
 }
 
-export function ConfigInfo() {
+interface ConfigInfoProps {
+  onDataUpdate?: (data: any) => void;
+}
+
+export function ConfigInfo({ onDataUpdate }: ConfigInfoProps) {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Update export data when system info changes
+  useEffect(() => {
+    if (onDataUpdate && systemInfo) {
+      onDataUpdate(systemInfo);
+    }
+  }, [systemInfo, onDataUpdate]);
 
   useEffect(() => {
     const gatherSystemInfo = async () => {

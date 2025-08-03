@@ -13,6 +13,7 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 - **PingTest** (`PingTest.tsx`) - Client-side ping test to measure connectivity and response time
 - **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation to trace network path
 - **ConfigInfo** (`ConfigInfo.tsx`) - Comprehensive client-side system information display
+- **ExportStats** (`ExportStats.tsx`) - Comprehensive export functionality for all test results
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
 
@@ -74,6 +75,30 @@ The application now uses a tabbed interface to organize content:
   - **Language Support**: Browser language preferences
   - **Real-time Data**: Live IP address detection and system status
   - **Visual Status Indicators**: Color-coded badges for different states
+
+## Export Functionality
+
+### ExportStats Component
+- **Purpose**: Comprehensive data export from all tabs
+- **Features**:
+  - **JSON Export**: Complete test results in structured JSON format
+  - **CSV Export**: Tabular data export for spreadsheet analysis
+  - **Cross-Tab Data**: Aggregates data from all tabs (Network, Media, System, Quick Test)
+  - **Real-time Updates**: Export data updates as tests are completed
+  - **Timestamped Files**: Automatic file naming with timestamps
+  - **Comprehensive Coverage**: Includes all test results, system info, and metadata
+
+### Export Data Structure
+- **Network Data**: Speed test results, ping test data, traceroute information
+- **Media Data**: Device information, permissions status, microphone statistics
+- **System Data**: IP address, browser info, hardware specs, display details
+- **Quick Test Data**: Overall assessment, network status, media status
+- **Metadata**: Timestamps, test completion status, error information
+
+### Export Formats
+- **JSON Format**: Complete structured data with all test results and metadata
+- **CSV Format**: Tabular format with test type, parameter, value, and timestamp columns
+- **File Naming**: Automatic naming with format `video_call_test_results_[timestamp].[json|csv]`
 
 ## Network Testing Features
 
@@ -151,6 +176,7 @@ The application now uses a tabbed interface to organize content:
 - **Better Spacing**: Consistent spacing and padding throughout the application
 - **Grid Layouts**: Responsive grid layouts for better content organization
 - **Visual Hierarchy**: Clear typography hierarchy with proper heading sizes
+- **Export Section**: Prominent export functionality at the top level
 
 ### Component Features
 - **Loading States**: Buttons show loading spinners during async operations
@@ -160,6 +186,7 @@ The application now uses a tabbed interface to organize content:
 - **Real-time Updates**: Results update as tests complete
 - **Progressive Disclosure**: Information is revealed as tests progress
 - **Information Cards**: Organized sections for different types of system data
+- **Export Integration**: Seamless data collection and export from all components
 
 ## Architecture
 
@@ -172,6 +199,7 @@ The application has been refactored from a single large App.tsx file into modula
 5. **Design Consistency**: Unified design system ensures consistent user experience
 6. **Tabbed Organization**: Content is logically organized into tabs for better UX
 7. **Comprehensive Information**: Detailed system configuration and capability assessment
+8. **Data Export**: Centralized export functionality with cross-tab data aggregation
 
 ## Component Communication
 
@@ -180,6 +208,8 @@ The application has been refactored from a single large App.tsx file into modula
 - **Custom Hooks**: Shared logic is extracted into custom hooks (e.g., `useDarkMode`)
 - **Tab State**: Tab navigation is managed by the Tabs component
 - **API Integration**: External APIs for IP detection and system information
+- **Data Export**: Components provide data updates through `onDataUpdate` callbacks
+- **Centralized Export**: App-level data management for comprehensive export functionality
 
 ## File Structure
 
@@ -201,6 +231,7 @@ src/
 │   ├── PingTest.tsx
 │   ├── TracerouteTest.tsx
 │   ├── ConfigInfo.tsx
+│   ├── ExportStats.tsx
 │   ├── MediaTest.tsx
 │   ├── Footer.tsx
 │   ├── index.ts
@@ -218,7 +249,7 @@ src/
 Import components from the index file:
 
 ```typescript
-import { Header, QuickTest, NetworkTest, MediaTest, Footer, PingTest, TracerouteTest, ConfigInfo } from "./components";
+import { Header, QuickTest, NetworkTest, MediaTest, Footer, PingTest, TracerouteTest, ConfigInfo, ExportStats } from "./components";
 import { Card, Button, Badge, Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks";
 ```
@@ -232,4 +263,5 @@ import { useDarkMode } from "./hooks";
 - **Organized**: Tabbed interface for logical content organization
 - **Comprehensive**: Multiple testing methods and detailed system information
 - **Educational**: Helpful explanations and interpretation guides
-- **Informative**: Rich system configuration and capability data 
+- **Informative**: Rich system configuration and capability data
+- **Exportable**: Comprehensive data export for analysis and reporting 

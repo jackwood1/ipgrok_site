@@ -6,4 +6,5 @@ export { QuickTest } from "./QuickTest";
 export { PingTest } from "./PingTest";
 export { TracerouteTest } from "./TracerouteTest";
 export { ConfigInfo } from "./ConfigInfo";
+export { ExportStats } from "./ExportStats";
 export { Footer } from "./Footer"; 
