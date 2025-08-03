@@ -10,6 +10,11 @@ interface ExportData {
       latency: number;
       jitter: number;
       error?: string;
+      bandwidthScore?: string;
+      packetLossRate?: number;
+      connectionQuality?: 'A' | 'B' | 'C' | 'D' | 'F';
+      qualityScore?: number;
+      recommendations?: string[];
     };
     pingTest?: {
       host: string;
@@ -129,6 +134,25 @@ export function ExportStats({
         csvContent += `Speed Test,Upload,${networkData.speedTest.upload} Mbps,${new Date().toISOString()}\n`;
         csvContent += `Speed Test,Latency,${networkData.speedTest.latency}ms,${new Date().toISOString()}\n`;
         csvContent += `Speed Test,Jitter,${networkData.speedTest.jitter}ms,${new Date().toISOString()}\n`;
+        
+        // Add enhanced metrics
+        if (networkData.speedTest.bandwidthScore) {
+          csvContent += `Speed Test,Bandwidth Score,${networkData.speedTest.bandwidthScore}/100,${new Date().toISOString()}\n`;
+        }
+        if (networkData.speedTest.packetLossRate !== undefined) {
+          csvContent += `Speed Test,Packet Loss Rate,${networkData.speedTest.packetLossRate}%,${new Date().toISOString()}\n`;
+        }
+        if (networkData.speedTest.connectionQuality) {
+          csvContent += `Speed Test,Connection Quality,${networkData.speedTest.connectionQuality},${new Date().toISOString()}\n`;
+        }
+        if (networkData.speedTest.qualityScore !== undefined) {
+          csvContent += `Speed Test,Quality Score,${networkData.speedTest.qualityScore}/100,${new Date().toISOString()}\n`;
+        }
+        if (networkData.speedTest.recommendations) {
+          networkData.speedTest.recommendations.forEach((rec: string, index: number) => {
+            csvContent += `Speed Test,Recommendation ${index + 1},"${rec}",${new Date().toISOString()}\n`;
+          });
+        }
       }
       
       if (networkData?.pingTest) {

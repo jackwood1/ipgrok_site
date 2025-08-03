@@ -1,78 +1,210 @@
 import { TestResults } from "../types";
-import { Card, Badge } from "./ui";
+import { Badge } from "./ui";
+
+interface EnhancedTestResults extends TestResults {
+  bandwidthScore?: string;
+  packetLossRate?: number;
+  connectionQuality?: 'A' | 'B' | 'C' | 'D' | 'F';
+  qualityScore?: number;
+  recommendations?: string[];
+}
 
 interface NetworkMetricsProps {
-  results: TestResults;
+  results: EnhancedTestResults;
 }
 
 export function NetworkMetrics({ results }: NetworkMetricsProps) {
-  const getStatusBadge = () => {
-    if (results.error) return <Badge variant="danger">Test Failed</Badge>;
-    
-    const { download, upload, latency } = results;
-    if (+download > 10 && +upload > 5 && latency < 100) {
-      return <Badge variant="success">✅ Ready for HD video calls</Badge>;
-    } else {
-      return <Badge variant="warning">⚠️ Might have performance issues</Badge>;
-    }
+  const getDownloadColor = (speed: string) => {
+    const numSpeed = parseFloat(speed);
+    if (numSpeed >= 50) return "success";
+    if (numSpeed >= 25) return "info";
+    if (numSpeed >= 10) return "warning";
+    return "danger";
   };
 
-  const getMetricColor = (value: number, thresholds: { good: number; warning: number }) => {
-    if (value >= thresholds.good) return "text-green-600 dark:text-green-400";
-    if (value >= thresholds.warning) return "text-yellow-600 dark:text-yellow-400";
-    return "text-red-600 dark:text-red-400";
+  const getUploadColor = (speed: string) => {
+    const numSpeed = parseFloat(speed);
+    if (numSpeed >= 25) return "success";
+    if (numSpeed >= 10) return "info";
+    if (numSpeed >= 5) return "warning";
+    return "danger";
+  };
+
+  const getLatencyColor = (latency: number) => {
+    if (latency <= 50) return "success";
+    if (latency <= 100) return "info";
+    if (latency <= 200) return "warning";
+    return "danger";
+  };
+
+  const getJitterColor = (jitter: number) => {
+    if (jitter <= 10) return "success";
+    if (jitter <= 20) return "info";
+    if (jitter <= 50) return "warning";
+    return "danger";
+  };
+
+  const getPacketLossColor = (lossRate: number) => {
+    if (lossRate <= 1) return "success";
+    if (lossRate <= 3) return "warning";
+    return "danger";
   };
 
   if (results.error) {
     return (
-      <Card title="Test Results" className="border-red-200 dark:border-red-800">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-2">{results.error}</p>
-          {getStatusBadge()}
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="flex items-center">
+          <Badge variant="danger" className="mr-2">❌</Badge>
+          <span className="text-red-800 dark:text-red-200">{results.error}</span>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card title="Network Performance" subtitle="Your connection analysis">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${getMetricColor(+results.download, { good: 10, warning: 5 })}`}>
-            {results.download}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Mbps</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">Download</div>
-        </div>
-        
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${getMetricColor(+results.upload, { good: 5, warning: 2 })}`}>
-            {results.upload}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Mbps</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">Upload</div>
-        </div>
-        
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${getMetricColor(results.latency, { good: 50, warning: 100 })}`}>
-            {results.latency}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">ms</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">Latency</div>
-        </div>
-        
-        <div className="text-center">
-          <div className={`text-2xl font-bold ${getMetricColor(results.jitter, { good: 10, warning: 20 })}`}>
-            {results.jitter}
-          </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">ms</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">Jitter</div>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+        Network Performance Metrics
+      </h4>
       
-      <div className="flex justify-center">
-        {getStatusBadge()}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Download Speed */}
+        <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Download Speed
+            </span>
+            <Badge variant={getDownloadColor(results.download)}>
+              {parseFloat(results.download) >= 50 ? "Excellent" : 
+               parseFloat(results.download) >= 25 ? "Good" : 
+               parseFloat(results.download) >= 10 ? "Fair" : "Poor"}
+            </Badge>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {results.download} Mbps
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {parseFloat(results.download) >= 50 ? "4K video calls supported" :
+             parseFloat(results.download) >= 25 ? "HD video calls supported" :
+             parseFloat(results.download) >= 10 ? "SD video calls supported" : "May limit video quality"}
+          </div>
+        </div>
+
+        {/* Upload Speed */}
+        <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Upload Speed
+            </span>
+            <Badge variant={getUploadColor(results.upload)}>
+              {parseFloat(results.upload) >= 25 ? "Excellent" : 
+               parseFloat(results.upload) >= 10 ? "Good" : 
+               parseFloat(results.upload) >= 5 ? "Fair" : "Poor"}
+            </Badge>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {results.upload} Mbps
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {parseFloat(results.upload) >= 25 ? "High-quality video transmission" :
+             parseFloat(results.upload) >= 10 ? "Good video transmission" :
+             parseFloat(results.upload) >= 5 ? "Adequate transmission" : "May cause video issues"}
+          </div>
+        </div>
+
+        {/* Latency */}
+        <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Latency
+            </span>
+            <Badge variant={getLatencyColor(results.latency)}>
+              {results.latency <= 50 ? "Excellent" : 
+               results.latency <= 100 ? "Good" : 
+               results.latency <= 200 ? "Fair" : "Poor"}
+            </Badge>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {results.latency}ms
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {results.latency <= 50 ? "Minimal delay" :
+             results.latency <= 100 ? "Low delay" :
+             results.latency <= 200 ? "Moderate delay" : "High delay"}
+          </div>
+        </div>
+
+        {/* Jitter */}
+        <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Jitter
+            </span>
+            <Badge variant={getJitterColor(results.jitter)}>
+              {results.jitter <= 10 ? "Excellent" : 
+               results.jitter <= 20 ? "Good" : 
+               results.jitter <= 50 ? "Fair" : "Poor"}
+            </Badge>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {results.jitter}ms
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {results.jitter <= 10 ? "Very stable" :
+             results.jitter <= 20 ? "Stable" :
+             results.jitter <= 50 ? "Some variation" : "Unstable"}
+          </div>
+        </div>
       </div>
-    </Card>
+
+      {/* Additional Metrics Row */}
+      {(results.packetLossRate !== undefined || results.bandwidthScore) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Packet Loss Rate */}
+          {results.packetLossRate !== undefined && (
+            <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Packet Loss Rate
+                </span>
+                <Badge variant={getPacketLossColor(results.packetLossRate)}>
+                  {results.packetLossRate <= 1 ? "Excellent" : 
+                   results.packetLossRate <= 3 ? "Good" : "Poor"}
+                </Badge>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {results.packetLossRate}%
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {results.packetLossRate <= 1 ? "Minimal packet loss" :
+                 results.packetLossRate <= 3 ? "Low packet loss" : "High packet loss"}
+              </div>
+            </div>
+          )}
+
+          {/* Bandwidth Score */}
+          {results.bandwidthScore && (
+            <div className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Bandwidth Score
+                </span>
+                <Badge variant={parseFloat(results.bandwidthScore) >= 80 ? "success" : 
+                               parseFloat(results.bandwidthScore) >= 60 ? "warning" : "danger"}>
+                  {parseFloat(results.bandwidthScore) >= 80 ? "Excellent" : 
+                   parseFloat(results.bandwidthScore) >= 60 ? "Good" : "Poor"}
+                </Badge>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {results.bandwidthScore}/100
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Combined download and upload performance
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 } 

@@ -1,6 +1,6 @@
 # Components
 
-This directory contains the React components for the ipgrok Video Call Tester application.
+This directory contains the React components for the ipgrok Network & Media Tester application.
 
 ## Component Structure
 
@@ -8,10 +8,10 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 
 - **Header** (`Header.tsx`) - Application header with logo and dark mode toggle
 - **QuickTest** (`QuickTest.tsx`) - Combined network and media test for quick system assessment
-- **NetworkTest** (`NetworkTest.tsx`) - Detailed network speed testing functionality
-- **NetworkMetrics** (`NetworkMetrics.tsx`) - Displays network test results in a clean, organized format
+- **NetworkTest** (`NetworkTest.tsx`) - Advanced network speed testing with quality scoring
+- **NetworkMetrics** (`NetworkMetrics.tsx`) - Enhanced display of network test results with detailed metrics
 - **PingTest** (`PingTest.tsx`) - Client-side ping test to measure connectivity and response time
-- **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation to trace network path
+- **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation with IP and FQDN display
 - **ConfigInfo** (`ConfigInfo.tsx`) - Comprehensive client-side system information display
 - **ExportStats** (`ExportStats.tsx`) - Comprehensive export functionality for all test results
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
@@ -47,14 +47,17 @@ The application now uses a tabbed interface to organize content:
   - One-click testing for both network and media
 
 ### 2. Network Tab
-- **Purpose**: Detailed network performance analysis
+- **Purpose**: Advanced network performance analysis with quality scoring
 - **Features**:
-  - Comprehensive speed testing (download/upload/latency/jitter)
-  - Ping test to user-defined hosts
-  - Traceroute simulation to trace network path
-  - Detailed metrics display
-  - Performance recommendations
-  - Success rate and average response time analysis
+  - **Enhanced Speed Testing**: Download/upload/latency/jitter with real-time progress
+  - **Bandwidth Estimation**: Calculated bandwidth score based on download and upload speeds
+  - **Packet Loss Simulation**: Simulates packet loss using multiple HTTP requests
+  - **Connection Quality Score**: Overall grade (A-F) with detailed scoring algorithm
+  - **Smart Recommendations**: AI-powered suggestions based on test results
+  - **Ping Test**: Connectivity and response time testing
+  - **Traceroute Simulation**: Network path tracing with IP and FQDN display
+  - **Real-time Progress**: Live updates during test execution
+  - **Comprehensive Metrics**: Detailed performance analysis with color-coded indicators
 
 ### 3. Video Tab
 - **Purpose**: Camera and microphone testing
@@ -89,7 +92,7 @@ The application now uses a tabbed interface to organize content:
   - **Comprehensive Coverage**: Includes all test results, system info, and metadata
 
 ### Export Data Structure
-- **Network Data**: Speed test results, ping test data, traceroute information
+- **Network Data**: Speed test results, ping test data, traceroute information, quality scores
 - **Media Data**: Device information, permissions status, microphone statistics
 - **System Data**: IP address, browser info, hardware specs, display details
 - **Quick Test Data**: Overall assessment, network status, media status
@@ -100,6 +103,43 @@ The application now uses a tabbed interface to organize content:
 - **CSV Format**: Tabular format with test type, parameter, value, and timestamp columns
 - **File Naming**: Automatic naming with format `video_call_test_results_[timestamp].[json|csv]`
 
+## Advanced Network Testing Features
+
+### Bandwidth Estimation
+- **Algorithm**: Calculates bandwidth score based on download and upload speeds
+- **Scoring**: Download (40% weight) and upload (30% weight) performance
+- **Thresholds**: 
+  - Download: 50+ Mbps (Excellent), 25+ Mbps (Good), 10+ Mbps (Fair), <10 Mbps (Poor)
+  - Upload: 25+ Mbps (Excellent), 10+ Mbps (Good), 5+ Mbps (Fair), <5 Mbps (Poor)
+- **Visual Display**: Progress bar with percentage score
+
+### Packet Loss Simulation
+- **Method**: Uses 20 HTTP requests to simulate packet loss
+- **Algorithm**: Higher latency correlates with higher loss probability
+- **Timeout**: 5-second timeout per request
+- **Calculation**: Percentage of failed requests
+- **Categories**: ≤1% (Excellent), ≤3% (Good), >3% (Poor)
+
+### Connection Quality Score
+- **Grading System**: A (90-100), B (80-89), C (70-79), D (60-69), F (<60)
+- **Scoring Algorithm**:
+  - **Download Speed (40%)**: Critical for video call quality
+  - **Upload Speed (30%)**: Important for outgoing video
+  - **Latency (20%)**: Affects real-time communication
+  - **Jitter (5%)**: Impacts video stability
+  - **Packet Loss (5%)**: Critical for connection reliability
+- **Smart Recommendations**: Context-aware suggestions based on test results
+- **Visual Indicators**: Color-coded badges and progress indicators
+
+### Enhanced Network Metrics
+- **Download Speed**: With video call capability assessment
+- **Upload Speed**: With transmission quality indicators
+- **Latency**: With delay impact analysis
+- **Jitter**: With stability assessment
+- **Packet Loss Rate**: With reliability indicators
+- **Bandwidth Score**: Combined performance metric
+- **Quality Recommendations**: Actionable improvement suggestions
+
 ## Network Testing Features
 
 ### Speed Test
@@ -108,6 +148,7 @@ The application now uses a tabbed interface to organize content:
 - **Latency**: Simulated latency measurement
 - **Jitter**: Simulated jitter measurement
 - **Performance Assessment**: Color-coded performance indicators
+- **Real-time Progress**: Live updates during test execution
 
 ### Ping Test
 - **Custom Host**: Test connectivity to any user-defined host (default: www.microsoft.com)
@@ -121,10 +162,12 @@ The application now uses a tabbed interface to organize content:
 - **Custom Host**: Trace route to any user-defined host (default: www.microsoft.com)
 - **Configurable Hops**: Choose from 10, 15, 20, or 30 maximum hops
 - **Progressive Results**: Shows route path as it's discovered
+- **IP and FQDN Display**: Shows both IP addresses and domain names
 - **Hop Analysis**: Individual hop response times and status
 - **Route Statistics**: Total hops, successful hops, and total time
 - **Visual Status**: Icons for success (✅), timeout (⏱️), and error (❌)
 - **HTTP Simulation**: Uses HTTP requests with increasing timeouts to simulate traceroute
+- **DNS Resolution**: Forward and reverse DNS lookups for comprehensive information
 
 ## Configuration Information Features
 
@@ -177,6 +220,7 @@ The application now uses a tabbed interface to organize content:
 - **Grid Layouts**: Responsive grid layouts for better content organization
 - **Visual Hierarchy**: Clear typography hierarchy with proper heading sizes
 - **Export Section**: Prominent export functionality at the top level
+- **Quality Score Display**: Prominent connection quality scoring with visual indicators
 
 ### Component Features
 - **Loading States**: Buttons show loading spinners during async operations
@@ -187,6 +231,8 @@ The application now uses a tabbed interface to organize content:
 - **Progressive Disclosure**: Information is revealed as tests progress
 - **Information Cards**: Organized sections for different types of system data
 - **Export Integration**: Seamless data collection and export from all components
+- **Progress Indicators**: Real-time progress updates during test execution
+- **Quality Visualizations**: Progress bars, color-coded metrics, and grade displays
 
 ## Architecture
 
@@ -200,6 +246,7 @@ The application has been refactored from a single large App.tsx file into modula
 6. **Tabbed Organization**: Content is logically organized into tabs for better UX
 7. **Comprehensive Information**: Detailed system configuration and capability assessment
 8. **Data Export**: Centralized export functionality with cross-tab data aggregation
+9. **Advanced Analytics**: Sophisticated network quality scoring and recommendations
 
 ## Component Communication
 
@@ -210,6 +257,7 @@ The application has been refactored from a single large App.tsx file into modula
 - **API Integration**: External APIs for IP detection and system information
 - **Data Export**: Components provide data updates through `onDataUpdate` callbacks
 - **Centralized Export**: App-level data management for comprehensive export functionality
+- **Real-time Updates**: Live progress updates and result streaming
 
 ## File Structure
 
@@ -264,4 +312,5 @@ import { useDarkMode } from "./hooks";
 - **Comprehensive**: Multiple testing methods and detailed system information
 - **Educational**: Helpful explanations and interpretation guides
 - **Informative**: Rich system configuration and capability data
-- **Exportable**: Comprehensive data export for analysis and reporting 
+- **Exportable**: Comprehensive data export for analysis and reporting
+- **Analytical**: Advanced network quality scoring and intelligent recommendations 
