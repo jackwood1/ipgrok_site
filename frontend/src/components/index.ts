@@ -3,4 +3,6 @@ export { NetworkTest } from "./NetworkTest";
 export { NetworkMetrics } from "./NetworkMetrics";
 export { MediaTest } from "./MediaTest";
 export { QuickTest } from "./QuickTest";
+export { PingTest } from "./PingTest";
+export { TracerouteTest } from "./TracerouteTest";
 export { Footer } from "./Footer"; 

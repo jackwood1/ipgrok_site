@@ -2,6 +2,8 @@ import { useState } from "react";
 import { TestResults } from "../types";
 import { Card, Button, Badge } from "./ui";
 import { NetworkMetrics } from "./NetworkMetrics";
+import { PingTest } from "./PingTest";
+import { TracerouteTest } from "./TracerouteTest";
 
 interface NetworkTestProps {
   permissionsStatus: string;
@@ -54,33 +56,42 @@ export function NetworkTest({ permissionsStatus }: NetworkTestProps) {
   };
 
   return (
-    <Card 
-      title="Network Speed Test" 
-      subtitle="Test your internet connection for video calls"
-    >
-      {permissionsStatus !== "granted" && (
-        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-          <div className="flex items-center">
-            <Badge variant="warning" className="mr-2">⚠️</Badge>
-            <span className="text-sm text-yellow-800 dark:text-yellow-200">
-              Camera and mic permissions are not granted.
-            </span>
+    <div className="space-y-8">
+      {/* Speed Test */}
+      <Card 
+        title="Network Speed Test" 
+        subtitle="Test your internet connection for video calls"
+      >
+        {permissionsStatus !== "granted" && (
+          <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <div className="flex items-center">
+              <Badge variant="warning" className="mr-2">⚠️</Badge>
+              <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                Camera and mic permissions are not granted.
+              </span>
+            </div>
           </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <Button
+            onClick={runTest}
+            loading={loading}
+            size="lg"
+            className="flex-1"
+          >
+            {loading ? "Running test..." : testStarted ? "Re-run Test" : "Start Speed Test"}
+          </Button>
         </div>
-      )}
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <Button
-          onClick={runTest}
-          loading={loading}
-          size="lg"
-          className="flex-1"
-        >
-          {loading ? "Running test..." : testStarted ? "Re-run Test" : "Start Speed Test"}
-        </Button>
-      </div>
+        {results && <NetworkMetrics results={results} />}
+      </Card>
 
-      {results && <NetworkMetrics results={results} />}
-    </Card>
+      {/* Ping Test */}
+      <PingTest />
+
+      {/* Traceroute Test */}
+      <TracerouteTest />
+    </div>
   );
 } 

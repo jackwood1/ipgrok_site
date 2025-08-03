@@ -10,6 +10,8 @@ This directory contains the React components for the ipgrok Video Call Tester ap
 - **QuickTest** (`QuickTest.tsx`) - Combined network and media test for quick system assessment
 - **NetworkTest** (`NetworkTest.tsx`) - Detailed network speed testing functionality
 - **NetworkMetrics** (`NetworkMetrics.tsx`) - Displays network test results in a clean, organized format
+- **PingTest** (`PingTest.tsx`) - Client-side ping test to measure connectivity and response time
+- **TracerouteTest** (`TracerouteTest.tsx`) - Client-side traceroute simulation to trace network path
 - **MediaTest** (`MediaTest.tsx`) - Webcam and microphone testing with device selection and visualization
 - **Footer** (`Footer.tsx`) - Application footer with copyright information
 
@@ -45,10 +47,12 @@ The application now uses a tabbed interface to organize content:
 ### 2. Network Tab
 - **Purpose**: Detailed network performance analysis
 - **Features**:
-  - Comprehensive speed testing
+  - Comprehensive speed testing (download/upload/latency/jitter)
+  - Ping test to user-defined hosts
+  - Traceroute simulation to trace network path
   - Detailed metrics display
   - Performance recommendations
-  - Historical test results
+  - Success rate and average response time analysis
 
 ### 3. Video Tab
 - **Purpose**: Camera and microphone testing
@@ -57,6 +61,32 @@ The application now uses a tabbed interface to organize content:
   - Real-time video preview
   - Microphone activity visualization
   - Device compatibility testing
+
+## Network Testing Features
+
+### Speed Test
+- **Download Speed**: Measures download bandwidth using a 5MB test file
+- **Upload Speed**: Measures upload bandwidth using HTTP POST requests
+- **Latency**: Simulated latency measurement
+- **Jitter**: Simulated jitter measurement
+- **Performance Assessment**: Color-coded performance indicators
+
+### Ping Test
+- **Custom Host**: Test connectivity to any user-defined host (default: www.microsoft.com)
+- **Configurable Pings**: Choose from 1, 4, 8, or 10 ping attempts
+- **Real-time Results**: Shows individual ping results as they complete
+- **Statistics**: Success rate, average response time, and overall status
+- **Interpretation Guide**: Helpful guidelines for understanding results
+- **HTTP-based**: Uses HTTP requests to simulate ping (browser-compatible)
+
+### Traceroute Test
+- **Custom Host**: Trace route to any user-defined host (default: www.microsoft.com)
+- **Configurable Hops**: Choose from 10, 15, 20, or 30 maximum hops
+- **Progressive Results**: Shows route path as it's discovered
+- **Hop Analysis**: Individual hop response times and status
+- **Route Statistics**: Total hops, successful hops, and total time
+- **Visual Status**: Icons for success (✅), timeout (⏱️), and error (❌)
+- **HTTP Simulation**: Uses HTTP requests with increasing timeouts to simulate traceroute
 
 ## UI Improvements
 
@@ -78,6 +108,8 @@ The application now uses a tabbed interface to organize content:
 - **Error Handling**: Consistent error display with colored badges and messages
 - **Status Indicators**: Color-coded badges for different states (success, warning, error)
 - **Interactive Elements**: Hover states, focus rings, and smooth transitions
+- **Real-time Updates**: Results update as tests complete
+- **Progressive Disclosure**: Information is revealed as tests progress
 
 ## Architecture
 
@@ -114,6 +146,8 @@ src/
 │   ├── QuickTest.tsx
 │   ├── NetworkTest.tsx
 │   ├── NetworkMetrics.tsx
+│   ├── PingTest.tsx
+│   ├── TracerouteTest.tsx
 │   ├── MediaTest.tsx
 │   ├── Footer.tsx
 │   ├── index.ts
@@ -131,7 +165,7 @@ src/
 Import components from the index file:
 
 ```typescript
-import { Header, QuickTest, NetworkTest, MediaTest, Footer } from "./components";
+import { Header, QuickTest, NetworkTest, MediaTest, Footer, PingTest, TracerouteTest } from "./components";
 import { Card, Button, Badge, Tabs } from "./components/ui";
 import { useDarkMode } from "./hooks";
 ```
@@ -142,4 +176,6 @@ import { useDarkMode } from "./hooks";
 - **User-Friendly**: Intuitive interface with helpful tooltips and status indicators
 - **Performance-Focused**: Optimized for speed and responsiveness
 - **Accessible**: WCAG compliant with proper contrast and keyboard navigation
-- **Organized**: Tabbed interface for logical content organization 
+- **Organized**: Tabbed interface for logical content organization
+- **Comprehensive**: Multiple testing methods for thorough network analysis
+- **Educational**: Helpful explanations and interpretation guides 
