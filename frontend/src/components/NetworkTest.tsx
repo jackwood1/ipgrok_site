@@ -656,7 +656,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
       const start = performance.now();
       let downloadMbps: number;
       try {
-        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test");
+        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/100MB.test");
         const end = performance.now();
         const timeSec = (end - start) / 1000;
         downloadMbps = (5 * 8) / timeSec;
