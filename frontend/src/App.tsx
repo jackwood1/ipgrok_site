@@ -33,6 +33,7 @@ function App() {
         });
 
   const updateExportData = (type: string, data: any) => {
+    console.log('updateExportData called for Detailed Analysis:', { type, data, currentTest });
     setExportData(prev => ({
       ...prev,
       [type]: data
@@ -298,6 +299,7 @@ function App() {
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={(data: any) => updateExportData('networkData', data)}
                     onTestStart={() => handleTestStart('networkTest')}
+                    autoStart={true}
                     detailedAnalysisMode={true}
                   />
                 )}
