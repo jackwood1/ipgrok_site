@@ -32,6 +32,14 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   const [testProgress, setTestProgress] = useState<string>("");
 
   const lastDataSentRef = useRef<string>('');
+  
+  // Debug logging on component mount
+  console.log('NetworkTest component mounted with props:', { autoStart, quickTestMode, detailedAnalysisMode });
+
+  // Component mount effect
+  useEffect(() => {
+    console.log('NetworkTest: Component mounted, autoStart:', autoStart);
+  }, []);
 
   // Update export data when results change
   useEffect(() => {
@@ -61,15 +69,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
 
   // Auto-start test if autoStart is true
   useEffect(() => {
-    console.log('Auto-start effect:', { autoStart, testStarted, loading });
+    console.log('Auto-start effect triggered:', { autoStart, testStarted, loading });
     if (autoStart && !testStarted && !loading) {
       console.log('Auto-starting network test...');
+      // Use a longer timeout to ensure component is fully mounted
       setTimeout(() => {
         console.log('Executing runTest after timeout...');
-        runTest();
-      }, 500);
+        if (!testStarted && !loading) {
+          console.log('Calling runTest...');
+          runTest();
+        } else {
+          console.log('Test already started or loading, skipping runTest');
+        }
+      }, 1000);
     }
-  }, [autoStart, testStarted, loading]);
+  }, [autoStart]);
 
   const calculateBandwidthScore = (downloadMbps: number, uploadMbps: number): string => {
     const downloadScore = Math.min(100, (downloadMbps / 100) * 100);
@@ -321,7 +335,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
   };
 
   const runTest = async () => {
-    console.log('runTest called');
+    console.log('runTest called - starting network test');
     setTestStarted(true);
     setLoading(true);
     
@@ -437,16 +451,31 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, autoStart = false
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <Button
-            onClick={runTest}
-            loading={loading}
-            size="lg"
-            className="flex-1"
-          >
-            {loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Tests"}
-          </Button>
-        </div>
+        {/* Hide button in quick test mode since it auto-starts */}
+        {!quickTestMode && (
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <Button
+              onClick={runTest}
+              loading={loading}
+              size="lg"
+              className="flex-1"
+            >
+              {loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Tests"}
+            </Button>
+          </div>
+        )}
+        
+        {/* Show progress in quick test mode */}
+        {quickTestMode && loading && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center justify-center">
+              <div className="text-blue-600 dark:text-blue-400 text-center">
+                <div className="text-lg mb-2">🔄</div>
+                <div className="font-medium">{testProgress || "Running network test..."}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {results && (
           <div className="space-y-6">
