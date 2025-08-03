@@ -305,6 +305,7 @@ function App() {
                     onDataUpdate={(data: any) => updateExportData('mediaData', data)}
                     onTestStart={() => handleTestStart('mediaTest')}
                     autoStart={true}
+                    detailedAnalysisMode={true}
                   />
                 )}
                 {currentTest === "configInfo" && (

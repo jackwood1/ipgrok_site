@@ -7,6 +7,7 @@ interface MediaTestProps {
   onDataUpdate?: (data: any) => void;
   onTestStart?: () => void;
   autoStart?: boolean;
+  detailedAnalysisMode?: boolean;
 }
 
 interface VideoQualityMetrics {
@@ -35,7 +36,7 @@ interface RecordingTest {
   audioQuality: AudioQualityMetrics;
 }
 
-export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate, onTestStart, autoStart = false }: MediaTestProps) {
+export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate, onTestStart, autoStart = false, detailedAnalysisMode = false }: MediaTestProps) {
   const [devices, setDevices] = useState<{ microphone: string; camera: string }>({
     microphone: "",
     camera: "",
@@ -81,6 +82,26 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
     }
   }, [devices, permissionsStatus, micStats, videoQuality, audioQuality, codecSupport, recordingTest, onDataUpdate]);
 
+  // Mark test as complete in Detailed Analysis mode when all steps are done
+  useEffect(() => {
+    if (detailedAnalysisMode && onDataUpdate && permissionsStatus === "granted" && videoQuality && audioQuality && codecSupport) {
+      // Send completion signal
+      onDataUpdate({
+        testType: 'mediaTest',
+        data: {
+          devices,
+          permissions: permissionsStatus,
+          micStats,
+          videoQuality,
+          audioQuality,
+          codecSupport,
+          recordingTest,
+          completed: true
+        }
+      });
+    }
+  }, [detailedAnalysisMode, permissionsStatus, videoQuality, audioQuality, codecSupport, onDataUpdate, devices, micStats, recordingTest]);
+
   // Auto-start test if autoStart is true
   useEffect(() => {
     if (autoStart && !isTesting) {
@@ -94,22 +115,19 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
         }
         
         try {
-          // Request permissions first
-          await requestPermissions();
-          
-          // Get available devices
-          await getAvailableDevices();
-          
-          // Start video test
-          await startVideoTest();
-          
-          // Start microphone test
-          await startMicrophoneTest();
-          
-          // Test codec support
-          testCodecSupport();
-          
-          setTestProgress("Media tests completed!");
+          // For Detailed Analysis mode, just get devices and show guided interface
+          if (detailedAnalysisMode) {
+            await getAvailableDevices();
+            setTestProgress("Ready for manual testing");
+          } else {
+            // For other modes, run full automated tests
+            await requestPermissions();
+            await getAvailableDevices();
+            await startVideoTest();
+            await startMicrophoneTest();
+            testCodecSupport();
+            setTestProgress("Media tests completed!");
+          }
         } catch (error) {
           console.error("Media tests failed:", error);
           setTestProgress("Media tests failed");
@@ -120,7 +138,7 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
       
       startMediaTests();
     }
-  }, [autoStart]);
+  }, [autoStart, detailedAnalysisMode]);
 
   const getAvailableDevices = async () => {
     try {
@@ -565,6 +583,111 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
 
   return (
     <div className="space-y-8">
+      {/* Detailed Analysis Mode - Guided Interface */}
+      {detailedAnalysisMode && (
+        <Card title="Media Tests - Detailed Analysis" subtitle="Complete these tests to assess your media capabilities">
+          <div className="space-y-6">
+            {/* Step 1: Permissions */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Step 1: Grant Permissions</h4>
+                <Badge variant={permissionsStatus === "granted" ? "success" : "warning"}>
+                  {permissionsStatus === "granted" ? "✅ Complete" : "⏳ Pending"}
+                </Badge>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                Allow camera and microphone access to test your media devices.
+              </p>
+              {permissionsStatus !== "granted" && (
+                <Button onClick={requestPermissions} size="sm" variant="primary">
+                  Grant Permissions
+                </Button>
+              )}
+            </div>
+
+            {/* Step 2: Video Test */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Step 2: Video Quality Test</h4>
+                <Badge variant={videoQuality ? "success" : "warning"}>
+                  {videoQuality ? "✅ Complete" : "⏳ Pending"}
+                </Badge>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                Test your camera quality and performance metrics.
+              </p>
+              {permissionsStatus === "granted" && !videoQuality && (
+                <Button 
+                  onClick={startVideoTest} 
+                  loading={isTesting}
+                  size="sm" 
+                  variant="primary"
+                >
+                  Start Video Test
+                </Button>
+              )}
+            </div>
+
+            {/* Step 3: Microphone Test */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Step 3: Microphone Test</h4>
+                <Badge variant={audioQuality ? "success" : "warning"}>
+                  {audioQuality ? "✅ Complete" : "⏳ Pending"}
+                </Badge>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                Test your microphone quality and audio performance.
+              </p>
+              {permissionsStatus === "granted" && !audioQuality && (
+                <Button 
+                  onClick={startMicrophoneTest} 
+                  loading={isTesting}
+                  size="sm" 
+                  variant="primary"
+                >
+                  Start Microphone Test
+                </Button>
+              )}
+            </div>
+
+            {/* Step 4: Codec Support */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Step 4: Codec Support</h4>
+                <Badge variant={codecSupport ? "success" : "warning"}>
+                  {codecSupport ? "✅ Complete" : "⏳ Pending"}
+                </Badge>
+              </div>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                Check supported video and audio codecs.
+              </p>
+              {!codecSupport && (
+                <Button 
+                  onClick={testCodecSupport} 
+                  size="sm" 
+                  variant="primary"
+                >
+                  Check Codec Support
+                </Button>
+              )}
+            </div>
+
+            {/* Progress Summary */}
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">Progress Summary</h4>
+              <div className="text-sm text-green-800 dark:text-green-200">
+                {permissionsStatus === "granted" && videoQuality && audioQuality && codecSupport ? (
+                  <p>🎉 All media tests completed! Your device is ready for video calls and streaming.</p>
+                ) : (
+                  <p>Complete the steps above to assess your media capabilities for video calls and streaming.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Device Selection */}
       <Card title="Device Configuration" subtitle="Select your camera and microphone">
         {permissionsStatus !== "granted" && (
