@@ -181,8 +181,8 @@ function App() {
             />
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
+            <div className={`grid grid-cols-1 gap-8 ${(exportData.networkData || exportData.mediaData || exportData.systemData || exportData.quickTestData) ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+              <div className={`${(exportData.networkData || exportData.mediaData || exportData.systemData || exportData.quickTestData) ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
                 {/* Individual Test Components */}
                 {currentTest === "quickTest" && (
                   <QuickTest
@@ -219,25 +219,27 @@ function App() {
                 )}
               </div>
               <div className="lg:col-span-1">
-                {/* Export Stats Section */}
-                <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="space-y-4">
-                    <div>
-                      <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                        Export Test Results
-                      </h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Export comprehensive test results
-                      </p>
+                {/* Export Stats Section - Only show when there's data */}
+                {(exportData.networkData || exportData.mediaData || exportData.systemData || exportData.quickTestData) && (
+                  <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="space-y-4">
+                      <div>
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                          Export Test Results
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Export comprehensive test results
+                        </p>
+                      </div>
+                      <ExportStats
+                        networkData={exportData.networkData}
+                        mediaData={exportData.mediaData}
+                        systemData={exportData.systemData}
+                        quickTestData={exportData.quickTestData}
+                      />
                     </div>
-                    <ExportStats
-                      networkData={exportData.networkData}
-                      mediaData={exportData.mediaData}
-                      systemData={exportData.systemData}
-                      quickTestData={exportData.quickTestData}
-                    />
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
