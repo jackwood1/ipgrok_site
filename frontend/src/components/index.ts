@@ -8,4 +8,5 @@ export { TracerouteTest } from "./TracerouteTest";
 export { ConfigInfo } from "./ConfigInfo";
 export { ExportStats } from "./ExportStats";
 export { EmailResults } from "./EmailResults";
+export { Help } from "./Help";
 export { Footer } from "./Footer"; 
