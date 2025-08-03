@@ -4,9 +4,10 @@ import { Card, Button, Badge } from "./ui";
 interface TracerouteHop {
   hop: number;
   host: string;
+  ip: string;
+  fqdn: string;
   time: number;
   status: 'success' | 'timeout' | 'error';
-  ip?: string;
 }
 
 interface TracerouteTestProps {
@@ -32,6 +33,42 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
     }
   }, [results, host, onDataUpdate]);
 
+  const resolveIP = async (hostname: string): Promise<string> => {
+    try {
+      // Try to resolve IP using a DNS lookup service
+      const response = await fetch(`https://dns.google/resolve?name=${hostname}&type=A`);
+      const data = await response.json();
+      
+      if (data.Answer && data.Answer.length > 0) {
+        return data.Answer[0].data;
+      }
+      
+      // Fallback: try to get IP from the hostname itself
+      return hostname;
+    } catch {
+      // If DNS resolution fails, return the hostname
+      return hostname;
+    }
+  };
+
+  const getFQDN = async (ip: string, originalHost: string): Promise<string> => {
+    try {
+      // Try reverse DNS lookup
+      const response = await fetch(`https://dns.google/resolve?name=${ip}&type=PTR`);
+      const data = await response.json();
+      
+      if (data.Answer && data.Answer.length > 0) {
+        return data.Answer[0].data.replace(/\.$/, ''); // Remove trailing dot
+      }
+      
+      // If no PTR record, return the original hostname or IP
+      return originalHost !== ip ? originalHost : ip;
+    } catch {
+      // If reverse lookup fails, return the original hostname or IP
+      return originalHost !== ip ? originalHost : ip;
+    }
+  };
+
   const simulateHop = async (targetHost: string, hopNumber: number): Promise<TracerouteHop> => {
     const start = performance.now();
     const timeout = hopNumber * 1000; // Increase timeout for each hop
@@ -49,25 +86,43 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
       clearTimeout(timeoutId);
       const end = performance.now();
       
+      // Resolve IP and FQDN
+      const ip = await resolveIP(targetHost);
+      const fqdn = await getFQDN(ip, targetHost);
+      
       return {
         hop: hopNumber,
         host: targetHost,
+        ip,
+        fqdn,
         time: Math.round(end - start),
-        status: 'success',
-        ip: targetHost // In a real traceroute, this would be the actual IP
+        status: 'success'
       };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
+        // For timeout, still try to resolve IP and FQDN
+        const ip = await resolveIP(targetHost);
+        const fqdn = await getFQDN(ip, targetHost);
+        
         return {
           hop: hopNumber,
           host: targetHost,
+          ip,
+          fqdn,
           time: timeout,
           status: 'timeout'
         };
       }
+      
+      // For other errors, still try to resolve IP and FQDN
+      const ip = await resolveIP(targetHost);
+      const fqdn = await getFQDN(ip, targetHost);
+      
       return {
         hop: hopNumber,
         host: targetHost,
+        ip,
+        fqdn,
         time: 0,
         status: 'error'
       };
@@ -128,6 +183,11 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
       case 'error': return '❌';
       default: return '❓';
     }
+  };
+
+  const isIPAddress = (str: string): boolean => {
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    return ipRegex.test(str);
   };
 
   return (
@@ -222,14 +282,16 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
                       <span className="text-sm font-medium text-gray-900 dark:text-white min-w-[3rem]">
                         {result.hop}
                       </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {result.host}
-                      </span>
-                      {result.ip && result.ip !== result.host && (
-                        <span className="text-xs text-gray-500 dark:text-gray-500">
-                          ({result.ip})
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-900 dark:text-white font-medium">
+                          {result.fqdn}
                         </span>
-                      )}
+                        {result.ip !== result.fqdn && (
+                          <span className="text-xs text-gray-500 dark:text-gray-500 font-mono">
+                            {result.ip}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -244,6 +306,24 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
               </div>
             </div>
 
+            {/* Legend */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h5 className="font-medium text-gray-900 dark:text-white mb-2">Legend</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white mb-1">Display Format</div>
+                  <div>• <strong>FQDN:</strong> Fully Qualified Domain Name</div>
+                  <div>• <strong>IP:</strong> Resolved IP address (shown below FQDN)</div>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white mb-1">Status Icons</div>
+                  <div>• ✅ Success: Hop responded successfully</div>
+                  <div>• ⏱️ Timeout: Hop timed out</div>
+                  <div>• ❌ Error: Hop failed to respond</div>
+                </div>
+              </div>
+            </div>
+
             {/* Interpretation */}
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
@@ -251,8 +331,10 @@ export function TracerouteTest({ onDataUpdate }: TracerouteTestProps) {
               </h5>
               <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                 <p>• <strong>Hop Number:</strong> Each step in the network path</p>
+                <p>• <strong>FQDN:</strong> Human-readable domain name for each hop</p>
+                <p>• <strong>IP Address:</strong> Numerical IP address (shown when different from FQDN)</p>
                 <p>• <strong>Response Time:</strong> Time to reach each hop</p>
-                <p>• <strong>Status Icons:</strong> ✅ Success, ⏱️ Timeout, ❌ Error</p>
+                <p>• <strong>Status Icons:</strong> Visual indicators for hop status</p>
                 <p className="mt-2 text-xs">
                   Note: This is a simulated traceroute using HTTP requests. Real traceroute uses ICMP packets and shows actual network hops.
                 </p>

@@ -26,6 +26,8 @@ interface ExportData {
       results: Array<{
         hop: number;
         host: string;
+        ip: string;
+        fqdn: string;
         time: number;
         status: 'success' | 'timeout' | 'error';
       }>;
@@ -139,6 +141,14 @@ export function ExportStats({
         csvContent += `Traceroute,Host,${networkData.tracerouteTest.host},${new Date().toISOString()}\n`;
         csvContent += `Traceroute,Total Hops,${networkData.tracerouteTest.totalHops},${new Date().toISOString()}\n`;
         csvContent += `Traceroute,Successful Hops,${networkData.tracerouteTest.successfulHops},${new Date().toISOString()}\n`;
+        
+        // Add individual hop details
+        networkData.tracerouteTest.results.forEach((hop: any, index: number) => {
+          csvContent += `Traceroute Hop ${hop.hop},FQDN,${hop.fqdn},${new Date().toISOString()}\n`;
+          csvContent += `Traceroute Hop ${hop.hop},IP Address,${hop.ip},${new Date().toISOString()}\n`;
+          csvContent += `Traceroute Hop ${hop.hop},Response Time,${hop.time}ms,${new Date().toISOString()}\n`;
+          csvContent += `Traceroute Hop ${hop.hop},Status,${hop.status},${new Date().toISOString()}\n`;
+        });
       }
       
       // Add system data
