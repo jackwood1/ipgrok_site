@@ -4,9 +4,11 @@ interface LandingPageProps {
   onStartQuickTest: () => void;
   onStartDetailedTest: () => void;
   onStartManualTest: () => void;
+  onShowAbout?: () => void;
+  onShowContact?: () => void;
 }
 
-export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManualTest }: LandingPageProps) {
+export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManualTest, onShowAbout, onShowContact }: LandingPageProps) {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -44,6 +46,31 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
           >
             ⚙️ Manual Test
           </Button>
+        </div>
+        
+        {/* About & Contact Links */}
+        <div className="text-center mt-4 space-y-2">
+          {onShowAbout && (
+            <div>
+              <button
+                onClick={onShowAbout}
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2 transition-colors"
+              >
+                ℹ️ Learn more about IPGrok
+              </button>
+            </div>
+          )}
+          
+          {onShowContact && (
+            <div>
+              <button
+                onClick={onShowContact}
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2 transition-colors"
+              >
+                📧 Contact us for support
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

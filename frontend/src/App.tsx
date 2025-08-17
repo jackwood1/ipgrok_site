@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, AboutUs, ContactUs } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -14,6 +14,8 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showContact, setShowContact] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [resetPrevious, setResetPrevious] = useState(false);
             const [completedTests, setCompletedTests] = useState({
@@ -30,51 +32,100 @@ function App() {
           networkData: null as any,
           mediaData: null as any,
           systemData: null as any,
+          advancedTestsData: null as any,
         });
 
   const updateExportData = (type: string, data: any) => {
-    setExportData(prev => ({
-      ...prev,
-      [type]: data
-    }));
-    
-    // Mark test as completed when data is received
-    const testMapping: { [key: string]: string } = {
-      'networkData': 'networkTest',
-      'mediaData': 'mediaTest',
-      'systemData': 'configInfo',
-      'advancedTestsData': 'advancedTests'
-    };
-    
-    // Special handling for quick test completion
-    if (type === 'networkData' && data && data.testType === 'quickTest') {
-      handleTestComplete('quickTest');
-    }
-    
-    const testName = testMapping[type];
-    if (testName && data) {
-      handleTestComplete(testName);
+    // Handle new data format from components
+    if (data && data.testType) {
+      // Components are sending { testType: '...', data: ... }
+      const componentType = data.testType;
+      const componentData = data.data;
       
-      // If network data includes advanced tests, mark advanced tests as complete
-      if (type === 'networkData' && data.advancedTests) {
-        handleTestComplete('advancedTests');
+      // Map component test types to export data keys
+      const componentMapping: { [key: string]: string } = {
+        'networkTest': 'networkData',
+        'mediaTest': 'mediaData',
+        'systemInfo': 'systemData',
+        'advancedTests': 'advancedTestsData'
+      };
+      
+      const exportKey = componentMapping[componentType];
+      if (exportKey) {
+        setExportData(prev => ({
+          ...prev,
+          [exportKey]: componentData
+        }));
+        
+        // Mark test as completed
+        const testMapping: { [key: string]: string } = {
+          'networkTest': 'networkTest',
+          'mediaTest': 'mediaTest',
+          'systemInfo': 'configInfo',
+          'advancedTests': 'advancedTests'
+        };
+        
+        const testName = testMapping[componentType];
+        if (testName) {
+          handleTestComplete(testName);
+          
+          // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
+          if (componentType === 'networkTest' && currentTest === 'networkTest') {
+            setCurrentTest('configInfo');
+          }
+          if (componentType === 'systemInfo' && currentTest === 'configInfo') {
+            setCurrentTest('advancedTests');
+          }
+          if (componentType === 'advancedTests' && currentTest === 'advancedTests') {
+            setCurrentTest('mediaTest');
+          }
+        }
+      }
+    } else {
+      // Handle legacy format (direct type mapping)
+      setExportData(prev => ({
+        ...prev,
+        [type]: data
+      }));
+      
+      // Mark test as completed when data is received
+      const testMapping: { [key: string]: string } = {
+        'networkData': 'networkTest',
+        'mediaData': 'mediaTest',
+        'systemData': 'configInfo',
+        'advancedTestsData': 'advancedTests'
+      };
+      
+      // Special handling for quick test completion
+      if (type === 'networkData' && data && data.testType === 'quickTest') {
+        handleTestComplete('quickTest');
       }
       
-      // Handle system info from NetworkTest component
-      if (data && data.testType === 'systemInfo') {
-        updateExportData('systemData', data.data);
-        handleTestComplete('configInfo');
-      }
-      
-      // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
-      if (type === 'networkData' && currentTest === 'networkTest') {
-        setCurrentTest('configInfo');
-      }
-      if (type === 'systemData' && currentTest === 'configInfo') {
-        setCurrentTest('advancedTests');
-      }
-      if (type === 'advancedTestsData' && currentTest === 'advancedTests') {
-        setCurrentTest('mediaTest');
+      const testName = testMapping[type];
+      if (testName && data) {
+        handleTestComplete(testName);
+        
+        // If network data includes advanced tests, mark advanced tests as complete
+        if (type === 'networkData' && data.advancedTests) {
+          handleTestComplete('advancedTests');
+        }
+        
+        // Handle system info from NetworkTest component
+        if (data && data.testType === 'systemInfo') {
+          updateExportData('systemData', data.data);
+          handleTestComplete('configInfo');
+        }
+        
+        // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
+        if (type === 'networkData' && currentTest === 'networkTest') {
+          setCurrentTest('configInfo');
+        }
+        if (type === 'systemData' && currentTest === 'configInfo') {
+          setCurrentTest('advancedTests');
+        }
+        if (type === 'advancedTestsData' && currentTest === 'advancedTests') {
+          setCurrentTest('mediaTest');
+        }
       }
     }
   };
@@ -84,6 +135,22 @@ function App() {
   };
 
   const startQuickTest = () => {
+    // Reset all states for a clean Quick Test
+    setExportData({
+      networkData: null,
+      mediaData: null,
+      systemData: null,
+      advancedTestsData: null,
+    });
+    setCompletedTests({
+      quickTest: false,
+      networkTest: false,
+      mediaTest: false,
+      advancedTests: false,
+      configInfo: false,
+    });
+    setRunningTests([]);
+    
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
@@ -109,21 +176,22 @@ function App() {
   };
 
   const confirmDetailedTest = () => {
-    // Reset previous data if checkbox is checked
-    if (resetPrevious) {
-      setExportData({
-        networkData: null,
-        mediaData: null,
-        systemData: null,
-      });
-      setCompletedTests({
-        quickTest: false,
-        networkTest: false,
-        mediaTest: false,
-        advancedTests: false,
-        configInfo: false,
-      });
-    }
+    // Always reset data and completed tests for Detailed Analysis
+    // This ensures a clean slate and prevents loops from existing data
+    setExportData({
+      networkData: null,
+      mediaData: null,
+      systemData: null,
+      advancedTestsData: null,
+    });
+    setCompletedTests({
+      quickTest: false,
+      networkTest: false,
+      mediaTest: false,
+      advancedTests: false,
+      configInfo: false,
+    });
+    setRunningTests([]);
     
     setShowDetailedConfirm(false);
     setCurrentTest("networkTest"); // Start with Network Tests first
@@ -184,15 +252,41 @@ function App() {
 
 
   const goHome = () => {
-    console.log('Going home, currentTest before:', currentTest);
+    // Reset all states when going home
     setShowLanding(true);
     setShowResults(false);
     setShowShare(false);
     setShowHelp(false);
     setShowDetailedConfirm(false);
+    setShowAbout(false);
+    setShowContact(false);
     setCurrentTest("");
     setRunningTests([]);
-    console.log('Home state set, currentTest reset to empty string');
+    // Don't reset exportData here - let user keep their results
+  };
+
+  const showAboutPage = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setShowHelp(false);
+    setShowDetailedConfirm(false);
+    setShowAbout(true);
+    setShowContact(false);
+    setCurrentTest("");
+    setRunningTests([]);
+  };
+
+  const showContactPage = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setShowHelp(false);
+    setShowDetailedConfirm(false);
+    setShowAbout(false);
+    setShowContact(true);
+    setCurrentTest("");
+    setRunningTests([]);
   };
 
   const memoizedQuickTestUpdate = useCallback((data: any) => {
@@ -228,17 +322,23 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} />
+      <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} onShowAbout={showAboutPage} onShowContact={showContactPage} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {showHelp ? (
           <Help />
+        ) : showAbout ? (
+          <AboutUs />
+        ) : showContact ? (
+          <ContactUs onGoHome={goHome} />
         ) : showLanding ? (
           <LandingPage 
             onStartQuickTest={startQuickTest}
             onStartDetailedTest={startDetailedTest}
             onStartManualTest={startManualTest}
+            onShowAbout={showAboutPage}
+            onShowContact={showContactPage}
           />
         ) : showDetailedConfirm ? (
           <DetailedTestConfirm
@@ -338,6 +438,7 @@ function App() {
                 {currentTest === "configInfo" && (
                   <ConfigInfo 
                     onDataUpdate={memoizedSystemDataUpdate}
+                    autoStart={true}
                   />
                 )}
                 {currentTest === "email" && (

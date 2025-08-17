@@ -5,9 +5,11 @@ interface HeaderProps {
   onToggleDarkMode: () => void;
   onShowHelp?: () => void;
   onGoHome?: () => void;
+  onShowAbout?: () => void;
+  onShowContact?: () => void;
 }
 
-export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome }: HeaderProps) {
+export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onShowAbout, onShowContact }: HeaderProps) {
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,6 +26,26 @@ export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome }: Hea
           </div>
           
           <div className="flex items-center gap-3">
+            {onShowContact && (
+              <Button
+                onClick={onShowContact}
+                variant="secondary"
+                size="sm"
+              >
+                📧 Contact
+              </Button>
+            )}
+            
+            {onShowAbout && (
+              <Button
+                onClick={onShowAbout}
+                variant="secondary"
+                size="sm"
+              >
+                ℹ️ About
+              </Button>
+            )}
+            
             {onShowHelp && (
               <Button
                 onClick={onShowHelp}

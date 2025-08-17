@@ -71,13 +71,16 @@ export function MediaTest({ permissionsStatus, onPermissionsChange, onDataUpdate
   useEffect(() => {
     if (onDataUpdate) {
       onDataUpdate({
-        devices,
-        permissions: permissionsStatus,
-        micStats,
-        videoQuality,
-        audioQuality,
-        codecSupport,
-        recordingTest,
+        testType: 'mediaTest',
+        data: {
+          devices,
+          permissions: permissionsStatus,
+          micStats,
+          videoQuality,
+          audioQuality,
+          codecSupport,
+          recordingTest,
+        }
       });
     }
   }, [devices, permissionsStatus, micStats, videoQuality, audioQuality, codecSupport, recordingTest, onDataUpdate]);

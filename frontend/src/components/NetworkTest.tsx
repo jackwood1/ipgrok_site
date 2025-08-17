@@ -70,9 +70,12 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
           tracerouteTest: tracerouteData,
         });
         onDataUpdate({
-          speedTest: results,
-          pingTest: pingData,
-          tracerouteTest: tracerouteData,
+          testType: 'networkTest',
+          data: {
+            speedTest: results,
+            pingTest: pingData,
+            tracerouteTest: tracerouteData,
+          }
         });
         console.log('NetworkTest: onDataUpdate called successfully');
         lastDataSentRef.current = currentData;

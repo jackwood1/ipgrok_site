@@ -16,4 +16,6 @@ export { ResultsDashboard } from "./ResultsDashboard";
 export { Footer } from "./Footer";
 export { ManualTest } from "./ManualTest";
 export { DetailedTestConfirm } from "./DetailedTestConfirm";
-export { AdvancedNetworkTests } from "./AdvancedNetworkTests"; 
+export { AdvancedNetworkTests } from "./AdvancedNetworkTests";
+export { AboutUs } from "./AboutUs";
+export { ContactUs } from "./ContactUs"; 

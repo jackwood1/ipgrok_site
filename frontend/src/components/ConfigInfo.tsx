@@ -31,9 +31,10 @@ interface SystemInfo {
 
 interface ConfigInfoProps {
   onDataUpdate?: (data: any) => void;
+  autoStart?: boolean;
 }
 
-export function ConfigInfo({ onDataUpdate }: ConfigInfoProps) {
+export function ConfigInfo({ onDataUpdate, autoStart = false }: ConfigInfoProps) {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,138 +42,149 @@ export function ConfigInfo({ onDataUpdate }: ConfigInfoProps) {
   // Update export data when system info changes
   useEffect(() => {
     if (onDataUpdate && systemInfo) {
-      onDataUpdate(systemInfo);
+      onDataUpdate({
+        testType: 'systemInfo',
+        data: systemInfo
+      });
     }
   }, [systemInfo, onDataUpdate]);
 
-  useEffect(() => {
-    const gatherSystemInfo = async () => {
+  const gatherSystemInfo = async () => {
+    try {
+      // Get IP address
+      let ipAddress = "Unknown";
       try {
-        // Get IP address
-        let ipAddress = "Unknown";
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        ipAddress = data.ip;
+      } catch {
         try {
-          const response = await fetch("https://api.ipify.org?format=json");
+          const response = await fetch("https://httpbin.org/ip");
           const data = await response.json();
-          ipAddress = data.ip;
+          ipAddress = data.origin;
         } catch {
-          try {
-            const response = await fetch("https://httpbin.org/ip");
-            const data = await response.json();
-            ipAddress = data.origin;
-          } catch {
-            ipAddress = "Could not determine";
-          }
+          ipAddress = "Could not determine";
         }
-
-        // Get connection info
-        let connectionType = "Unknown";
-        let effectiveType = "Unknown";
-        let downlink = 0;
-        let rtt = 0;
-
-        if ('connection' in navigator) {
-          const connection = (navigator as any).connection;
-          connectionType = connection.effectiveType || "Unknown";
-          effectiveType = connection.effectiveType || "Unknown";
-          downlink = connection.downlink || 0;
-          rtt = connection.rtt || 0;
-        }
-
-        // Get battery info
-        let batteryLevel = undefined;
-        let batteryCharging = undefined;
-
-        if ('getBattery' in navigator) {
-          try {
-            const battery = await (navigator as any).getBattery();
-            batteryLevel = Math.round(battery.level * 100);
-            batteryCharging = battery.charging;
-          } catch {
-            // Battery API not available
-          }
-        }
-
-        // Get hardware info
-        let cores = undefined;
-        let memory = undefined;
-
-        if ('hardwareConcurrency' in navigator) {
-          cores = (navigator as any).hardwareConcurrency;
-        }
-
-        if ('deviceMemory' in navigator) {
-          memory = (navigator as any).deviceMemory;
-        }
-
-        // Get WebGL info
-        let webGL = false;
-        let webGLVendor = undefined;
-        let webGLRenderer = undefined;
-
-        try {
-          const canvas = document.createElement('canvas');
-          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
-          if (gl) {
-            webGL = true;
-            webGLVendor = gl.getParameter(gl.VENDOR) as string;
-            webGLRenderer = gl.getParameter(gl.RENDERER) as string;
-          }
-        } catch {
-          webGL = false;
-        }
-
-        const info: SystemInfo = {
-          ipAddress,
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          languages: navigator.languages || [],
-          cookieEnabled: navigator.cookieEnabled,
-          doNotTrack: navigator.doNotTrack,
-          onLine: navigator.onLine,
-          connectionType,
-          effectiveType,
-          downlink,
-          rtt,
-          screenResolution: `${screen.width}x${screen.height}`,
-          colorDepth: screen.colorDepth,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          dateTime: new Date().toLocaleString(),
-          localStorage: (() => {
-            try {
-              localStorage.setItem('test', 'test');
-              localStorage.removeItem('test');
-              return true;
-            } catch {
-              return false;
-            }
-          })(),
-          sessionStorage: (() => {
-            try {
-              sessionStorage.setItem('test', 'test');
-              sessionStorage.removeItem('test');
-              return true;
-            } catch {
-              return false;
-            }
-          })(),
-          webGL,
-          webGLVendor,
-          webGLRenderer,
-          batteryLevel,
-          batteryCharging,
-          cores,
-          memory,
-        };
-
-        setSystemInfo(info);
-      } catch (err) {
-        setError("Failed to gather system information");
-      } finally {
-        setLoading(false);
       }
-    };
 
+      // Get connection info
+      let connectionType = "Unknown";
+      let effectiveType = "Unknown";
+      let downlink = 0;
+      let rtt = 0;
+
+      if ('connection' in navigator) {
+        const connection = (navigator as any).connection;
+        connectionType = connection.effectiveType || "Unknown";
+        effectiveType = connection.effectiveType || "Unknown";
+        downlink = connection.downlink || 0;
+        rtt = connection.rtt || 0;
+      }
+
+      // Get battery info
+      let batteryLevel = undefined;
+      let batteryCharging = undefined;
+
+      if ('getBattery' in navigator) {
+        try {
+          const battery = await (navigator as any).getBattery();
+          batteryLevel = Math.round(battery.level * 100);
+          batteryCharging = battery.charging;
+        } catch {
+          // Battery API not available
+        }
+      }
+
+      // Get hardware info
+      let cores = undefined;
+      let memory = undefined;
+
+      if ('hardwareConcurrency' in navigator) {
+        cores = (navigator as any).hardwareConcurrency;
+      }
+
+      if ('deviceMemory' in navigator) {
+        memory = (navigator as any).deviceMemory;
+      }
+
+      // Get WebGL info
+      let webGL = false;
+      let webGLVendor = undefined;
+      let webGLRenderer = undefined;
+
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
+        if (gl) {
+          webGL = true;
+          webGLVendor = gl.getParameter(gl.VENDOR) as string;
+          webGLRenderer = gl.getParameter(gl.RENDERER) as string;
+        }
+      } catch {
+        webGL = false;
+      }
+
+      const info: SystemInfo = {
+        ipAddress,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages || [],
+        cookieEnabled: navigator.cookieEnabled,
+        doNotTrack: navigator.doNotTrack,
+        onLine: navigator.onLine,
+        connectionType,
+        effectiveType,
+        downlink,
+        rtt,
+        screenResolution: `${screen.width}x${screen.height}`,
+        colorDepth: screen.colorDepth,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        dateTime: new Date().toLocaleString(),
+        localStorage: (() => {
+          try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
+        sessionStorage: (() => {
+          try {
+            sessionStorage.setItem('test', 'test');
+            sessionStorage.removeItem('test');
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
+        webGL,
+        webGLVendor,
+        webGLRenderer,
+        batteryLevel,
+        batteryCharging,
+        cores,
+        memory,
+      };
+
+      setSystemInfo(info);
+    } catch (err) {
+      setError("Failed to gather system information");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-start if autoStart is true
+  useEffect(() => {
+    if (autoStart && !systemInfo && !loading) {
+      gatherSystemInfo();
+    }
+  }, [autoStart]);
+
+  // Initial load of system info
+  useEffect(() => {
     gatherSystemInfo();
   }, []);
 
