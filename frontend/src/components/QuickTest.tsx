@@ -313,6 +313,51 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     </p>
                   </div>
 
+                  {/* Overall Assessment */}
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      📊 Overall Assessment
+                    </h4>
+                    <div className="space-y-3">
+                      {networkData?.speedTest && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Network Performance</span>
+                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                            parseFloat(networkData.speedTest.download) > 25 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                            parseFloat(networkData.speedTest.download) > 10 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                          }`}>
+                            {parseFloat(networkData.speedTest.download) > 25 ? 'Excellent' :
+                             parseFloat(networkData.speedTest.download) > 10 ? 'Good' : 'Needs Improvement'}
+                          </span>
+                        </div>
+                      )}
+                      {systemData && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">System Compatibility</span>
+                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                            systemData.webGL ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}>
+                            {systemData.webGL ? 'Compatible' : 'Limited Support'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Video Call Readiness</span>
+                        <span className={`font-medium px-3 py-1 rounded-full text-sm ${
+                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 
+                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 'Ready' :
+                           networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 'Fair' : 'Not Ready'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Results Summary */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Network Summary */}
@@ -392,53 +437,6 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                         </div>
                       </div>
                     )}
-                  </div>
-
-
-                  
-                  {/* Overall Assessment */}
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      📊 Overall Assessment
-                    </h4>
-                    <div className="space-y-3">
-                      {networkData?.speedTest && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Network Performance</span>
-                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
-                            parseFloat(networkData.speedTest.download) > 25 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                            parseFloat(networkData.speedTest.download) > 10 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          }`}>
-                            {parseFloat(networkData.speedTest.download) > 25 ? 'Excellent' :
-                             parseFloat(networkData.speedTest.download) > 10 ? 'Good' : 'Needs Improvement'}
-                          </span>
-                        </div>
-                      )}
-                      {systemData && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">System Compatibility</span>
-                          <span className={`font-medium px-3 py-1 rounded-full text-sm ${
-                            systemData.webGL ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                          }`}>
-                            {systemData.webGL ? 'Compatible' : 'Limited Support'}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Video Call Readiness</span>
-                        <span className={`font-medium px-3 py-1 rounded-full text-sm ${
-                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 
-                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 
-                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
-                          {networkData?.speedTest && parseFloat(networkData.speedTest.download) > 10 && systemData?.webGL ? 'Ready' :
-                           networkData?.speedTest && parseFloat(networkData.speedTest.download) > 5 ? 'Fair' : 'Not Ready'}
-                        </span>
-                      </div>
-                    </div>
                   </div>
 
                   {/* Recommendations */}

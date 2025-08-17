@@ -274,20 +274,6 @@ function App() {
               >
                 📤 Share
               </Button>
-              <Button
-                onClick={toggleAboutUs}
-                variant="secondary"
-                size="sm"
-              >
-                ℹ️ About Us
-              </Button>
-              <Button
-                onClick={toggleContactUs}
-                variant="secondary"
-                size="sm"
-              >
-                📧 Contact Us
-              </Button>
             </div>
 
             {/* Test Progress - Hide when running Quick Test, Manual Test, or DNS Tests */}
@@ -345,7 +331,10 @@ function App() {
         )}
       </main>
 
-      <Footer />
+      <Footer 
+        onShowAboutUs={toggleAboutUs}
+        onShowContactUs={toggleContactUs}
+      />
     </div>
   );
 }

@@ -1057,6 +1057,42 @@ export function DnsTests() {
                       </div>
                     </div>
 
+                    {/* ISP Information */}
+                    <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                      <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-4 flex items-center gap-2">
+                        🏢 ISP & Network Details
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h5 className="font-medium text-indigo-800 dark:text-indigo-200 mb-2">Network Provider</h5>
+                          <div className="text-sm text-indigo-700 dark:text-indigo-300 space-y-1">
+                            <div><span className="font-medium">Connection Type:</span> {(navigator as any).connection?.effectiveType || 'Unknown'}</div>
+                            <div><span className="font-medium">Network Type:</span> {(navigator as any).connection?.type || 'Unknown'}</div>
+                            <div><span className="font-medium">Downlink Speed:</span> {(navigator as any).connection?.downlink || 'Unknown'} Mbps</div>
+                            <div><span className="font-medium">Round Trip Time:</span> {(navigator as any).connection?.rtt || 'Unknown'} ms</div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h5 className="font-medium text-indigo-800 dark:text-indigo-200 mb-2">Network Features</h5>
+                          <div className="text-sm text-indigo-700 dark:text-indigo-300 space-y-1">
+                            <div><span className="font-medium">Save Data Mode:</span> {(navigator as any).connection?.saveData ? 'Enabled' : 'Disabled'}</div>
+                            <div><span className="font-medium">Network Priority:</span> {(navigator as any).connection?.downlinkMax || 'Not Specified'}</div>
+                            <div><span className="font-medium">IP Version:</span> {window.location.protocol === 'https:' ? 'IPv4/IPv6' : 'IPv4'}</div>
+                            <div><span className="font-medium">Secure Connection:</span> {window.location.protocol === 'https:' ? 'Yes (HTTPS)' : 'No (HTTP)'}</div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* ISP Detection Note */}
+                      <div className="mt-4 p-3 bg-indigo-100 dark:bg-indigo-800/30 rounded-lg">
+                        <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                          <strong>💡 Note:</strong> ISP identification requires external services and may not be available due to privacy restrictions. 
+                          For detailed ISP information, consider using specialized network testing tools or contacting your internet service provider directly.
+                        </p>
+                      </div>
+                    </div>
+
                     {/* Helpful Information */}
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                       <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-4 flex items-center gap-2">
