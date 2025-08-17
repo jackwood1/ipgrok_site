@@ -1,4 +1,5 @@
 import { Button } from "./ui";
+import { APP_VERSION } from '../config/version';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -20,9 +21,14 @@ export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onSho
             title="Click to go home"
           >
             <img src="/logo.png" alt="Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-              ipgrok
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                ipgrok
+              </h1>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                v{APP_VERSION}
+              </span>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">

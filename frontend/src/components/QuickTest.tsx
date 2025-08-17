@@ -14,6 +14,8 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
   const [networkData, setNetworkData] = useState<any>(null);
   const [systemData, setSystemData] = useState<any>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [networkProgress, setNetworkProgress] = useState<string>("");
+  const [systemProgress, setSystemProgress] = useState<string>("");
 
   // Update parent component when all tests complete
   useEffect(() => {
@@ -34,12 +36,24 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
     console.log('QuickTest: Network test completed with data:', data);
     setNetworkData(data);
     setCurrentStep('system');
+    setNetworkProgress("Network test completed!");
+  };
+
+  // Handle network test progress updates
+  const handleNetworkProgress = (progress: string) => {
+    setNetworkProgress(progress);
   };
 
   // Handle system info completion
   const handleSystemComplete = (data: any) => {
     setSystemData(data);
     setCurrentStep('complete');
+    setSystemProgress("System information gathered!");
+  };
+
+  // Handle system info progress updates
+  const handleSystemProgress = (progress: string) => {
+    setSystemProgress(progress);
   };
 
   // Start the quick test sequence
@@ -49,6 +63,8 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
     setCurrentStep('network');
     setNetworkData(null);
     setSystemData(null);
+    setNetworkProgress("");
+    setSystemProgress("");
   };
 
   const getStepStatus = (step: 'network' | 'system' | 'complete') => {
@@ -142,6 +158,15 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Testing download, upload, and connection quality
                     </p>
+                    {/* Progress indicator for network test */}
+                    {getStepStatus('network') === 'running' && networkProgress && (
+                      <div className="mt-2 p-2 bg-blue-100 dark:bg-blue-800 rounded text-xs text-blue-800 dark:text-blue-200">
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                          <span>{networkProgress}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -150,7 +175,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
                     : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                 }`}>
-                  <div className="text-2xl">{getStepIcon('system')}</div>
+                  <div className="text-1xl">{getStepIcon('system')}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium text-gray-900 dark:text-white">
@@ -165,6 +190,15 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Gathering device and browser information
                     </p>
+                    {/* Progress indicator for system info */}
+                    {getStepStatus('system') === 'running' && systemProgress && (
+                      <div className="mt-2 p-2 bg-green-100 dark:bg-green-800 rounded text-xs text-green-800 dark:text-green-200">
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600"></div>
+                          <span>{systemProgress}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -193,9 +227,29 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
               {/* Current Test Component */}
               {currentStep === 'network' && (
                 <div className="mt-6">
+                  {/* Enhanced Progress Display */}
+                  {networkProgress && (
+                    <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <div>
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Network Test in Progress</h4>
+                            <p className="text-sm text-blue-700 dark:text-blue-300">{networkProgress}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-blue-600 dark:text-blue-400">Step 1 of 2</div>
+                          <div className="text-sm font-medium text-blue-900 dark:text-blue-100">Network</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <NetworkTest 
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={handleNetworkComplete}
+                    onProgressUpdate={handleNetworkProgress}
                     autoStart={true}
                     quickTestMode={true}
                   />
@@ -204,6 +258,25 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
 
               {currentStep === 'system' && (
                 <div className="mt-6">
+                  {/* Enhanced Progress Display */}
+                  {systemProgress && (
+                    <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-200 dark:border-green-700 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                          <div>
+                            <h4 className="font-medium text-green-900 dark:text-green-100">System Information Gathering</h4>
+                            <p className="text-sm text-green-700 dark:text-green-300">{systemProgress}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-green-600 dark:text-green-400">Step 2 of 2</div>
+                          <div className="text-sm font-medium text-green-900 dark:text-green-100">System</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <ConfigInfo 
                     onDataUpdate={handleSystemComplete}
                   />

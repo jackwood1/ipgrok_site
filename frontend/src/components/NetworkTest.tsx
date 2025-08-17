@@ -9,6 +9,7 @@ interface NetworkTestProps {
   permissionsStatus: string;
   onDataUpdate?: (data: any) => void;
   onTestStart?: () => void;
+  onProgressUpdate?: (progress: string) => void;
   autoStart?: boolean;
   quickTestMode?: boolean;
   detailedAnalysisMode?: boolean;
@@ -24,13 +25,16 @@ interface EnhancedTestResults extends TestResults {
 
 
 
-export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
+export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onProgressUpdate, autoStart = false, quickTestMode = false, detailedAnalysisMode = false }: NetworkTestProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [results, setResults] = useState<EnhancedTestResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [pingData, setPingData] = useState<any>(null);
   const [tracerouteData, setTracerouteData] = useState<any>(null);
   const [testProgress, setTestProgress] = useState<string>("");
+  
+  // Check if we're in development mode
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   const lastDataSentRef = useRef<string>('');
   
@@ -119,6 +123,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
     let successfulPings = 0;
     
     setTestProgress("Testing packet loss...");
+    if (onProgressUpdate) onProgressUpdate("Testing packet loss...");
     
     for (let i = 0; i < testCount; i++) {
       try {
@@ -308,25 +313,91 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
 
   const gatherSystemInfo = async () => {
     setTestProgress("Gathering system information...");
+    if (onProgressUpdate) onProgressUpdate("Gathering system information...");
     
-    // Get IP address
+    // Get IP address with multiple fallbacks
     let ipAddress = 'Unknown';
     try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      ipAddress = data.ip;
+      // Try multiple IP services with fallbacks
+      const ipServices = [
+        'https://api.ipify.org?format=json',
+        'https://api64.ipify.org?format=json',
+        'https://httpbin.org/ip'
+      ];
+      
+      for (const service of ipServices) {
+        try {
+          const response = await fetch(service, { 
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (service.includes('httpbin')) {
+              ipAddress = data.origin;
+            } else {
+              ipAddress = data.ip;
+            }
+            console.log('IP address obtained from:', service);
+            break;
+          }
+        } catch (serviceError) {
+          const errorMessage = serviceError instanceof Error ? serviceError.message : 'Unknown error';
+          console.log(`IP service ${service} failed:`, errorMessage);
+          continue;
+        }
+      }
     } catch (error) {
-      console.error('Failed to get IP address:', error);
+      console.error('All IP address services failed:', error);
+      ipAddress = 'Local Development';
     }
 
-    // Get geolocation
+    // Get geolocation with fallbacks
     let location = 'Unknown';
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      location = `${data.city}, ${data.country_name}`;
+      // Try multiple geolocation services
+      const geoServices = [
+        'https://ipapi.co/json/',
+        'https://ipinfo.io/json',
+        'https://httpbin.org/headers'
+      ];
+      
+      for (const service of geoServices) {
+        try {
+          const response = await fetch(service, { 
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (service.includes('ipapi.co')) {
+              location = `${data.city || 'Unknown'}, ${data.country_name || 'Unknown'}`;
+            } else if (service.includes('ipinfo.io')) {
+              location = `${data.city || 'Unknown'}, ${data.country || 'Unknown'}`;
+            } else if (service.includes('httpbin')) {
+              // httpbin doesn't provide real location, use as fallback
+              location = 'Location Unavailable';
+            }
+            console.log('Location obtained from:', service);
+            break;
+          }
+        } catch (serviceError) {
+          const errorMessage = serviceError instanceof Error ? serviceError.message : 'Unknown error';
+          console.log(`Geolocation service ${service} failed:`, errorMessage);
+          continue;
+        }
+      }
     } catch (error) {
-      console.error('Failed to get location:', error);
+      console.error('All geolocation services failed:', error);
+      location = 'Development Environment';
     }
 
     const systemInfo = {
@@ -372,6 +443,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
       
       // Download test
       setTestProgress("Testing download speed...");
+      if (onProgressUpdate) onProgressUpdate("Testing download speed...");
       console.log("Starting download test...");
       const start = performance.now();
       let downloadMbps: number;
@@ -383,12 +455,29 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
         console.log("Download test completed, speed:", downloadMbps, "Mbps");
       } catch (downloadError) {
         console.error("Download test failed:", downloadError);
-        throw downloadError;
+        if (isDevelopment) {
+          console.log("Development mode: Using simulated download speed");
+          downloadMbps = Math.random() * 100 + 50; // Random between 50-150 Mbps
+        } else {
+          throw downloadError;
+        }
       }
       
       // Upload test
       setTestProgress("Testing upload speed...");
-      const uploadMbps = await runUploadTest();
+      if (onProgressUpdate) onProgressUpdate("Testing upload speed...");
+      let uploadMbps: string;
+      try {
+        uploadMbps = await runUploadTest();
+      } catch (uploadError) {
+        console.error("Upload test failed:", uploadError);
+        if (isDevelopment) {
+          console.log("Development mode: Using simulated upload speed");
+          uploadMbps = (Math.random() * 50 + 10).toFixed(2); // Random between 10-60 Mbps
+        } else {
+          throw uploadError;
+        }
+      }
       
       // Packet loss test
       const packetLossRate = await simulatePacketLoss();
@@ -421,6 +510,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
 
       console.log("Network test completed!");
       setTestProgress("Network test completed!");
+      if (onProgressUpdate) onProgressUpdate("Network test completed!");
       
     } catch (err) {
       setResults({ 
@@ -436,6 +526,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
     } finally {
       setLoading(false);
       setTestProgress("");
+      if (onProgressUpdate) onProgressUpdate("");
     }
   };
 
@@ -462,6 +553,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, auto
 
   return (
     <div className="space-y-8">
+      {/* Development Mode Warning */}
+      {isDevelopment && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
+            <div>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Development Mode</h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Running locally - some external services may be unavailable. Tests will use fallback data when possible.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Speed Test */}
       <Card 
         title="Detailed Advanced Analysis" 
