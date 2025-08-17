@@ -23,7 +23,7 @@ export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onSho
             <img src="/logo.png" alt="Logo" className="h-8 w-8" />
             <div className="flex flex-col">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                ipgrok
+                IPGrok
               </h1>
               <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
                 v{APP_VERSION}
