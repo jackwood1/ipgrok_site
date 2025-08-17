@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests, ContactUs, AboutUs } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -14,6 +14,8 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
+  const [showContactUs, setShowContactUs] = useState(false);
+  const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [resetPrevious, setResetPrevious] = useState(false);
   const [isQuickTestMode, setIsQuickTestMode] = useState(false);
@@ -85,6 +87,14 @@ function App() {
 
   const toggleHelp = () => {
     setShowHelp(!showHelp);
+  };
+
+  const toggleContactUs = () => {
+    setShowContactUs(!showContactUs);
+  };
+
+  const toggleAboutUs = () => {
+    setShowAboutUs(!showAboutUs);
   };
 
   const startQuickTest = () => {
@@ -222,6 +232,8 @@ function App() {
     setShowResults(false);
     setShowShare(false);
     setShowHelp(false);
+    setShowContactUs(false);
+    setShowAboutUs(false);
     setIsQuickTestMode(false);
     setShowDetailedConfirm(false);
     setCurrentTest("");
@@ -268,6 +280,10 @@ function App() {
 
         {showHelp ? (
           <Help />
+        ) : showContactUs ? (
+          <ContactUs />
+        ) : showAboutUs ? (
+          <AboutUs />
         ) : showLanding ? (
           <LandingPage 
             onStartQuickTest={startQuickTest}
@@ -320,6 +336,20 @@ function App() {
                 size="sm"
               >
                 📤 Share
+              </Button>
+              <Button
+                onClick={toggleAboutUs}
+                variant="secondary"
+                size="sm"
+              >
+                ℹ️ About Us
+              </Button>
+              <Button
+                onClick={toggleContactUs}
+                variant="secondary"
+                size="sm"
+              >
+                📧 Contact Us
               </Button>
             </div>
 

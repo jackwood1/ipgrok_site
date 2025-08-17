@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests, ContactUs, AboutUs } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -12,6 +12,8 @@ function App() {
     const [showResults, setShowResults] = useState(false);
     const [showShare, setShowShare] = useState(false);
     const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
+    const [showContactUs, setShowContactUs] = useState(false);
+    const [showAboutUs, setShowAboutUs] = useState(false);
     const [currentTest, setCurrentTest] = useState("");
     const [resetPrevious, setResetPrevious] = useState(false);
     const [isQuickTestMode, setIsQuickTestMode] = useState(false);
@@ -74,6 +76,12 @@ function App() {
     };
     const toggleHelp = () => {
         setShowHelp(!showHelp);
+    };
+    const toggleContactUs = () => {
+        setShowContactUs(!showContactUs);
+    };
+    const toggleAboutUs = () => {
+        setShowAboutUs(!showAboutUs);
     };
     const startQuickTest = () => {
         // Reset all states for a clean Quick Test
@@ -193,6 +201,8 @@ function App() {
         setShowResults(false);
         setShowShare(false);
         setShowHelp(false);
+        setShowContactUs(false);
+        setShowAboutUs(false);
         setIsQuickTestMode(false);
         setShowDetailedConfirm(false);
         setCurrentTest("");
@@ -224,7 +234,7 @@ function App() {
     const memoizedSystemDataUpdate = useCallback((data) => {
         updateExportData('systemData', data);
     }, []);
-    return (_jsxs("div", { className: "min-h-screen bg-gray-50 dark:bg-gray-900", children: [_jsx(Header, { darkMode: darkMode, onToggleDarkMode: toggleDarkMode, onShowHelp: toggleHelp, onGoHome: goHome }), _jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: showHelp ? (_jsx(Help, {})) : showLanding ? (_jsx(LandingPage, { onStartQuickTest: startQuickTest, onStartDetailedTest: startDetailedTest, onStartManualTest: startManualTest, onStartDnsTests: startDnsTests })) : showDetailedConfirm ? (_jsx(DetailedTestConfirm, { resetPrevious: resetPrevious, onResetPreviousChange: setResetPrevious, onConfirm: confirmDetailedTest, onCancel: goHome })) : showResults ? (_jsx(ResultsDashboard, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData, onShareResults: showShareResults, onExportResults: handleExportResults })) : showShare ? (_jsx(ShareResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })) : (_jsxs("div", { className: "space-y-8", children: [_jsxs("div", { className: "flex flex-wrap gap-4", children: [_jsx(Button, { onClick: goHome, variant: "secondary", size: "sm", children: "\uD83C\uDFE0 Home" }), _jsx(Button, { onClick: showResultsDashboard, variant: "secondary", size: "sm", children: "\uD83D\uDCCA Results" }), _jsx(Button, { onClick: showShareResults, variant: "secondary", size: "sm", children: "\uD83D\uDCE4 Share" })] }), currentTest !== "quickTest" && currentTest !== "manualTest" && currentTest !== "dnsTests" && (_jsx(TestProgress, { completedTests: completedTests, currentTest: currentTest, runningTests: runningTests, onTestClick: handleTestClick })), _jsx("div", { className: "grid grid-cols-1 gap-8", children: _jsxs("div", { className: "lg:col-span-1", children: [currentTest === "quickTest" && (_jsx(QuickTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedQuickTestUpdate })), currentTest === "networkTest" && (_jsx(NetworkTest, { permissionsStatus: permissionsStatus, onDataUpdate: memoizedNetworkTestUpdate, onTestStart: () => handleTestStart('networkTest'), autoStart: true, detailedAnalysisMode: true })), currentTest === "advancedTests" && (_jsx(AdvancedNetworkTests, { onDataUpdate: memoizedAdvancedTestsUpdate, onTestStart: () => handleTestStart('advancedTests'), autoStart: true })), currentTest === "mediaTest" && (_jsx(MediaTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedMediaTestUpdate, onTestStart: () => handleTestStart('mediaTest'), autoStart: true, detailedAnalysisMode: true })), currentTest === "configInfo" && (_jsx(ConfigInfo, { onDataUpdate: memoizedSystemDataUpdate })), currentTest === "email" && (_jsx(EmailResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })), currentTest === "manualTest" && (_jsx(ManualTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: (data) => {
+    return (_jsxs("div", { className: "min-h-screen bg-gray-50 dark:bg-gray-900", children: [_jsx(Header, { darkMode: darkMode, onToggleDarkMode: toggleDarkMode, onShowHelp: toggleHelp, onGoHome: goHome }), _jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: showHelp ? (_jsx(Help, {})) : showContactUs ? (_jsx(ContactUs, {})) : showAboutUs ? (_jsx(AboutUs, {})) : showLanding ? (_jsx(LandingPage, { onStartQuickTest: startQuickTest, onStartDetailedTest: startDetailedTest, onStartManualTest: startManualTest, onStartDnsTests: startDnsTests })) : showDetailedConfirm ? (_jsx(DetailedTestConfirm, { resetPrevious: resetPrevious, onResetPreviousChange: setResetPrevious, onConfirm: confirmDetailedTest, onCancel: goHome })) : showResults ? (_jsx(ResultsDashboard, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData, onShareResults: showShareResults, onExportResults: handleExportResults })) : showShare ? (_jsx(ShareResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })) : (_jsxs("div", { className: "space-y-8", children: [_jsxs("div", { className: "flex flex-wrap gap-4", children: [_jsx(Button, { onClick: goHome, variant: "secondary", size: "sm", children: "\uD83C\uDFE0 Home" }), _jsx(Button, { onClick: showResultsDashboard, variant: "secondary", size: "sm", children: "\uD83D\uDCCA Results" }), _jsx(Button, { onClick: showShareResults, variant: "secondary", size: "sm", children: "\uD83D\uDCE4 Share" }), _jsx(Button, { onClick: toggleAboutUs, variant: "secondary", size: "sm", children: "\u2139\uFE0F About Us" }), _jsx(Button, { onClick: toggleContactUs, variant: "secondary", size: "sm", children: "\uD83D\uDCE7 Contact Us" })] }), currentTest !== "quickTest" && currentTest !== "manualTest" && currentTest !== "dnsTests" && (_jsx(TestProgress, { completedTests: completedTests, currentTest: currentTest, runningTests: runningTests, onTestClick: handleTestClick })), _jsx("div", { className: "grid grid-cols-1 gap-8", children: _jsxs("div", { className: "lg:col-span-1", children: [currentTest === "quickTest" && (_jsx(QuickTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedQuickTestUpdate })), currentTest === "networkTest" && (_jsx(NetworkTest, { permissionsStatus: permissionsStatus, onDataUpdate: memoizedNetworkTestUpdate, onTestStart: () => handleTestStart('networkTest'), autoStart: true, detailedAnalysisMode: true })), currentTest === "advancedTests" && (_jsx(AdvancedNetworkTests, { onDataUpdate: memoizedAdvancedTestsUpdate, onTestStart: () => handleTestStart('advancedTests'), autoStart: true })), currentTest === "mediaTest" && (_jsx(MediaTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedMediaTestUpdate, onTestStart: () => handleTestStart('mediaTest'), autoStart: true, detailedAnalysisMode: true })), currentTest === "configInfo" && (_jsx(ConfigInfo, { onDataUpdate: memoizedSystemDataUpdate })), currentTest === "email" && (_jsx(EmailResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })), currentTest === "manualTest" && (_jsx(ManualTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: (data) => {
                                             // Handle manual test data
                                             if (data.testName === 'network') {
                                                 updateExportData('networkData', data.data);
