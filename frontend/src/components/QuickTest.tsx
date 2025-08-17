@@ -19,10 +19,12 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
   useEffect(() => {
     if (networkData && systemData && onDataUpdate) {
       onDataUpdate({
-        networkData,
-        systemData,
         testType: 'quickTest',
-        completedAt: new Date().toISOString()
+        data: {
+          networkData,
+          systemData,
+          completedAt: new Date().toISOString()
+        }
       });
     }
   }, [networkData, systemData, onDataUpdate]);

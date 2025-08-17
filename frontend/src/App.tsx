@@ -47,7 +47,8 @@ function App() {
         'networkTest': 'networkData',
         'mediaTest': 'mediaData',
         'systemInfo': 'systemData',
-        'advancedTests': 'advancedTestsData'
+        'advancedTests': 'advancedTestsData',
+        'quickTest': 'quickTestData'
       };
       
       const exportKey = componentMapping[componentType];
@@ -62,7 +63,8 @@ function App() {
           'networkTest': 'networkTest',
           'mediaTest': 'mediaTest',
           'systemInfo': 'configInfo',
-          'advancedTests': 'advancedTests'
+          'advancedTests': 'advancedTests',
+          'quickTest': 'quickTest'
         };
         
         const testName = testMapping[componentType];
@@ -291,15 +293,18 @@ function App() {
 
   const memoizedQuickTestUpdate = useCallback((data: any) => {
     // Handle quick test data - it contains both network and system data
-    if (data.networkData) {
-      updateExportData('networkData', data.networkData);
-    }
-    if (data.systemData) {
-      updateExportData('systemData', data.systemData);
-    }
-    // Mark quick test as complete when both tests are done
-    if (data.networkData && data.systemData) {
-      handleTestComplete('quickTest');
+    if (data.testType === 'quickTest' && data.data) {
+      const { networkData, systemData } = data.data;
+      if (networkData) {
+        updateExportData('networkData', networkData);
+      }
+      if (systemData) {
+        updateExportData('systemData', systemData);
+      }
+      // Mark quick test as complete when both tests are done
+      if (networkData && systemData) {
+        handleTestComplete('quickTest');
+      }
     }
   }, []);
 
