@@ -394,32 +394,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     )}
                   </div>
 
-                  {/* Debug Information - Collapsible */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4 overflow-hidden">
-                    <button
-                      onClick={() => setShowDebug(!showDebug)}
-                      className="w-full p-4 text-left flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                    >
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                        🐛 Debug Info
-                        <span className="text-xs text-blue-600 dark:text-blue-300">
-                          (Click to {showDebug ? 'hide' : 'show'})
-                        </span>
-                      </h4>
-                      <span className="text-blue-600 dark:text-blue-300 text-lg">
-                        {showDebug ? '▼' : '▶'}
-                      </span>
-                    </button>
-                    {showDebug && (
-                      <div className="p-4 border-t border-blue-200 dark:border-blue-800">
-                        <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                          <div>Network Data: {JSON.stringify(networkData, null, 2)}</div>
-                          <div>System Data: {JSON.stringify(systemData, null, 2)}</div>
-                          <div>Current Step: {currentStep}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+
                   
                   {/* Overall Assessment */}
                   <div className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -488,6 +463,33 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                         <p>• Run additional tests for a more comprehensive assessment of your system.</p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Debug Information - Collapsible */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setShowDebug(!showDebug)}
+                      className="w-full p-4 text-left flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                      <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                        🐛 Debug Info
+                        <span className="text-xs text-blue-600 dark:text-blue-300">
+                          (Click to {showDebug ? 'hide' : 'show'})
+                        </span>
+                      </h4>
+                      <span className="text-blue-600 dark:text-blue-300 text-lg">
+                        {showDebug ? '▼' : '▶'}
+                      </span>
+                    </button>
+                    {showDebug && (
+                      <div className="p-4 border-t border-blue-200 dark:border-blue-800">
+                        <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                          <div>Network Data: {JSON.stringify(networkData, null, 2)}</div>
+                          <div>System Data: {JSON.stringify(systemData, null, 2)}</div>
+                          <div>Current Step: {currentStep}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Buttons */}

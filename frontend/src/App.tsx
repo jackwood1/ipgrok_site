@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, AboutUs, ContactUs } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, AboutUs, ContactUs, DnsTests } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -177,6 +177,15 @@ function App() {
     console.log('Manual Test started, currentTest set to: manualTest');
   };
 
+  const startDnsTests = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setShowDetailedConfirm(false);
+    setCurrentTest("dnsTests");
+    setRunningTests([]);
+  };
+
   const confirmDetailedTest = () => {
     // Always reset data and completed tests for Detailed Analysis
     // This ensures a clean slate and prevents loops from existing data
@@ -342,6 +351,7 @@ function App() {
             onStartQuickTest={startQuickTest}
             onStartDetailedTest={startDetailedTest}
             onStartManualTest={startManualTest}
+            onStartDnsTests={startDnsTests}
             onShowAbout={showAboutPage}
             onShowContact={showContactPage}
           />
@@ -468,6 +478,9 @@ function App() {
                       }
                     }}
                   />
+                )}
+                {currentTest === "dnsTests" && (
+                  <DnsTests />
                 )}
               </div>
 

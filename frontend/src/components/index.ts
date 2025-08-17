@@ -12,6 +12,7 @@ export { Help } from "./Help";
 export { JitterTest } from "./JitterTest";
 export { LandingPage } from "./LandingPage";
 export { LocalNetworkTest } from "./LocalNetworkTest";
+export { DnsTests } from "./DnsTests";
 export { ManualTest } from "./ManualTest";
 export { PacketLossTest } from "./PacketLossTest";
 export { ShareResults } from "./ShareResults";
