@@ -16,6 +16,7 @@ function App() {
   const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [resetPrevious, setResetPrevious] = useState(false);
+  const [isQuickTestMode, setIsQuickTestMode] = useState(false);
             const [completedTests, setCompletedTests] = useState({
     quickTest: false,
     networkTest: false,
@@ -68,13 +69,14 @@ function App() {
       }
       
       // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
-      if (type === 'networkData' && currentTest === 'networkTest') {
+      // Only auto-progress if we're not in Quick Test mode
+      if (type === 'networkData' && currentTest === 'networkTest' && !data.testType && !isQuickTestMode) {
         setCurrentTest('configInfo');
       }
-      if (type === 'systemData' && currentTest === 'configInfo') {
+      if (type === 'systemData' && currentTest === 'configInfo' && !data.testType && !isQuickTestMode) {
         setCurrentTest('advancedTests');
       }
-      if (type === 'advancedTestsData' && currentTest === 'advancedTests') {
+      if (type === 'advancedTestsData' && currentTest === 'advancedTests' && !data.testType && !isQuickTestMode) {
         setCurrentTest('mediaTest');
       }
     }
@@ -105,6 +107,7 @@ function App() {
     setShowResults(false);
     setShowShare(false);
     setCurrentTest("quickTest");
+    setIsQuickTestMode(true);
   };
 
   const startDetailedTest = () => {
@@ -112,6 +115,7 @@ function App() {
     setShowResults(false);
     setShowShare(false);
     setShowDetailedConfirm(true);
+    setIsQuickTestMode(false);
   };
 
   const startManualTest = () => {
@@ -122,6 +126,7 @@ function App() {
     setShowDetailedConfirm(false);
     setCurrentTest("manualTest");
     setRunningTests([]);
+    setIsQuickTestMode(false);
     console.log('Manual Test started, currentTest set to: manualTest');
   };
 
@@ -131,6 +136,7 @@ function App() {
     setShowShare(false);
     setShowDetailedConfirm(false);
     setCurrentTest("dnsTests");
+    setIsQuickTestMode(false);
   };
 
   const confirmDetailedTest = () => {
@@ -215,6 +221,7 @@ function App() {
     setShowResults(false);
     setShowShare(false);
     setShowHelp(false);
+    setIsQuickTestMode(false);
     setShowDetailedConfirm(false);
     setCurrentTest("");
     setRunningTests([]);
