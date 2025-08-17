@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -123,6 +123,14 @@ function App() {
     setCurrentTest("manualTest");
     setRunningTests([]);
     console.log('Manual Test started, currentTest set to: manualTest');
+  };
+
+  const startDnsTests = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setShowDetailedConfirm(false);
+    setCurrentTest("dnsTests");
   };
 
   const confirmDetailedTest = () => {
@@ -257,6 +265,7 @@ function App() {
             onStartQuickTest={startQuickTest}
             onStartDetailedTest={startDetailedTest}
             onStartManualTest={startManualTest}
+            onStartDnsTests={startDnsTests}
           />
         ) : showDetailedConfirm ? (
           <DetailedTestConfirm
@@ -380,6 +389,9 @@ function App() {
                       }
                     }}
                   />
+                )}
+                {currentTest === "dnsTests" && (
+                  <DnsTests />
                 )}
               </div>
 
