@@ -5,6 +5,8 @@ import { MediaTest } from "./MediaTest";
 import { ConfigInfo } from "./ConfigInfo";
 import { PingTest } from "./PingTest";
 import { TracerouteTest } from "./TracerouteTest";
+import { JitterTest } from "./JitterTest";
+import { PacketLossTest } from "./PacketLossTest";
 
 interface ManualTestProps {
   permissionsStatus: string;
@@ -18,6 +20,8 @@ interface TestStatus {
   system: 'not-started' | 'running' | 'completed' | 'failed';
   ping: 'not-started' | 'running' | 'completed' | 'failed';
   traceroute: 'not-started' | 'running' | 'completed' | 'failed';
+  jitter: 'not-started' | 'running' | 'completed' | 'failed';
+  packetLoss: 'not-started' | 'running' | 'completed' | 'failed';
 }
 
 export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdate }: ManualTestProps) {
@@ -26,7 +30,9 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
     media: 'not-started',
     system: 'not-started',
     ping: 'not-started',
-    traceroute: 'not-started'
+    traceroute: 'not-started',
+    jitter: 'not-started',
+    packetLoss: 'not-started'
   });
 
   const [testData, setTestData] = useState<any>({
@@ -34,7 +40,9 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
     media: null,
     system: null,
     ping: null,
-    traceroute: null
+    traceroute: null,
+    jitter: null,
+    packetLoss: null
   });
 
   const [activeTest, setActiveTest] = useState<string | null>(null);
@@ -91,14 +99,18 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
       media: 'not-started',
       system: 'not-started',
       ping: 'not-started',
-      traceroute: 'not-started'
+      traceroute: 'not-started',
+      jitter: 'not-started',
+      packetLoss: 'not-started'
     });
     setTestData({
       network: null,
       media: null,
       system: null,
       ping: null,
-      traceroute: null
+      traceroute: null,
+      jitter: null,
+      packetLoss: null
     });
     setActiveTest(null);
     setViewingResults(null);
@@ -143,6 +155,20 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
       description: 'Network path analysis and hop details',
       duration: '15-30 seconds',
       icon: '🛣️'
+    },
+    {
+      id: 'jitter',
+      name: 'Jitter Test',
+      description: 'Measure network stability and latency variation',
+      duration: '30-60 seconds',
+      icon: '📊'
+    },
+    {
+      id: 'packetLoss',
+      name: 'Packet Loss Test',
+      description: 'Test network reliability and data delivery',
+      duration: '20-40 seconds',
+      icon: '📦'
     }
   ];
 
@@ -272,6 +298,18 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
             {activeTest === 'traceroute' && (
               <TracerouteTest
                 onDataUpdate={(data) => handleTestComplete('traceroute', data)}
+              />
+            )}
+            
+            {activeTest === 'jitter' && (
+              <JitterTest
+                onDataUpdate={(data) => handleTestComplete('jitter', data)}
+              />
+            )}
+            
+            {activeTest === 'packetLoss' && (
+              <PacketLossTest
+                onDataUpdate={(data) => handleTestComplete('packetLoss', data)}
               />
             )}
           </div>
