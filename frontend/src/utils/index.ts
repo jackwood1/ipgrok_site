@@ -1,1 +1,11 @@
-export { generateUUID, getClientUUID, getExistingClientUUID } from './uuid';
+export { 
+  generateUUID, 
+  getClientUUID, 
+  getExistingClientUUID, 
+  getClientInfo, 
+  getExistingClientInfo, 
+  updateClientPublicIP,
+  generateSessionId 
+} from './uuid';
+
+export type { ClientInfo } from './uuid';

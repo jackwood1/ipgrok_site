@@ -1,5 +1,5 @@
 import { Button } from "./ui";
-import { getClientUUID } from "../utils";
+import { getClientInfo } from "../utils";
 
 export function ClientInfo() {
   return (
@@ -28,10 +28,10 @@ export function ClientInfo() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium">UUID:</span>
                   <code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
-                    {getClientUUID()}
+                    {getClientInfo().uuid}
                   </code>
                   <button
-                    onClick={() => navigator.clipboard.writeText(getClientUUID())}
+                    onClick={() => navigator.clipboard.writeText(getClientInfo().uuid)}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
                     title="Copy to clipboard"
                   >
@@ -42,6 +42,33 @@ export function ClientInfo() {
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400">
               <p>This unique identifier helps track your test results and maintain privacy. It's stored locally in your browser and not shared with external servers.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Client Statistics */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            📊 Client Statistics
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h5 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Visit Information</h5>
+              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <div><span className="font-medium">Created:</span> {new Date(getClientInfo().createdAt).toLocaleString()}</div>
+                <div><span className="font-medium">Last Seen:</span> {new Date(getClientInfo().lastSeen).toLocaleString()}</div>
+                <div><span className="font-medium">Visit Count:</span> {getClientInfo().visitCount}</div>
+                <div><span className="font-medium">Session ID:</span> <code className="text-xs">{getClientInfo().sessionId}</code></div>
+              </div>
+            </div>
+            <div>
+              <h5 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Network Information</h5>
+              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <div><span className="font-medium">Network Type:</span> {getClientInfo().networkType || 'Unknown'}</div>
+                <div><span className="font-medium">RTT:</span> {getClientInfo().rtt || 'Unknown'} ms</div>
+                <div><span className="font-medium">Downlink:</span> {getClientInfo().downlink || 'Unknown'} Mbps</div>
+                <div><span className="font-medium">Public IP:</span> {getClientInfo().publicIp || 'Not detected'}</div>
+              </div>
             </div>
           </div>
         </div>

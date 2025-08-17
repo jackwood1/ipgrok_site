@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
-import { getClientUUID } from "./utils";
+import { getClientInfo, ClientInfo } from "./utils";
 
 function App() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -28,11 +28,11 @@ function App() {
   });
   const [runningTests, setRunningTests] = useState<string[]>([]);
 
-  // Initialize client UUID on component mount
+  // Initialize client info on component mount
   useEffect(() => {
-    const uuid = getClientUUID();
-    setClientUUID(uuid);
-    console.log('Client UUID initialized:', uuid);
+    const clientInfo = getClientInfo();
+    setClientUUID(clientInfo.uuid);
+    console.log('Client info initialized:', clientInfo);
   }, []);
 
   // Data management for export functionality
@@ -347,7 +347,7 @@ function App() {
                   <DnsTests />
                 )}
                 {currentTest === "clientInfo" && (
-                  <ClientInfo />
+                  <ClientInfoComponent />
                 )}
               </div>
 

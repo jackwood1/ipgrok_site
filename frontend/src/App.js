@@ -1,9 +1,9 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useCallback, useEffect } from "react";
-import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo } from "./components";
+import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent } from "./components";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
-import { getClientUUID } from "./utils";
+import { getClientInfo } from "./utils";
 function App() {
     const { darkMode, toggleDarkMode } = useDarkMode();
     const [permissionsStatus, setPermissionsStatus] = useState(() => localStorage.getItem("mediaPermissions") || "unknown");
@@ -23,11 +23,11 @@ function App() {
         mediaTest: false,
     });
     const [runningTests, setRunningTests] = useState([]);
-    // Initialize client UUID on component mount
+    // Initialize client info on component mount
     useEffect(() => {
-        const uuid = getClientUUID();
-        setClientUUID(uuid);
-        console.log('Client UUID initialized:', uuid);
+        const clientInfo = getClientInfo();
+        setClientUUID(clientInfo.uuid);
+        console.log('Client info initialized:', clientInfo);
     }, []);
     // Data management for export functionality
     const [exportData, setExportData] = useState({
@@ -205,6 +205,6 @@ function App() {
                                             else if (data.testName === 'system') {
                                                 updateExportData('systemData', data.data);
                                             }
-                                        } })), currentTest === "dnsTests" && (_jsx(DnsTests, {})), currentTest === "clientInfo" && (_jsx(ClientInfo, {}))] }) })] })) }), _jsx(Footer, { onShowAboutUs: toggleAboutUs, onShowContactUs: toggleContactUs })] }));
+                                        } })), currentTest === "dnsTests" && (_jsx(DnsTests, {})), currentTest === "clientInfo" && (_jsx(ClientInfoComponent, {}))] }) })] })) }), _jsx(Footer, { onShowAboutUs: toggleAboutUs, onShowContactUs: toggleContactUs })] }));
 }
 export default App;
