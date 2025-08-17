@@ -1,5 +1,5 @@
 import { Button } from "./ui";
-import { getClientInfo } from "../utils";
+import { getClientInfo, getTestResults } from "../utils";
 
 export function ClientInfo() {
   return (
@@ -195,6 +195,58 @@ export function ClientInfo() {
               <strong>💡 Note:</strong> ISP identification requires external services and may not be available due to privacy restrictions. 
               For detailed ISP information, consider using specialized network testing tools or contacting your internet service provider directly.
             </p>
+          </div>
+        </div>
+
+        {/* Test Results History */}
+        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+          <h4 className="font-medium text-orange-900 dark:text-orange-100 mb-4 flex items-center gap-2">
+            📊 Test Results History
+          </h4>
+          <div className="space-y-4">
+            {(() => {
+              const testResults = getTestResults();
+              if (testResults.length === 0) {
+                return (
+                  <div className="text-sm text-orange-700 dark:text-orange-300">
+                    <p>No tests have been run yet. Run some tests to see your history here.</p>
+                  </div>
+                );
+              }
+              
+              // Group tests by type
+              const testsByType = testResults.reduce((acc, result) => {
+                if (!acc[result.testType]) {
+                  acc[result.testType] = [];
+                }
+                acc[result.testType].push(result);
+                return acc;
+              }, {} as Record<string, typeof testResults>);
+              
+              return (
+                <div className="space-y-4">
+                  {Object.entries(testsByType).map(([testType, results]) => (
+                    <div key={testType} className="border border-orange-200 dark:border-orange-800 rounded-lg p-3 bg-orange-100 dark:bg-orange-800/30">
+                      <h5 className="font-medium text-orange-800 dark:text-orange-200 mb-2 flex items-center gap-2">
+                        {testType === 'quickTest' && '🚀 Quick Test'}
+                        {testType === 'manualTest' && '🔧 Manual Test'}
+                        {testType === 'dnsTest' && '🔍 DNS Test'}
+                        {testType === 'httpTest' && '🌐 HTTP Test'}
+                        {testType === 'sslTest' && '🔒 SSL Test'}
+                        {testType === 'networkTest' && '📡 Network Test'}
+                        {testType === 'systemInfo' && '⚙️ System Info'}
+                        {testType || 'Unknown Test'}
+                      </h5>
+                      <div className="text-xs text-orange-700 dark:text-orange-300 space-y-1">
+                        <div><span className="font-medium">Total Tests:</span> {results.length}</div>
+                        <div><span className="font-medium">Latest:</span> {new Date(results[results.length - 1].timestamp).toLocaleString()}</div>
+                        <div><div className="font-medium">Test IDs:</div> {results.slice(-3).map(r => r.testId).join(', ')}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
 

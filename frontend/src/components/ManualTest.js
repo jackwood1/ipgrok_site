@@ -9,6 +9,7 @@ import { TracerouteTest } from "./TracerouteTest";
 import { JitterTest } from "./JitterTest";
 import { LocalNetworkTest } from "./LocalNetworkTest";
 import { PacketLossTest } from "./PacketLossTest";
+import { addTestResult } from "../utils";
 export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdate }) {
     const [testStatus, setTestStatus] = useState({
         network: 'not-started',
@@ -56,6 +57,12 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
         setTestStatus((prev) => ({ ...prev, [testName]: 'completed' }));
         setTestData((prev) => ({ ...prev, [testName]: data }));
         setActiveTest(null);
+        // Add test result to client tracking
+        addTestResult('manualTest', {
+            testName,
+            data,
+            allTests: testData
+        });
         // Update parent component
         if (onDataUpdate) {
             onDataUpdate({

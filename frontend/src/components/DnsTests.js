@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useCallback } from "react";
 import { Card, Button, Badge } from "./ui";
+import { addTestResult } from "../utils";
 export function DnsTests() {
     const [activeTest, setActiveTest] = useState(null);
     const [dnsResults, setDnsResults] = useState([]);
@@ -103,6 +104,12 @@ export function DnsTests() {
             }
         }
         setDnsResults(results);
+        // Add DNS test result to client tracking
+        addTestResult('dnsTest', {
+            domain: dnsDomain,
+            results: results,
+            provider: 'Cloudflare, Google'
+        });
         setIsLoading(false);
     }, [dnsDomain]);
     // HTTP Status Test
@@ -224,6 +231,11 @@ export function DnsTests() {
                 troubleshooting
             };
             setHttpResults([result]);
+            // Add HTTP test result to client tracking
+            addTestResult('httpTest', {
+                url: httpUrl,
+                result: result
+            });
         }
         catch (error) {
             // Handle any other errors
@@ -299,6 +311,11 @@ export function DnsTests() {
                         status: 'success'
                     };
                     setSslResults([result]);
+                    // Add SSL test result to client tracking
+                    addTestResult('sslTest', {
+                        domain: sslDomain,
+                        result: result
+                    });
                 }
                 else {
                     setSslResults([{

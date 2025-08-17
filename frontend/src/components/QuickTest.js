@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, Button, Badge } from "./ui";
 import { NetworkTest } from "./NetworkTest";
 import { ConfigInfo } from "./ConfigInfo";
+import { addTestResult } from "../utils";
 export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate }) {
     const [currentStep, setCurrentStep] = useState('network');
     const [networkData, setNetworkData] = useState(null);
@@ -14,14 +15,17 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
     // Update parent component when all tests complete
     useEffect(() => {
         if (networkData && systemData && onDataUpdate) {
-            onDataUpdate({
+            const testData = {
                 testType: 'quickTest',
                 data: {
                     networkData,
                     systemData,
                     completedAt: new Date().toISOString()
                 }
-            });
+            };
+            // Add test result to client tracking
+            addTestResult('quickTest', testData);
+            onDataUpdate(testData);
         }
     }, [networkData, systemData, onDataUpdate]);
     // Handle network test completion
@@ -32,6 +36,8 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
         if (data && data.testType === 'networkTest' && data.data) {
             networkDataToSet = data.data;
         }
+        // Add network test result to client tracking
+        addTestResult('networkTest', data);
         setNetworkData(networkDataToSet);
         setCurrentStep('system');
         setNetworkProgress("Network test completed!");
@@ -48,6 +54,8 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
         if (data && data.testType === 'systemInfo' && data.data) {
             systemDataToSet = data.data;
         }
+        // Add system info result to client tracking
+        addTestResult('systemInfo', data);
         setSystemData(systemDataToSet);
         setCurrentStep('complete');
         setSystemProgress("System information gathered!");

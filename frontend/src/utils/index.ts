@@ -5,7 +5,11 @@ export {
   getClientInfo, 
   getExistingClientInfo, 
   updateClientPublicIP,
-  generateSessionId 
+  generateSessionId,
+  generateTestId,
+  addTestResult,
+  getTestResults,
+  getTestResultsByType
 } from './uuid';
 
-export type { ClientInfo } from './uuid';
+export type { ClientInfo, TestResult } from './uuid';

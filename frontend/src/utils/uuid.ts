@@ -1,3 +1,12 @@
+export interface TestResult {
+  testId: string;
+  timestamp: string;
+  testType: string;
+  results: any;
+  ipAddress?: string;
+  sessionId: string;
+}
+
 export interface ClientInfo {
   uuid: string;
   createdAt: string;
@@ -17,6 +26,7 @@ export interface ClientInfo {
   rtt?: number;
   downlink?: number;
   sessionId: string;
+  testResults: TestResult[];
 }
 
 /**
@@ -64,6 +74,7 @@ export function getClientInfo(): ClientInfo {
         pixelDepth: screen.pixelDepth,
       },
       sessionId: generateSessionId(),
+      testResults: [],
     };
     
     // Try to get network information if available
@@ -144,4 +155,90 @@ export function updateClientPublicIP(ip: string): void {
     parsed.publicIp = ip;
     localStorage.setItem(storageKey, JSON.stringify(parsed));
   }
+}
+
+/**
+ * Generates a unique test ID based on timestamp, IP address, and test type
+ * @param testType The type of test being run
+ * @param ipAddress Optional IP address
+ * @returns A unique test ID string
+ */
+export function generateTestId(testType: string, ipAddress?: string): string {
+  const timestamp = Date.now().toString();
+  const ip = ipAddress || 'unknown';
+  const data = `${timestamp}-${ip}-${testType}`;
+  
+  // Simple hash function for the test ID
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    const char = data.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return `test_${Math.abs(hash).toString(36)}_${Date.now().toString(36)}`;
+}
+
+/**
+ * Adds a test result to the client's test history
+ * @param testType The type of test
+ * @param results The test results
+ * @param ipAddress Optional IP address
+ */
+export function addTestResult(testType: string, results: any, ipAddress?: string): void {
+  const storageKey = 'ipgrok_client_info';
+  const clientInfo = localStorage.getItem(storageKey);
+  
+  if (clientInfo) {
+    const parsed: ClientInfo = JSON.parse(clientInfo);
+    const testId = generateTestId(testType, ipAddress);
+    
+    const testResult: TestResult = {
+      testId,
+      timestamp: new Date().toISOString(),
+      testType,
+      results,
+      ipAddress,
+      sessionId: parsed.sessionId
+    };
+    
+    // Add to test results array
+    if (!parsed.testResults) {
+      parsed.testResults = [];
+    }
+    parsed.testResults.push(testResult);
+    
+    // Keep only last 100 test results to prevent localStorage from getting too large
+    if (parsed.testResults.length > 100) {
+      parsed.testResults = parsed.testResults.slice(-100);
+    }
+    
+    localStorage.setItem(storageKey, JSON.stringify(parsed));
+    console.log('Test result added:', testResult);
+  }
+}
+
+/**
+ * Gets all test results for the current client
+ * @returns Array of test results or empty array if none
+ */
+export function getTestResults(): TestResult[] {
+  const storageKey = 'ipgrok_client_info';
+  const clientInfo = localStorage.getItem(storageKey);
+  
+  if (clientInfo) {
+    const parsed: ClientInfo = JSON.parse(clientInfo);
+    return parsed.testResults || [];
+  }
+  
+  return [];
+}
+
+/**
+ * Gets test results filtered by test type
+ * @param testType The type of test to filter by
+ * @returns Array of test results for the specified type
+ */
+export function getTestResultsByType(testType: string): TestResult[] {
+  return getTestResults().filter(result => result.testType === testType);
 }
