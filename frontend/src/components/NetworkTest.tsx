@@ -573,7 +573,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         title={quickTestMode ? "" : "Detailed Advanced Analysis"} 
         subtitle={quickTestMode ? "" : "Test your internet connection for video calls"}
       >
-        {permissionsStatus !== "granted" && (
+        {permissionsStatus !== "granted" && !quickTestMode && (
           <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
             <div className="flex items-center">
               <Badge variant="warning" className="mr-2">⚠️</Badge>
