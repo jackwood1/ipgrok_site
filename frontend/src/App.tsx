@@ -315,8 +315,8 @@ function App() {
               </Button>
             </div>
 
-            {/* Test Progress - Hide when running Quick Test or Manual Test */}
-            {currentTest !== "quickTest" && currentTest !== "manualTest" && (
+            {/* Test Progress - Hide when running Quick Test, Manual Test, or DNS Tests */}
+            {currentTest !== "quickTest" && currentTest !== "manualTest" && currentTest !== "dnsTests" && (
               <TestProgress
                 completedTests={completedTests}
                 currentTest={currentTest}
