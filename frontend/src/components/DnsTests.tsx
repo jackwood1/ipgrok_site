@@ -4,6 +4,19 @@ import { Card, Button, Badge } from "./ui";
 interface DnsResult {
   domain: string;
   ipAddresses: string[];
+  cnameRecords: string[];
+  mxRecords: string[];
+  txtRecords: string[];
+  nsRecords: string[];
+  soaRecord?: {
+    mname: string;
+    rname: string;
+    serial: number;
+    refresh: number;
+    retry: number;
+    expire: number;
+    minimum: number;
+  };
   responseTime: number;
   provider: string;
   status: 'success' | 'error';
@@ -40,7 +53,7 @@ export function DnsTests() {
   const [httpUrl, setHttpUrl] = useState('https://google.com');
   const [sslDomain, setSslDomain] = useState('google.com');
 
-  // DNS Resolution Check using multiple DoH providers
+  // DNS Resolution Check using reliable DoH providers
   const runDnsTest = useCallback(async () => {
     if (!dnsDomain.trim()) return;
     
@@ -50,7 +63,8 @@ export function DnsTests() {
     const providers = [
       { name: 'Cloudflare', url: 'https://cloudflare-dns.com/dns-query' },
       { name: 'Google', url: 'https://dns.google/resolve' },
-      { name: 'Quad9', url: 'https://dns.quad9.net:5053/dns-query' }
+      { name: 'OpenDNS', url: 'https://doh.opendns.com/dns-query' },
+      { name: 'AdGuard', url: 'https://dns.adguard-dns.com/dns-query' }
     ];
     
     const results: DnsResult[] = [];
@@ -59,53 +73,79 @@ export function DnsTests() {
       try {
         const startTime = performance.now();
         
-        let response;
-        if (provider.name === 'Google') {
-          // Google DNS uses a different format
-          response = await fetch(`${provider.url}?name=${dnsDomain}&type=A`);
-        } else {
-          // Cloudflare and Quad9 use DoH format
-          response = await fetch(`${provider.url}?name=${dnsDomain}&type=A`, {
-            headers: {
-              'Accept': 'application/dns-json'
+        // Query multiple DNS record types
+        const recordTypes = ['A', 'CNAME', 'MX', 'TXT', 'NS', 'SOA'];
+        const dnsData: any = {};
+        
+        for (const recordType of recordTypes) {
+          try {
+            let response;
+            if (provider.name === 'Google') {
+              response = await fetch(`${provider.url}?name=${dnsDomain}&type=${recordType}`);
+            } else {
+              response = await fetch(`${provider.url}?name=${dnsDomain}&type=${recordType}`, {
+                headers: {
+                  'Accept': 'application/dns-json'
+                }
+              });
             }
-          });
+            
+            if (response.ok) {
+              const data = await response.json();
+              dnsData[recordType] = data;
+            }
+          } catch (error) {
+            // Continue with other record types if one fails
+            console.log(`Failed to fetch ${recordType} records from ${provider.name}:`, error);
+          }
         }
         
         const endTime = performance.now();
         const responseTime = Math.round(endTime - startTime);
         
-        if (response.ok) {
-          const data = await response.json();
-          let ipAddresses: string[] = [];
-          
-          if (data.Answer) {
-            ipAddresses = data.Answer
-              .filter((answer: any) => answer.type === 1)
-              .map((answer: any) => answer.data);
-          }
-          
-          results.push({
-            domain: dnsDomain,
-            ipAddresses,
-            responseTime,
-            provider: provider.name,
-            status: 'success'
-          });
-        } else {
-          results.push({
-            domain: dnsDomain,
-            ipAddresses: [],
-            responseTime: 0,
-            provider: provider.name,
-            status: 'error',
-            error: `HTTP ${response.status}`
-          });
+        // Extract data from different record types
+        const ipAddresses = dnsData.A?.Answer?.filter((answer: any) => answer.type === 1)?.map((answer: any) => answer.data) || [];
+        const cnameRecords = dnsData.CNAME?.Answer?.filter((answer: any) => answer.type === 5)?.map((answer: any) => answer.data) || [];
+        const mxRecords = dnsData.MX?.Answer?.filter((answer: any) => answer.type === 15)?.map((answer: any) => `${answer.data.priority} ${answer.data.exchange}`) || [];
+        const txtRecords = dnsData.TXT?.Answer?.filter((answer: any) => answer.type === 16)?.map((answer: any) => answer.data.join('')) || [];
+        const nsRecords = dnsData.NS?.Answer?.filter((answer: any) => answer.type === 2)?.map((answer: any) => answer.data) || [];
+        
+        // Extract SOA record if available
+        let soaRecord;
+        if (dnsData.SOA?.Answer?.[0]) {
+          const soa = dnsData.SOA.Answer[0].data;
+          soaRecord = {
+            mname: soa.mname,
+            rname: soa.rname,
+            serial: soa.serial,
+            refresh: soa.refresh,
+            retry: soa.retry,
+            expire: soa.expire,
+            minimum: soa.minimum
+          };
         }
+        
+        results.push({
+          domain: dnsDomain,
+          ipAddresses,
+          cnameRecords,
+          mxRecords,
+          txtRecords,
+          nsRecords,
+          soaRecord,
+          responseTime,
+          provider: provider.name,
+          status: 'success'
+        });
+        
       } catch (error) {
         results.push({
           domain: dnsDomain,
           ipAddresses: [],
+          cnameRecords: [],
+          mxRecords: [],
+          txtRecords: [],
+          nsRecords: [],
           responseTime: 0,
           provider: provider.name,
           status: 'error',
@@ -339,9 +379,72 @@ export function DnsTests() {
                             </Badge>
                           </div>
                           {result.status === 'success' ? (
-                            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                              <div>IP Addresses: {result.ipAddresses.join(', ') || 'None'}</div>
-                              <div>Response Time: {result.responseTime}ms</div>
+                            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                              <div className="grid grid-cols-1 gap-2">
+                                <div className="font-medium text-gray-700 dark:text-gray-300">IP Addresses (A Records):</div>
+                                <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                  {result.ipAddresses.length > 0 ? result.ipAddresses.join('\n') : 'None'}
+                                </div>
+                                
+                                {result.cnameRecords.length > 0 && (
+                                  <>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">CNAME Records:</div>
+                                    <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                      {result.cnameRecords.join('\n')}
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {result.mxRecords.length > 0 && (
+                                  <>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">MX Records (Mail Servers):</div>
+                                    <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                      {result.mxRecords.join('\n')}
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {result.txtRecords.length > 0 && (
+                                  <>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">TXT Records:</div>
+                                    <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                      {result.txtRecords.map((txt, idx) => (
+                                        <div key={idx} className="break-all">{txt}</div>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {result.nsRecords.length > 0 && (
+                                  <>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">Name Servers (NS):</div>
+                                    <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                      {result.nsRecords.join('\n')}
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {result.soaRecord && (
+                                  <>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300">SOA Record:</div>
+                                    <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                      <div>Primary NS: {result.soaRecord.mname}</div>
+                                      <div>Admin Email: {result.soaRecord.rname}</div>
+                                      <div>Serial: {result.soaRecord.serial}</div>
+                                      <div>Refresh: {result.soaRecord.refresh}s</div>
+                                      <div>Retry: {result.soaRecord.retry}s</div>
+                                      <div>Expire: {result.soaRecord.expire}s</div>
+                                      <div>Minimum TTL: {result.soaRecord.minimum}s</div>
+                                    </div>
+                                  </>
+                                )}
+                                
+                                <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                                  <div className="text-gray-500 dark:text-gray-400">
+                                    Response Time: {result.responseTime}ms
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="text-sm text-red-600 dark:text-red-400">
