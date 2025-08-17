@@ -3,7 +3,7 @@ import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
-import { getClientInfo, ClientInfo } from "./utils";
+import { checkAndUpdateMetadata, ClientInfo } from "./utils";
 
 function App() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -30,8 +30,12 @@ function App() {
 
   // Initialize client info on component mount
   useEffect(() => {
-    const clientInfo = getClientInfo();
+    const { changed, changes, clientInfo } = checkAndUpdateMetadata();
     setClientUUID(clientInfo.uuid);
+    
+    if (changed) {
+      console.log('Client metadata updated:', changes);
+    }
     console.log('Client info initialized:', clientInfo);
   }, []);
 

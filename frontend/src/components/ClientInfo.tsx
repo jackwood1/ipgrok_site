@@ -1,7 +1,20 @@
 import { Button } from "./ui";
-import { getClientInfo, getTestResults } from "../utils";
+import { getClientInfo, getTestResults, checkAndUpdateMetadata } from "../utils";
+import { useState, useEffect } from "react";
 
 export function ClientInfo() {
+  const [metadataChanges, setMetadataChanges] = useState<string[]>([]);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  
+  // Check for metadata changes when component mounts
+  useEffect(() => {
+    const { changed, changes } = checkAndUpdateMetadata();
+    if (changed) {
+      setMetadataChanges(changes);
+      setLastChecked(new Date());
+    }
+  }, []);
+  
   return (
     <div className="space-y-8">
       {/* Client Info Header */}
@@ -45,6 +58,37 @@ export function ClientInfo() {
             </div>
           </div>
         </div>
+
+        {/* Metadata Change Notification */}
+        {metadataChanges.length > 0 && (
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <h4 className="font-medium text-green-900 dark:text-green-100 mb-4 flex items-center gap-2">
+              🔄 Metadata Updated
+            </h4>
+            <div className="text-sm text-green-700 dark:text-green-300 space-y-2">
+              <p><strong>Changes detected:</strong> Your client information has been updated with the following changes:</p>
+              <ul className="list-disc list-inside space-y-1">
+                {metadataChanges.map((change, index) => (
+                  <li key={index}>
+                    {change === 'userAgent' && '🌐 Browser/Device information'}
+                    {change === 'language' && '🗣️ Language preference'}
+                    {change === 'platform' && '💻 Operating system'}
+                    {change === 'screen' && '📱 Screen resolution'}
+                    {change === 'networkType' && '📡 Network connection type'}
+                    {change === 'rtt' && '⏱️ Network latency (RTT)'}
+                    {change === 'downlink' && '⬇️ Download speed'}
+                    {change || 'Unknown change'}
+                  </li>
+                ))}
+              </ul>
+              {lastChecked && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                  Last updated: {lastChecked.toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Client Statistics */}
         <div className="p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">

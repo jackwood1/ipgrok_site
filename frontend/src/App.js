@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent } from "./components";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
-import { getClientInfo } from "./utils";
+import { checkAndUpdateMetadata } from "./utils";
 function App() {
     const { darkMode, toggleDarkMode } = useDarkMode();
     const [permissionsStatus, setPermissionsStatus] = useState(() => localStorage.getItem("mediaPermissions") || "unknown");
@@ -25,8 +25,11 @@ function App() {
     const [runningTests, setRunningTests] = useState([]);
     // Initialize client info on component mount
     useEffect(() => {
-        const clientInfo = getClientInfo();
+        const { changed, changes, clientInfo } = checkAndUpdateMetadata();
         setClientUUID(clientInfo.uuid);
+        if (changed) {
+            console.log('Client metadata updated:', changes);
+        }
         console.log('Client info initialized:', clientInfo);
     }, []);
     // Data management for export functionality

@@ -9,7 +9,8 @@ export {
   generateTestId,
   addTestResult,
   getTestResults,
-  getTestResultsByType
+  getTestResultsByType,
+  checkAndUpdateMetadata
 } from './uuid';
 
 export type { ClientInfo, TestResult } from './uuid';

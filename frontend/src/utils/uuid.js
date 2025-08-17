@@ -58,12 +58,60 @@ export function getClientInfo() {
     parsedInfo.lastSeen = new Date().toISOString();
     parsedInfo.visitCount += 1;
     parsedInfo.sessionId = generateSessionId(); // New session ID for each visit
+    // Check for metadata changes and update if necessary
+    let metadataChanged = false;
+    // Check user agent changes
+    if (parsedInfo.userAgent !== navigator.userAgent) {
+        parsedInfo.userAgent = navigator.userAgent;
+        metadataChanged = true;
+    }
+    // Check language changes
+    if (parsedInfo.language !== navigator.language) {
+        parsedInfo.language = navigator.language;
+        metadataChanged = true;
+    }
+    // Check platform changes
+    if (parsedInfo.platform !== navigator.platform) {
+        parsedInfo.platform = navigator.platform;
+        metadataChanged = true;
+    }
+    // Check screen resolution changes
+    const currentScreen = {
+        width: screen.width,
+        height: screen.height,
+        colorDepth: screen.colorDepth,
+        pixelDepth: screen.pixelDepth,
+    };
+    if (JSON.stringify(parsedInfo.screen) !== JSON.stringify(currentScreen)) {
+        parsedInfo.screen = currentScreen;
+        metadataChanged = true;
+    }
     // Update network information if available
     if (navigator.connection) {
         const connection = navigator.connection;
-        parsedInfo.networkType = connection.effectiveType || connection.type || 'unknown';
-        parsedInfo.rtt = connection.rtt;
-        parsedInfo.downlink = connection.downlink;
+        const newNetworkType = connection.effectiveType || connection.type || 'unknown';
+        const newRtt = connection.rtt;
+        const newDownlink = connection.downlink;
+        if (parsedInfo.networkType !== newNetworkType ||
+            parsedInfo.rtt !== newRtt ||
+            parsedInfo.downlink !== newDownlink) {
+            parsedInfo.networkType = newNetworkType;
+            parsedInfo.rtt = newRtt;
+            parsedInfo.downlink = newDownlink;
+            metadataChanged = true;
+        }
+    }
+    // Log metadata changes if any were detected
+    if (metadataChanged) {
+        console.log('Client metadata updated due to changes:', {
+            userAgent: parsedInfo.userAgent,
+            language: parsedInfo.language,
+            platform: parsedInfo.platform,
+            screen: parsedInfo.screen,
+            networkType: parsedInfo.networkType,
+            rtt: parsedInfo.rtt,
+            downlink: parsedInfo.downlink
+        });
     }
     localStorage.setItem(storageKey, JSON.stringify(parsedInfo));
     return parsedInfo;
@@ -112,6 +160,79 @@ export function updateClientPublicIP(ip) {
         parsed.publicIp = ip;
         localStorage.setItem(storageKey, JSON.stringify(parsed));
     }
+}
+/**
+ * Checks for metadata changes and updates client info if necessary
+ * @returns Object indicating what changed and the updated client info
+ */
+export function checkAndUpdateMetadata() {
+    const storageKey = 'ipgrok_client_info';
+    const clientInfo = localStorage.getItem(storageKey);
+    if (!clientInfo) {
+        // No existing client info, create new one
+        return { changed: false, changes: [], clientInfo: getClientInfo() };
+    }
+    const parsed = JSON.parse(clientInfo);
+    const changes = [];
+    // Check user agent changes
+    if (parsed.userAgent !== navigator.userAgent) {
+        parsed.userAgent = navigator.userAgent;
+        changes.push('userAgent');
+    }
+    // Check language changes
+    if (parsed.language !== navigator.language) {
+        parsed.language = navigator.language;
+        changes.push('language');
+    }
+    // Check platform changes
+    if (parsed.platform !== navigator.platform) {
+        parsed.platform = navigator.platform;
+        changes.push('platform');
+    }
+    // Check screen resolution changes
+    const currentScreen = {
+        width: screen.width,
+        height: screen.height,
+        colorDepth: screen.colorDepth,
+        pixelDepth: screen.pixelDepth,
+    };
+    if (JSON.stringify(parsed.screen) !== JSON.stringify(currentScreen)) {
+        parsed.screen = currentScreen;
+        changes.push('screen');
+    }
+    // Check network information changes
+    if (navigator.connection) {
+        const connection = navigator.connection;
+        const newNetworkType = connection.effectiveType || connection.type || 'unknown';
+        const newRtt = connection.rtt;
+        const newDownlink = connection.downlink;
+        if (parsed.networkType !== newNetworkType) {
+            parsed.networkType = newNetworkType;
+            changes.push('networkType');
+        }
+        if (parsed.rtt !== newRtt) {
+            parsed.rtt = newRtt;
+            changes.push('rtt');
+        }
+        if (parsed.downlink !== newDownlink) {
+            parsed.downlink = newDownlink;
+            changes.push('downlink');
+        }
+    }
+    // Update last seen and visit count
+    parsed.lastSeen = new Date().toISOString();
+    parsed.visitCount += 1;
+    parsed.sessionId = generateSessionId();
+    // Save updated info if there were changes
+    if (changes.length > 0) {
+        localStorage.setItem(storageKey, JSON.stringify(parsed));
+        console.log('Metadata updated:', changes);
+    }
+    return {
+        changed: changes.length > 0,
+        changes,
+        clientInfo: parsed
+    };
 }
 /**
  * Generates a unique test ID based on timestamp, IP address, and test type
