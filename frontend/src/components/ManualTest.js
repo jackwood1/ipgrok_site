@@ -17,7 +17,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
         ping: 'not-started',
         traceroute: 'not-started',
         jitter: 'not-started',
-        packetLoss: 'not-started'
+        packetLoss: 'not-started',
+        localNetwork: 'not-started'
     });
     const [testData, setTestData] = useState({
         network: null,
