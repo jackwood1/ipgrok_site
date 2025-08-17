@@ -2,14 +2,13 @@ import { Button } from "./ui";
 
 interface LandingPageProps {
   onStartQuickTest: () => void;
-  onStartDetailedTest: () => void;
   onStartManualTest: () => void;
   onStartDnsTests: () => void;
   onShowAbout?: () => void;
   onShowContact?: () => void;
 }
 
-export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManualTest, onStartDnsTests, onShowAbout, onShowContact }: LandingPageProps) {
+export function LandingPage({ onStartQuickTest, onStartManualTest, onStartDnsTests, onShowAbout, onShowContact }: LandingPageProps) {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -38,14 +37,6 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
             className="text-lg px-8 py-4"
           >
             🌐 DNS Tests
-          </Button>
-          <Button
-            onClick={onStartDetailedTest}
-            variant="success"
-            size="lg"
-            className="text-lg px-8 py-4"
-          >
-            🔍 Detailed Analysis (2-3 minutes)
           </Button>
           <Button
             onClick={onStartManualTest}
@@ -144,7 +135,7 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
           Ready to Test Your Internet?
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Get started in under 30 seconds with our quick test, or dive deep with comprehensive analysis.
+          Get started in under 30 seconds with our quick test, or explore DNS testing and manual testing options.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
@@ -153,14 +144,6 @@ export function LandingPage({ onStartQuickTest, onStartDetailedTest, onStartManu
             className="text-lg px-8 py-4"
           >
             Start Quick Test
-          </Button>
-          <Button
-            onClick={onStartDetailedTest}
-            variant="secondary"
-            size="lg"
-            className="text-lg px-8 py-4"
-          >
-            Start Detailed Test
           </Button>
         </div>
       </div>

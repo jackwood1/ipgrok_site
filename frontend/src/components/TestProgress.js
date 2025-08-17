@@ -11,22 +11,6 @@ export function TestProgress({ completedTests, currentTest, runningTests = [], o
             required: true
         },
         {
-            id: 'configInfo',
-            name: 'System Info',
-            description: 'Device and browser configuration details',
-            icon: '⚙️',
-            duration: 'Instant',
-            required: true
-        },
-        {
-            id: 'advancedTests',
-            name: 'Advanced Network Tests',
-            description: 'DNS, HTTP/HTTPS, CDN, VPN detection, and security tests',
-            icon: '🔬',
-            duration: '30-60 seconds',
-            required: true
-        },
-        {
             id: 'mediaTest',
             name: 'Media Tests',
             description: 'Camera, microphone, and video quality assessment',

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DetailedTestConfirm, AdvancedNetworkTests, DnsTests, ContactUs, AboutUs } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -13,18 +13,15 @@ function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [showDetailedConfirm, setShowDetailedConfirm] = useState(false);
+
   const [showContactUs, setShowContactUs] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
-  const [resetPrevious, setResetPrevious] = useState(false);
   const [isQuickTestMode, setIsQuickTestMode] = useState(false);
             const [completedTests, setCompletedTests] = useState({
     quickTest: false,
     networkTest: false,
     mediaTest: false,
-    advancedTests: false,
-    configInfo: false,
   });
   const [runningTests, setRunningTests] = useState<string[]>([]);
 
@@ -33,7 +30,6 @@ function App() {
           networkData: null as any,
           mediaData: null as any,
           systemData: null as any,
-          advancedTestsData: null as any,
         });
 
   const updateExportData = (type: string, data: any) => {
@@ -45,9 +41,7 @@ function App() {
     // Mark test as completed when data is received
     const testMapping: { [key: string]: string } = {
       'networkData': 'networkTest',
-      'mediaData': 'mediaTest',
-      'systemData': 'configInfo',
-      'advancedTestsData': 'advancedTests'
+      'mediaData': 'mediaTest'
     };
     
     // Special handling for quick test completion
@@ -70,18 +64,7 @@ function App() {
         handleTestComplete('configInfo');
       }
       
-      // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
-      // Only auto-progress if we're in Detailed Analysis mode (not Quick Test mode)
-      // AND ensure we're not in Quick Test mode at all
-      if (!isQuickTestMode && type === 'networkData' && currentTest === 'networkTest' && !data.testType) {
-        setCurrentTest('configInfo');
-      }
-      if (!isQuickTestMode && type === 'systemData' && currentTest === 'configInfo' && !data.testType) {
-        setCurrentTest('advancedTests');
-      }
-      if (!isQuickTestMode && type === 'advancedTestsData' && currentTest === 'advancedTests' && !data.testType) {
-        setCurrentTest('mediaTest');
-      }
+
     }
   };
 
@@ -103,14 +86,11 @@ function App() {
       networkData: null,
       mediaData: null,
       systemData: null,
-      advancedTestsData: null,
     });
     setCompletedTests({
       quickTest: false,
       networkTest: false,
       mediaTest: false,
-      advancedTests: false,
-      configInfo: false,
     });
     setRunningTests([]);
     
@@ -121,20 +101,13 @@ function App() {
     setIsQuickTestMode(true);
   };
 
-  const startDetailedTest = () => {
-    setShowLanding(false);
-    setShowResults(false);
-    setShowShare(false);
-    setShowDetailedConfirm(true);
-    setIsQuickTestMode(false);
-  };
+
 
   const startManualTest = () => {
     console.log('Starting Manual Test, currentTest before:', currentTest);
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
-    setShowDetailedConfirm(false);
     setCurrentTest("manualTest");
     setRunningTests([]);
     setIsQuickTestMode(false);
@@ -145,32 +118,11 @@ function App() {
     setShowLanding(false);
     setShowResults(false);
     setShowShare(false);
-    setShowDetailedConfirm(false);
     setCurrentTest("dnsTests");
     setIsQuickTestMode(false);
   };
 
-  const confirmDetailedTest = () => {
-    // Always reset data and completed tests for Detailed Analysis
-    // This ensures a clean slate and prevents loops from existing data
-    setExportData({
-      networkData: null,
-      mediaData: null,
-      systemData: null,
-      advancedTestsData: null,
-    });
-    setCompletedTests({
-      quickTest: false,
-      networkTest: false,
-      mediaTest: false,
-      advancedTests: false,
-      configInfo: false,
-    });
-    setRunningTests([]);
-    
-    setShowDetailedConfirm(false);
-    setCurrentTest("networkTest"); // Start with Network Tests first
-  };
+
 
   const showResultsDashboard = () => {
     setShowResults(true);
@@ -235,7 +187,6 @@ function App() {
     setShowContactUs(false);
     setShowAboutUs(false);
     setIsQuickTestMode(false);
-    setShowDetailedConfirm(false);
     setCurrentTest("");
     setRunningTests([]);
     // Don't reset exportData here - let user keep their results
@@ -263,13 +214,7 @@ function App() {
     updateExportData('networkData', data);
   }, []);
 
-  const memoizedAdvancedTestsUpdate = useCallback((data: any) => {
-    updateExportData('advancedTestsData', data);
-  }, []);
 
-  const memoizedSystemDataUpdate = useCallback((data: any) => {
-    updateExportData('systemData', data);
-  }, []);
 
 
   return (
@@ -287,16 +232,8 @@ function App() {
         ) : showLanding ? (
           <LandingPage 
             onStartQuickTest={startQuickTest}
-            onStartDetailedTest={startDetailedTest}
             onStartManualTest={startManualTest}
             onStartDnsTests={startDnsTests}
-          />
-        ) : showDetailedConfirm ? (
-          <DetailedTestConfirm
-            resetPrevious={resetPrevious}
-            onResetPreviousChange={setResetPrevious}
-            onConfirm={confirmDetailedTest}
-            onCancel={goHome}
           />
         ) : showResults ? (
           <ResultsDashboard
@@ -374,37 +311,7 @@ function App() {
                     onDataUpdate={memoizedQuickTestUpdate}
                   />
                 )}
-                {currentTest === "networkTest" && (
-                  <NetworkTest 
-                    permissionsStatus={permissionsStatus}
-                    onDataUpdate={memoizedNetworkTestUpdate}
-                    onTestStart={() => handleTestStart('networkTest')}
-                    autoStart={true}
-                    detailedAnalysisMode={true}
-                  />
-                )}
-                {currentTest === "advancedTests" && (
-                  <AdvancedNetworkTests
-                    onDataUpdate={memoizedAdvancedTestsUpdate}
-                    onTestStart={() => handleTestStart('advancedTests')}
-                    autoStart={true}
-                  />
-                )}
-                {currentTest === "mediaTest" && (
-                  <MediaTest
-                    permissionsStatus={permissionsStatus}
-                    onPermissionsChange={setPermissionsStatus}
-                    onDataUpdate={memoizedMediaTestUpdate}
-                    onTestStart={() => handleTestStart('mediaTest')}
-                    autoStart={true}
-                    detailedAnalysisMode={true}
-                  />
-                )}
-                {currentTest === "configInfo" && (
-                  <ConfigInfo 
-                    onDataUpdate={memoizedSystemDataUpdate}
-                  />
-                )}
+
                 {currentTest === "email" && (
                   <EmailResults
                     networkData={exportData.networkData}
