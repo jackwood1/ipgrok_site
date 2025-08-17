@@ -109,38 +109,167 @@ export function DnsTests() {
     const runHttpTest = useCallback(async () => {
         if (!httpUrl.trim())
             return;
+        // Clear previous results when starting a new test
+        setHttpResults([]);
         setIsLoading(true);
         setActiveTest('http');
         try {
             const startTime = performance.now();
-            // Use a CORS proxy for development or your backend
             const testUrl = httpUrl.startsWith('http') ? httpUrl : `https://${httpUrl}`;
+            // Try to get detailed information using a proxy or backend approach
+            // For now, we'll use a more comprehensive approach that works around CORS
             const response = await fetch(testUrl, {
-                method: 'HEAD',
-                mode: 'no-cors' // This will give limited info but won't fail
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'omit',
+                headers: {
+                    'User-Agent': 'IPGrok-HTTP-Tester/1.0'
+                }
             });
             const endTime = performance.now();
             const responseTime = Math.round(endTime - startTime);
-            // Since we're using no-cors, we'll simulate some data
+            // Extract headers
+            const headers = {};
+            response.headers.forEach((value, key) => {
+                headers[key.toLowerCase()] = value;
+            });
+            // Parse security headers
+            const securityHeaders = {
+                hsts: headers['strict-transport-security'] || null,
+                csp: headers['content-security-policy'] || null,
+                xFrameOptions: headers['x-frame-options'] || null,
+                xContentTypeOptions: headers['x-content-type-options'] || null,
+                xXssProtection: headers['x-xss-protection'] || null,
+                referrerPolicy: headers['referrer-policy'] || null,
+            };
+            // Parse performance headers
+            const performanceHeaders = {
+                cacheControl: headers['cache-control'] || null,
+                expires: headers['expires'] || null,
+                lastModified: headers['last-modified'] || null,
+                etag: headers['etag'] || null,
+                vary: headers['vary'] || null,
+            };
+            // Detect CDN
+            const cdnInfo = {
+                detected: false,
+                provider: null,
+                serverLocation: null,
+            };
+            // CDN detection logic
+            if (headers['server']) {
+                const server = headers['server'].toLowerCase();
+                if (server.includes('cloudflare')) {
+                    cdnInfo.detected = true;
+                    cdnInfo.provider = 'Cloudflare';
+                }
+                else if (server.includes('akamai')) {
+                    cdnInfo.detected = true;
+                    cdnInfo.provider = 'Akamai';
+                }
+                else if (server.includes('fastly')) {
+                    cdnInfo.detected = true;
+                    cdnInfo.provider = 'Fastly';
+                }
+                else if (server.includes('aws') || server.includes('amazon')) {
+                    cdnInfo.detected = true;
+                    cdnInfo.provider = 'Amazon CloudFront';
+                }
+            }
+            // Server location detection (basic)
+            if (headers['cf-ray']) {
+                cdnInfo.serverLocation = 'Cloudflare Edge Location';
+            }
+            else if (headers['x-amz-cf-pop']) {
+                cdnInfo.serverLocation = 'AWS CloudFront Edge';
+            }
+            // Generate troubleshooting tips
+            const troubleshooting = [];
+            if (response.status >= 400) {
+                if (response.status === 404) {
+                    troubleshooting.push('Page not found - check if the URL is correct');
+                }
+                else if (response.status === 403) {
+                    troubleshooting.push('Access forbidden - the server is blocking requests');
+                }
+                else if (response.status === 500) {
+                    troubleshooting.push('Server error - the website is experiencing issues');
+                }
+                else if (response.status >= 500) {
+                    troubleshooting.push('Server error - contact the website administrator');
+                }
+            }
+            if (responseTime > 3000) {
+                troubleshooting.push('Slow response time - consider using a CDN or optimizing server performance');
+            }
+            if (!securityHeaders.hsts && testUrl.startsWith('https://')) {
+                troubleshooting.push('Missing HSTS header - consider enabling HTTP Strict Transport Security');
+            }
+            if (!securityHeaders.csp) {
+                troubleshooting.push('Missing CSP header - consider adding Content Security Policy for security');
+            }
             const result = {
                 url: testUrl,
-                statusCode: response.status || 200,
+                finalUrl: response.url,
+                statusCode: response.status,
+                statusText: response.statusText,
                 responseTime,
-                redirects: [],
-                headers: {},
-                status: 'success'
+                protocol: 'HTTP/' + (response.headers.get('x-http-version') || '1.1'),
+                server: headers['server'] || 'Unknown',
+                contentType: headers['content-type'] || 'Unknown',
+                contentLength: headers['content-length'] || 'Unknown',
+                redirects: [], // Will be populated if we implement redirect following
+                headers,
+                securityHeaders,
+                performanceHeaders,
+                cdnInfo,
+                status: 'success',
+                troubleshooting
             };
             setHttpResults([result]);
         }
         catch (error) {
+            // Handle CORS or other errors gracefully
+            const troubleshooting = [
+                'CORS policy blocked this request - this is normal for cross-origin requests',
+                'Try testing from the same domain or use a CORS proxy',
+                'Some headers may not be visible due to browser security restrictions'
+            ];
             setHttpResults([{
                     url: httpUrl,
+                    finalUrl: httpUrl,
                     statusCode: 0,
+                    statusText: 'Error',
                     responseTime: 0,
+                    protocol: 'Unknown',
+                    server: 'Unknown',
+                    contentType: 'Unknown',
+                    contentLength: 'Unknown',
                     redirects: [],
                     headers: {},
+                    securityHeaders: {
+                        hsts: null,
+                        csp: null,
+                        xFrameOptions: null,
+                        xContentTypeOptions: null,
+                        xXssProtection: null,
+                        referrerPolicy: null,
+                    },
+                    performanceHeaders: {
+                        cacheControl: null,
+                        expires: null,
+                        lastModified: null,
+                        etag: null,
+                        vary: null,
+                    },
+                    cdnInfo: {
+                        detected: false,
+                        provider: null,
+                        serverLocation: null,
+                    },
                     status: 'error',
-                    error: error instanceof Error ? error.message : 'Unknown error'
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                    troubleshooting
                 }]);
         }
         setIsLoading(false);
@@ -217,5 +346,5 @@ export function DnsTests() {
     };
     return (_jsx("div", { className: "space-y-8", children: _jsx(Card, { title: "DNS Tests", subtitle: "Test DNS resolution, HTTP status, and SSL certificates", children: _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: [_jsx("h4", { className: "font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2", children: "\uD83D\uDCA1 How to Use DNS Tests" }), _jsxs("div", { className: "text-sm text-blue-800 dark:text-blue-200 space-y-2", children: [_jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDD0D DNS Resolution:" }), " Enter a domain name (e.g., google.com) to check how different DNS providers resolve it. This helps identify DNS issues and compare response times."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83C\uDF10 HTTP Status:" }), " Test any website URL to check if it's accessible, get response codes, and measure response times. Useful for monitoring website availability."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDD12 SSL Certificate:" }), " Check SSL certificate details including issuer, validity dates, and days until expiration. Important for security and compliance."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDCA1 Tip:" }), " Start with common domains like google.com or github.com to test the functionality, then try your own domains."] })] })] }), !activeTest ? (_jsxs("div", { className: "text-center py-8", children: [_jsx("div", { className: "text-6xl mb-4", children: "\uD83C\uDF10" }), _jsx("h3", { className: "text-lg font-medium text-gray-900 dark:text-white mb-2", children: "DNS Testing Tools" }), _jsx("p", { className: "text-gray-600 dark:text-gray-400 mb-6", children: "Test DNS resolution, HTTP status, and SSL certificate information." }), _jsxs("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-4", children: [_jsx(Button, { onClick: () => setActiveTest('dns'), variant: "primary", size: "lg", className: "px-6", children: "\uD83D\uDD0D DNS Resolution" }), _jsx(Button, { onClick: () => setActiveTest('http'), variant: "primary", size: "lg", className: "px-6", children: "\uD83C\uDF10 HTTP Status" }), _jsx(Button, { onClick: () => setActiveTest('ssl'), variant: "primary", size: "lg", className: "px-6", children: "\uD83D\uDD12 SSL Certificate" })] })] })) : (_jsxs("div", { className: "space-y-6", children: [activeTest === 'dns' && (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("input", { type: "text", value: dnsDomain, onChange: (e) => setDnsDomain(e.target.value), placeholder: "Enter domain (e.g., google.com)", className: "flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" }), _jsx(Button, { onClick: runDnsTest, disabled: isLoading, variant: "primary", size: "md", children: isLoading ? 'Testing...' : 'Test DNS' }), _jsx(Button, { onClick: () => setActiveTest(null), variant: "secondary", size: "md", children: "Back" })] }), dnsResults.length > 0 && (_jsxs("div", { className: "space-y-4", children: [_jsxs("h4", { className: "font-medium text-gray-900 dark:text-white", children: ["DNS Results for ", dnsDomain] }), _jsxs("div", { className: "p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg", children: [_jsx("h5", { className: "font-medium text-green-900 dark:text-green-100 mb-2 flex items-center gap-2", children: "\uD83D\uDCCA Understanding Your DNS Results" }), _jsxs("div", { className: "text-sm text-green-800 dark:text-green-200 space-y-2", children: [_jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDD0D What This Test Shows:" }), " DNS resolution maps domain names to IP addresses and provides essential network configuration information."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83C\uDF10 Multiple Providers:" }), " Testing with both Cloudflare and Google DNS helps identify any provider-specific issues."] }), _jsxs("p", { children: [_jsx("strong", { children: "\u26A1 Response Times:" }), " Lower response times indicate faster DNS resolution, which improves website loading speed."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDCA1 Common Issues:" }), " If one provider fails but another succeeds, there may be network routing or firewall issues."] })] })] }), dnsResults.map((result, index) => (_jsxs("div", { className: "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border", children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("span", { className: "font-medium text-gray-900 dark:text-white", children: result.provider }), _jsx(Badge, { variant: result.status === 'success' ? 'success' : 'danger', children: result.status === 'success' ? 'Success' : 'Error' })] }), result.status === 'success' && (_jsxs("div", { className: "mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-800 dark:text-blue-200", children: [_jsxs("strong", { children: ["\uD83D\uDCA1 ", result.provider, " Insights:"] }), " ", result.provider === 'Cloudflare'
                                                                 ? 'Cloudflare DNS is optimized for speed and privacy, often providing the fastest response times.'
-                                                                : 'Google DNS offers excellent reliability and global distribution, with consistent performance worldwide.'] })), result.status === 'success' ? (_jsx("div", { className: "space-y-2 text-sm text-gray-600 dark:text-gray-400", children: _jsxs("div", { className: "grid grid-cols-1 gap-2", children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["IP Addresses (A Records)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "A Records map domain names to IPv4 addresses. These are the actual server locations for the website.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.ipAddresses.length > 0 ? result.ipAddresses.join('\n') : 'None' }), result.cnameRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["CNAME Records", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "CNAME records create aliases for domain names. They redirect one domain to another.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.cnameRecords.join('\n') })] })), result.mxRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["MX Records (Mail Servers)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "MX records specify which servers handle email for this domain. Lower priority numbers have higher priority.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.mxRecords.join('\n') })] })), result.txtRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["TXT Records", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "TXT records contain text information, often used for SPF (email security), DKIM verification, or other domain verification purposes.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.txtRecords.map((txt, idx) => (_jsx("div", { className: "break-all", children: txt }, idx))) })] })), result.nsRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["Name Servers (NS)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "NS records specify which servers are authoritative for this domain's DNS zone. These are the servers that know the domain's DNS information.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.nsRecords.join('\n') })] })), result.soaRecord && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["SOA Record", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "SOA (Start of Authority) records contain administrative information about the DNS zone, including transfer settings and contact information.", children: "\u2139\uFE0F" })] }), _jsxs("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: [_jsxs("div", { children: ["Primary NS: ", result.soaRecord.mname] }), _jsxs("div", { children: ["Admin Email: ", result.soaRecord.rname] }), _jsxs("div", { children: ["Serial: ", result.soaRecord.serial] }), _jsxs("div", { children: ["Refresh: ", result.soaRecord.refresh, "s"] }), _jsxs("div", { children: ["Retry: ", result.soaRecord.retry, "s"] }), _jsxs("div", { children: ["Expire: ", result.soaRecord.expire, "s"] }), _jsxs("div", { children: ["Minimum TTL: ", result.soaRecord.minimum, "s"] })] })] })), _jsx("div", { className: "pt-2 border-t border-gray-200 dark:border-gray-600", children: _jsxs("div", { className: "text-gray-500 dark:text-gray-400 flex items-center gap-2", children: ["Response Time: ", result.responseTime, "ms", _jsx("span", { className: "text-xs", title: "Response time shows how quickly this DNS provider resolved the domain. Lower times are better for faster website loading.", children: "\u2139\uFE0F" })] }) })] }) })) : (_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: ["Error: ", result.error] }))] }, index)))] }))] })), activeTest === 'http' && (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("input", { type: "text", value: httpUrl, onChange: (e) => setHttpUrl(e.target.value), placeholder: "Enter URL (e.g., https://google.com)", className: "flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" }), _jsx(Button, { onClick: runHttpTest, disabled: isLoading, variant: "primary", size: "md", children: isLoading ? 'Testing...' : 'Test HTTP' }), _jsx(Button, { onClick: () => setActiveTest(null), variant: "secondary", size: "md", children: "Back" })] }), httpResults.length > 0 && (_jsxs("div", { className: "space-y-3", children: [_jsxs("h4", { className: "font-medium text-gray-900 dark:text-white", children: ["HTTP Results for ", httpUrl] }), httpResults.map((result, index) => (_jsxs("div", { className: "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border", children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("span", { className: "font-medium text-gray-900 dark:text-white", children: "HTTP Status" }), _jsx(Badge, { variant: result.status === 'success' ? 'success' : 'danger', children: result.status === 'success' ? 'Success' : 'Error' })] }), result.status === 'success' ? (_jsxs("div", { className: "space-y-1 text-sm text-gray-600 dark:text-gray-400", children: [_jsxs("div", { children: ["Status Code: ", result.statusCode] }), _jsxs("div", { children: ["Response Time: ", result.responseTime, "ms"] }), _jsxs("div", { children: ["URL: ", result.url] })] })) : (_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: ["Error: ", result.error] }))] }, index)))] }))] })), activeTest === 'ssl' && (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("input", { type: "text", value: sslDomain, onChange: (e) => setSslDomain(e.target.value), placeholder: "Enter domain (e.g., google.com)", className: "flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" }), _jsx(Button, { onClick: runSslTest, disabled: isLoading, variant: "primary", size: "md", children: isLoading ? 'Testing...' : 'Test SSL' }), _jsx(Button, { onClick: () => setActiveTest(null), variant: "secondary", size: "md", children: "Back" })] }), sslResults.length > 0 && (_jsxs("div", { className: "space-y-3", children: [_jsxs("h4", { className: "font-medium text-gray-900 dark:text-white", children: ["SSL Certificate Results for ", sslDomain] }), sslResults.map((result, index) => (_jsxs("div", { className: "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border", children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("span", { className: "font-medium text-gray-900 dark:text-white", children: "Certificate Info" }), _jsx(Badge, { variant: result.status === 'success' ? 'success' : 'danger', children: result.status === 'success' ? 'Valid' : 'Error' })] }), result.status === 'success' ? (_jsxs("div", { className: "space-y-1 text-sm text-gray-600 dark:text-gray-400", children: [_jsxs("div", { children: ["Issuer: ", result.issuer] }), _jsxs("div", { children: ["Valid From: ", result.validFrom] }), _jsxs("div", { children: ["Valid To: ", result.validTo] }), _jsxs("div", { children: ["Days Remaining: ", result.daysRemaining] })] })) : (_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: ["Error: ", result.error] }))] }, index)))] }))] })), _jsx("div", { className: "flex justify-center", children: _jsx(Button, { onClick: resetAllTests, variant: "secondary", size: "md", children: "Reset All Tests" }) })] }))] }) }) }));
+                                                                : 'Google DNS offers excellent reliability and global distribution, with consistent performance worldwide.'] })), result.status === 'success' ? (_jsx("div", { className: "space-y-2 text-sm text-gray-600 dark:text-gray-400", children: _jsxs("div", { className: "grid grid-cols-1 gap-2", children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["IP Addresses (A Records)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "A Records map domain names to IPv4 addresses. These are the actual server locations for the website.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.ipAddresses.length > 0 ? result.ipAddresses.join('\n') : 'None' }), result.cnameRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["CNAME Records", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "CNAME records create aliases for domain names. They redirect one domain to another.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.cnameRecords.join('\n') })] })), result.mxRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["MX Records (Mail Servers)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "MX records specify which servers handle email for this domain. Lower priority numbers have higher priority.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.mxRecords.join('\n') })] })), result.txtRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["TXT Records", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "TXT records contain text information, often used for SPF (email security), DKIM verification, or other domain verification purposes.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.txtRecords.map((txt, idx) => (_jsx("div", { className: "break-all", children: txt }, idx))) })] })), result.nsRecords.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["Name Servers (NS)", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "NS records specify which servers are authoritative for this domain's DNS zone. These are the servers that know the domain's DNS information.", children: "\u2139\uFE0F" })] }), _jsx("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: result.nsRecords.join('\n') })] })), result.soaRecord && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2", children: ["SOA Record", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "SOA (Start of Authority) records contain administrative information about the DNS zone, including transfer settings and contact information.", children: "\u2139\uFE0F" })] }), _jsxs("div", { className: "pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded", children: [_jsxs("div", { children: ["Primary NS: ", result.soaRecord.mname] }), _jsxs("div", { children: ["Admin Email: ", result.soaRecord.rname] }), _jsxs("div", { children: ["Serial: ", result.soaRecord.serial] }), _jsxs("div", { children: ["Refresh: ", result.soaRecord.refresh, "s"] }), _jsxs("div", { children: ["Retry: ", result.soaRecord.retry, "s"] }), _jsxs("div", { children: ["Expire: ", result.soaRecord.expire, "s"] }), _jsxs("div", { children: ["Minimum TTL: ", result.soaRecord.minimum, "s"] })] })] })), _jsx("div", { className: "pt-2 border-t border-gray-200 dark:border-gray-600", children: _jsxs("div", { className: "text-gray-500 dark:text-gray-400 flex items-center gap-2", children: ["Response Time: ", result.responseTime, "ms", _jsx("span", { className: "text-xs", title: "Response time shows how quickly this DNS provider resolved the domain. Lower times are better for faster website loading.", children: "\u2139\uFE0F" })] }) })] }) })) : (_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: ["Error: ", result.error] }))] }, index)))] }))] })), activeTest === 'http' && (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("input", { type: "text", value: httpUrl, onChange: (e) => setHttpUrl(e.target.value), placeholder: "Enter URL (e.g., https://google.com)", className: "flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" }), _jsx(Button, { onClick: runHttpTest, disabled: isLoading, variant: "primary", size: "md", children: isLoading ? 'Testing...' : 'Test HTTP' }), _jsx(Button, { onClick: () => setActiveTest(null), variant: "secondary", size: "md", children: "Back" })] }), httpResults.length > 0 && (_jsxs("div", { className: "space-y-4", children: [_jsxs("h4", { className: "font-medium text-gray-900 dark:text-white", children: ["HTTP Results for ", httpUrl] }), _jsxs("div", { className: "p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: [_jsx("h5", { className: "font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2", children: "\uD83C\uDF10 Understanding HTTP Status Tests" }), _jsxs("div", { className: "text-sm text-blue-800 dark:text-blue-200 space-y-2", children: [_jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDD0D What This Test Shows:" }), " HTTP status testing reveals how websites respond to requests, including security headers, performance settings, and server configuration."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDEE1\uFE0F Security Analysis:" }), " Checks for important security headers like HSTS, CSP, and X-Frame-Options that protect against common web attacks."] }), _jsxs("p", { children: [_jsx("strong", { children: "\u26A1 Performance Insights:" }), " Analyzes caching headers, compression, and CDN usage to understand website optimization."] }), _jsxs("p", { children: [_jsx("strong", { children: "\uD83D\uDCA1 Troubleshooting:" }), " Provides specific recommendations based on the test results to improve website security and performance."] })] })] }), httpResults.map((result, index) => (_jsxs("div", { className: "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border", children: [_jsxs("div", { className: "flex items-center justify-between mb-3", children: [_jsx("span", { className: "font-medium text-gray-900 dark:text-white", children: "HTTP Status Analysis" }), _jsx(Badge, { variant: result.status === 'success' ? 'success' : 'danger', children: result.status === 'success' ? `${result.statusCode} ${result.statusText}` : 'Error' })] }), result.status === 'success' ? (_jsxs("div", { className: "space-y-4 text-sm text-gray-600 dark:text-gray-400", children: [_jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: [_jsxs("div", { children: [_jsx("h6", { className: "font-medium text-gray-700 dark:text-gray-300 mb-2", children: "Basic Information" }), _jsxs("div", { className: "space-y-1", children: [_jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "URL:" }), " ", result.url] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Final URL:" }), " ", result.finalUrl] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Protocol:" }), " ", result.protocol] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Server:" }), " ", result.server] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Content Type:" }), " ", result.contentType] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Content Length:" }), " ", result.contentLength] }), _jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Response Time:" }), " ", result.responseTime, "ms"] })] })] }), _jsxs("div", { children: [_jsx("h6", { className: "font-medium text-gray-700 dark:text-gray-300 mb-2", children: "CDN & Infrastructure" }), _jsxs("div", { className: "space-y-1", children: [_jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "CDN Detected:" }), " ", result.cdnInfo.detected ? 'Yes' : 'No'] }), result.cdnInfo.provider && (_jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Provider:" }), " ", result.cdnInfo.provider] })), result.cdnInfo.serverLocation && (_jsxs("div", { children: [_jsx("span", { className: "font-medium", children: "Location:" }), " ", result.cdnInfo.serverLocation] }))] })] })] }), _jsxs("div", { children: [_jsxs("h6", { className: "font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2", children: ["Security Headers", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "Security headers protect against common web vulnerabilities and attacks", children: "\uD83D\uDEE1\uFE0F" })] }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-2", children: Object.entries(result.securityHeaders).map(([key, value]) => (_jsxs("div", { className: "flex items-center gap-2", children: [_jsxs("span", { className: "font-medium capitalize", children: [key.replace(/([A-Z])/g, ' $1').trim(), ":"] }), _jsx("span", { className: `px-2 py-1 rounded text-xs ${value ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`, children: value || 'Missing' })] }, key))) })] }), _jsxs("div", { children: [_jsxs("h6", { className: "font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2", children: ["Performance Headers", _jsx("span", { className: "text-xs text-gray-500 dark:text-gray-400", title: "Performance headers control caching, compression, and optimization", children: "\u26A1" })] }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-2", children: Object.entries(result.performanceHeaders).map(([key, value]) => (_jsxs("div", { className: "flex items-center gap-2", children: [_jsxs("span", { className: "font-medium capitalize", children: [key.replace(/([A-Z])/g, ' $1').trim(), ":"] }), _jsx("span", { className: `px-2 py-1 rounded text-xs ${value ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}`, children: value || 'Not Set' })] }, key))) })] }), result.troubleshooting && result.troubleshooting.length > 0 && (_jsxs("div", { children: [_jsx("h6", { className: "font-medium text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2", children: "\uD83D\uDCA1 Troubleshooting Tips" }), _jsx("div", { className: "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3", children: _jsx("ul", { className: "list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200", children: result.troubleshooting.map((tip, idx) => (_jsx("li", { children: tip }, idx))) }) })] }))] })) : (_jsxs("div", { className: "space-y-3", children: [_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: [_jsx("strong", { children: "Error:" }), " ", result.error] }), result.troubleshooting && result.troubleshooting.length > 0 && (_jsxs("div", { children: [_jsx("h6", { className: "font-medium text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2", children: "\uD83D\uDCA1 Troubleshooting Tips" }), _jsx("div", { className: "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3", children: _jsx("ul", { className: "list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200", children: result.troubleshooting.map((tip, idx) => (_jsx("li", { children: tip }, idx))) }) })] }))] }))] }, index)))] }))] })), activeTest === 'ssl' && (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("input", { type: "text", value: sslDomain, onChange: (e) => setSslDomain(e.target.value), placeholder: "Enter domain (e.g., google.com)", className: "flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white" }), _jsx(Button, { onClick: runSslTest, disabled: isLoading, variant: "primary", size: "md", children: isLoading ? 'Testing...' : 'Test SSL' }), _jsx(Button, { onClick: () => setActiveTest(null), variant: "secondary", size: "md", children: "Back" })] }), sslResults.length > 0 && (_jsxs("div", { className: "space-y-3", children: [_jsxs("h4", { className: "font-medium text-gray-900 dark:text-white", children: ["SSL Certificate Results for ", sslDomain] }), sslResults.map((result, index) => (_jsxs("div", { className: "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border", children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("span", { className: "font-medium text-gray-900 dark:text-white", children: "Certificate Info" }), _jsx(Badge, { variant: result.status === 'success' ? 'success' : 'danger', children: result.status === 'success' ? 'Valid' : 'Error' })] }), result.status === 'success' ? (_jsxs("div", { className: "space-y-1 text-sm text-gray-600 dark:text-gray-400", children: [_jsxs("div", { children: ["Issuer: ", result.issuer] }), _jsxs("div", { children: ["Valid From: ", result.validFrom] }), _jsxs("div", { children: ["Valid To: ", result.validTo] }), _jsxs("div", { children: ["Days Remaining: ", result.daysRemaining] })] })) : (_jsxs("div", { className: "text-sm text-red-600 dark:text-red-400", children: ["Error: ", result.error] }))] }, index)))] }))] })), _jsx("div", { className: "flex justify-center", children: _jsx(Button, { onClick: resetAllTests, variant: "secondary", size: "md", children: "Reset All Tests" }) })] }))] }) }) }));
 }

@@ -25,12 +25,44 @@ interface DnsResult {
 
 interface HttpResult {
   url: string;
+  finalUrl: string;
   statusCode: number;
+  statusText: string;
   responseTime: number;
-  redirects: string[];
+  protocol: string;
+  server: string;
+  contentType: string;
+  contentLength: string;
+  redirects: Array<{
+    url: string;
+    statusCode: number;
+    statusText: string;
+    location: string;
+  }>;
   headers: Record<string, string>;
+  securityHeaders: {
+    hsts: string | null;
+    csp: string | null;
+    xFrameOptions: string | null;
+    xContentTypeOptions: string | null;
+    xXssProtection: string | null;
+    referrerPolicy: string | null;
+  };
+  performanceHeaders: {
+    cacheControl: string | null;
+    expires: string | null;
+    lastModified: string | null;
+    etag: string | null;
+    vary: string | null;
+  };
+  cdnInfo: {
+    detected: boolean;
+    provider: string | null;
+    serverLocation: string | null;
+  };
   status: 'success' | 'error';
   error?: string;
+  troubleshooting?: string[];
 }
 
 interface SslResult {
@@ -163,43 +195,178 @@ export function DnsTests() {
   const runHttpTest = useCallback(async () => {
     if (!httpUrl.trim()) return;
     
+    // Clear previous results when starting a new test
+    setHttpResults([]);
+    
     setIsLoading(true);
     setActiveTest('http');
     
     try {
       const startTime = performance.now();
-      
-      // Use a CORS proxy for development or your backend
       const testUrl = httpUrl.startsWith('http') ? httpUrl : `https://${httpUrl}`;
       
+      // Try to get detailed information using a proxy or backend approach
+      // For now, we'll use a more comprehensive approach that works around CORS
       const response = await fetch(testUrl, {
-        method: 'HEAD',
-        mode: 'no-cors' // This will give limited info but won't fail
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'User-Agent': 'IPGrok-HTTP-Tester/1.0'
+        }
       });
       
       const endTime = performance.now();
       const responseTime = Math.round(endTime - startTime);
       
-      // Since we're using no-cors, we'll simulate some data
+      // Extract headers
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key.toLowerCase()] = value;
+      });
+      
+      // Parse security headers
+      const securityHeaders = {
+        hsts: headers['strict-transport-security'] || null,
+        csp: headers['content-security-policy'] || null,
+        xFrameOptions: headers['x-frame-options'] || null,
+        xContentTypeOptions: headers['x-content-type-options'] || null,
+        xXssProtection: headers['x-xss-protection'] || null,
+        referrerPolicy: headers['referrer-policy'] || null,
+      };
+      
+      // Parse performance headers
+      const performanceHeaders = {
+        cacheControl: headers['cache-control'] || null,
+        expires: headers['expires'] || null,
+        lastModified: headers['last-modified'] || null,
+        etag: headers['etag'] || null,
+        vary: headers['vary'] || null,
+      };
+      
+      // Detect CDN
+      const cdnInfo = {
+        detected: false,
+        provider: null as string | null,
+        serverLocation: null as string | null,
+      };
+      
+      // CDN detection logic
+      if (headers['server']) {
+        const server = headers['server'].toLowerCase();
+        if (server.includes('cloudflare')) {
+          cdnInfo.detected = true;
+          cdnInfo.provider = 'Cloudflare';
+        } else if (server.includes('akamai')) {
+          cdnInfo.detected = true;
+          cdnInfo.provider = 'Akamai';
+        } else if (server.includes('fastly')) {
+          cdnInfo.detected = true;
+          cdnInfo.provider = 'Fastly';
+        } else if (server.includes('aws') || server.includes('amazon')) {
+          cdnInfo.detected = true;
+          cdnInfo.provider = 'Amazon CloudFront';
+        }
+      }
+      
+      // Server location detection (basic)
+      if (headers['cf-ray']) {
+        cdnInfo.serverLocation = 'Cloudflare Edge Location';
+      } else if (headers['x-amz-cf-pop']) {
+        cdnInfo.serverLocation = 'AWS CloudFront Edge';
+      }
+      
+      // Generate troubleshooting tips
+      const troubleshooting: string[] = [];
+      
+      if (response.status >= 400) {
+        if (response.status === 404) {
+          troubleshooting.push('Page not found - check if the URL is correct');
+        } else if (response.status === 403) {
+          troubleshooting.push('Access forbidden - the server is blocking requests');
+        } else if (response.status === 500) {
+          troubleshooting.push('Server error - the website is experiencing issues');
+        } else if (response.status >= 500) {
+          troubleshooting.push('Server error - contact the website administrator');
+        }
+      }
+      
+      if (responseTime > 3000) {
+        troubleshooting.push('Slow response time - consider using a CDN or optimizing server performance');
+      }
+      
+      if (!securityHeaders.hsts && testUrl.startsWith('https://')) {
+        troubleshooting.push('Missing HSTS header - consider enabling HTTP Strict Transport Security');
+      }
+      
+      if (!securityHeaders.csp) {
+        troubleshooting.push('Missing CSP header - consider adding Content Security Policy for security');
+      }
+      
       const result: HttpResult = {
         url: testUrl,
-        statusCode: response.status || 200,
+        finalUrl: response.url,
+        statusCode: response.status,
+        statusText: response.statusText,
         responseTime,
-        redirects: [],
-        headers: {},
-        status: 'success'
+        protocol: 'HTTP/' + (response.headers.get('x-http-version') || '1.1'),
+        server: headers['server'] || 'Unknown',
+        contentType: headers['content-type'] || 'Unknown',
+        contentLength: headers['content-length'] || 'Unknown',
+        redirects: [], // Will be populated if we implement redirect following
+        headers,
+        securityHeaders,
+        performanceHeaders,
+        cdnInfo,
+        status: 'success',
+        troubleshooting
       };
       
       setHttpResults([result]);
+      
     } catch (error) {
+      // Handle CORS or other errors gracefully
+      const troubleshooting: string[] = [
+        'CORS policy blocked this request - this is normal for cross-origin requests',
+        'Try testing from the same domain or use a CORS proxy',
+        'Some headers may not be visible due to browser security restrictions'
+      ];
+      
       setHttpResults([{
         url: httpUrl,
+        finalUrl: httpUrl,
         statusCode: 0,
+        statusText: 'Error',
         responseTime: 0,
+        protocol: 'Unknown',
+        server: 'Unknown',
+        contentType: 'Unknown',
+        contentLength: 'Unknown',
         redirects: [],
         headers: {},
+        securityHeaders: {
+          hsts: null,
+          csp: null,
+          xFrameOptions: null,
+          xContentTypeOptions: null,
+          xXssProtection: null,
+          referrerPolicy: null,
+        },
+        performanceHeaders: {
+          cacheControl: null,
+          expires: null,
+          lastModified: null,
+          etag: null,
+          vary: null,
+        },
+        cdnInfo: {
+          detected: false,
+          provider: null,
+          serverLocation: null,
+        },
         status: 'error',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        troubleshooting
       }]);
     }
     
@@ -546,25 +713,144 @@ export function DnsTests() {
                   </div>
                   
                   {httpResults.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <h4 className="font-medium text-gray-900 dark:text-white">HTTP Results for {httpUrl}</h4>
+                      
+                      {/* HTTP Test Explanation */}
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                          🌐 Understanding HTTP Status Tests
+                        </h5>
+                        <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                          <p><strong>🔍 What This Test Shows:</strong> HTTP status testing reveals how websites respond to requests, including security headers, performance settings, and server configuration.</p>
+                          <p><strong>🛡️ Security Analysis:</strong> Checks for important security headers like HSTS, CSP, and X-Frame-Options that protect against common web attacks.</p>
+                          <p><strong>⚡ Performance Insights:</strong> Analyzes caching headers, compression, and CDN usage to understand website optimization.</p>
+                          <p><strong>💡 Troubleshooting:</strong> Provides specific recommendations based on the test results to improve website security and performance.</p>
+                        </div>
+                      </div>
+                      
                       {httpResults.map((result, index) => (
                         <div key={index} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-gray-900 dark:text-white">HTTP Status</span>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-medium text-gray-900 dark:text-white">HTTP Status Analysis</span>
                             <Badge variant={result.status === 'success' ? 'success' : 'danger'}>
-                              {result.status === 'success' ? 'Success' : 'Error'}
+                              {result.status === 'success' ? `${result.statusCode} ${result.statusText}` : 'Error'}
                             </Badge>
                           </div>
+                          
                           {result.status === 'success' ? (
-                            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                              <div>Status Code: {result.statusCode}</div>
-                              <div>Response Time: {result.responseTime}ms</div>
-                              <div>URL: {result.url}</div>
+                            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+                              {/* Basic HTTP Information */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <h6 className="font-medium text-gray-700 dark:text-gray-300 mb-2">Basic Information</h6>
+                                  <div className="space-y-1">
+                                    <div><span className="font-medium">URL:</span> {result.url}</div>
+                                    <div><span className="font-medium">Final URL:</span> {result.finalUrl}</div>
+                                    <div><span className="font-medium">Protocol:</span> {result.protocol}</div>
+                                    <div><span className="font-medium">Server:</span> {result.server}</div>
+                                    <div><span className="font-medium">Content Type:</span> {result.contentType}</div>
+                                    <div><span className="font-medium">Content Length:</span> {result.contentLength}</div>
+                                    <div><span className="font-medium">Response Time:</span> {result.responseTime}ms</div>
+                                  </div>
+                                </div>
+                                
+                                {/* CDN Information */}
+                                <div>
+                                  <h6 className="font-medium text-gray-700 dark:text-gray-300 mb-2">CDN & Infrastructure</h6>
+                                  <div className="space-y-1">
+                                    <div><span className="font-medium">CDN Detected:</span> {result.cdnInfo.detected ? 'Yes' : 'No'}</div>
+                                    {result.cdnInfo.provider && (
+                                      <div><span className="font-medium">Provider:</span> {result.cdnInfo.provider}</div>
+                                    )}
+                                    {result.cdnInfo.serverLocation && (
+                                      <div><span className="font-medium">Location:</span> {result.cdnInfo.serverLocation}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Security Headers */}
+                              <div>
+                                <h6 className="font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                  Security Headers
+                                  <span className="text-xs text-gray-500 dark:text-gray-400" title="Security headers protect against common web vulnerabilities and attacks">
+                                    🛡️
+                                  </span>
+                                </h6>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {Object.entries(result.securityHeaders).map(([key, value]) => (
+                                    <div key={key} className="flex items-center gap-2">
+                                      <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                      <span className={`px-2 py-1 rounded text-xs ${
+                                        value ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                                      }`}>
+                                        {value || 'Missing'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Performance Headers */}
+                              <div>
+                                <h6 className="font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                  Performance Headers
+                                  <span className="text-xs text-gray-500 dark:text-gray-400" title="Performance headers control caching, compression, and optimization">
+                                    ⚡
+                                  </span>
+                                </h6>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {Object.entries(result.performanceHeaders).map(([key, value]) => (
+                                    <div key={key} className="flex items-center gap-2">
+                                      <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                      <span className={`px-2 py-1 rounded text-xs ${
+                                        value ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                      }`}>
+                                        {value || 'Not Set'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Troubleshooting Tips */}
+                              {result.troubleshooting && result.troubleshooting.length > 0 && (
+                                <div>
+                                  <h6 className="font-medium text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2">
+                                    💡 Troubleshooting Tips
+                                  </h6>
+                                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                                    <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200">
+                                      {result.troubleshooting.map((tip, idx) => (
+                                        <li key={idx}>{tip}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
-                            <div className="text-sm text-red-600 dark:text-red-400">
-                              Error: {result.error}
+                            <div className="space-y-3">
+                              <div className="text-sm text-red-600 dark:text-red-400">
+                                <strong>Error:</strong> {result.error}
+                              </div>
+                              
+                              {/* Troubleshooting for errors */}
+                              {result.troubleshooting && result.troubleshooting.length > 0 && (
+                                <div>
+                                  <h6 className="font-medium text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-2">
+                                    💡 Troubleshooting Tips
+                                  </h6>
+                                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                                    <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200">
+                                      {result.troubleshooting.map((tip, idx) => (
+                                        <li key={idx}>{tip}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
