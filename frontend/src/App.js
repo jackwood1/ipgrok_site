@@ -59,14 +59,15 @@ function App() {
                 handleTestComplete('configInfo');
             }
             // Auto-progression for Detailed Analysis: networkTest -> configInfo -> advancedTests -> mediaTest
-            // Only auto-progress if we're not in Quick Test mode
-            if (type === 'networkData' && currentTest === 'networkTest' && !data.testType && !isQuickTestMode) {
+            // Only auto-progress if we're in Detailed Analysis mode (not Quick Test mode)
+            // AND ensure we're not in Quick Test mode at all
+            if (!isQuickTestMode && type === 'networkData' && currentTest === 'networkTest' && !data.testType) {
                 setCurrentTest('configInfo');
             }
-            if (type === 'systemData' && currentTest === 'configInfo' && !data.testType && !isQuickTestMode) {
+            if (!isQuickTestMode && type === 'systemData' && currentTest === 'configInfo' && !data.testType) {
                 setCurrentTest('advancedTests');
             }
-            if (type === 'advancedTestsData' && currentTest === 'advancedTests' && !data.testType && !isQuickTestMode) {
+            if (!isQuickTestMode && type === 'advancedTestsData' && currentTest === 'advancedTests' && !data.testType) {
                 setCurrentTest('mediaTest');
             }
         }

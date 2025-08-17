@@ -712,48 +712,10 @@ export function DnsTests() {
                     </Button>
                   </div>
                   
+                                    {/* Results Section - Right under the URL input */}
                   {httpResults.length > 0 && (
                     <div className="space-y-4">
                       <h4 className="font-medium text-gray-900 dark:text-white">HTTP Results for {httpUrl}</h4>
-                      
-                      {/* HTTP Test Explanation */}
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-                          🌐 Understanding HTTP Status Tests
-                        </h5>
-                        <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                          <p><strong>🔍 What This Test Shows:</strong> HTTP status testing reveals how websites respond to requests, including security headers, performance settings, and server configuration.</p>
-                          <p><strong>🛡️ Security Analysis:</strong> Checks for important security headers like HSTS, CSP, and X-Frame-Options that protect against common web attacks.</p>
-                          <p><strong>⚡ Performance Insights:</strong> Analyzes caching headers, compression, and CDN usage to understand website optimization.</p>
-                          <p><strong>💡 Troubleshooting:</strong> Provides specific recommendations based on the test results to improve website security and performance.</p>
-                        </div>
-                      </div>
-                      
-
-                      
-                      {/* Educational Value */}
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <h5 className="font-medium text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
-                          🎓 Educational Value
-                        </h5>
-                        <div className="text-sm text-green-800 dark:text-green-200 space-y-2">
-                          <p><strong>📚 Learn About HTTP:</strong> Even with CORS limitations, this tool teaches you about important HTTP concepts and security best practices.</p>
-                          <p><strong>🛡️ Security Awareness:</strong> Understand what security headers should be present and why they're important.</p>
-                          <p><strong>🔍 Manual Testing Skills:</strong> Learn how to use browser developer tools for detailed HTTP analysis.</p>
-                        </div>
-                      </div>
-                      
-                      {/* CORS Information */}
-                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                        <h5 className="font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-                          ⚠️ Browser Security Limitations
-                        </h5>
-                        <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
-                          <p><strong>🌐 CORS Restrictions:</strong> Due to browser security policies, some websites may block cross-origin requests, limiting the information we can retrieve.</p>
-                          <p><strong>📊 What You'll See:</strong> We'll show available information and clearly indicate when data is limited due to CORS restrictions.</p>
-                          <p><strong>🔧 Alternative Testing:</strong> For comprehensive analysis, consider using browser developer tools, server-side tools, or testing from the same domain.</p>
-                        </div>
-                      </div>
                       
                       {httpResults.map((result, index) => (
                         <div key={index} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
@@ -883,6 +845,46 @@ export function DnsTests() {
                       ))}
                     </div>
                   )}
+                  
+                  {/* Helpful Information Section - Below the results */}
+                  <div className="space-y-4">
+                    {/* HTTP Test Explanation */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                        🌐 Understanding HTTP Status Tests
+                      </h5>
+                      <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                        <p><strong>🔍 What This Test Shows:</strong> HTTP status testing reveals how websites respond to requests, including security headers, performance settings, and server configuration.</p>
+                        <p><strong>🛡️ Security Analysis:</strong> Checks for important security headers like HSTS, CSP, and X-Frame-Options that protect against common web attacks.</p>
+                        <p><strong>⚡ Performance Insights:</strong> Analyzes caching headers, compression, and CDN usage to understand website optimization.</p>
+                        <p><strong>💡 Troubleshooting:</strong> Provides specific recommendations based on the test results to improve website security and performance.</p>
+                      </div>
+                    </div>
+                    
+                    {/* CORS Information */}
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <h5 className="font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+                        ⚠️ Browser Security Limitations
+                      </h5>
+                      <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
+                        <p><strong>🌐 CORS Restrictions:</strong> Due to browser security policies, most websites block cross-origin requests, limiting the information we can retrieve.</p>
+                        <p><strong>📊 What You'll See:</strong> We'll show available information and clearly indicate when data is limited due to CORS restrictions.</p>
+                        <p><strong>🔧 Alternative Testing:</strong> For comprehensive analysis, consider using browser developer tools, server-side tools, or testing from the same domain.</p>
+                      </div>
+                    </div>
+                    
+                    {/* Educational Value */}
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <h5 className="font-medium text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                        🎓 Educational Value
+                      </h5>
+                      <div className="text-sm text-green-800 dark:text-green-200 space-y-2">
+                        <p><strong>📚 Learn About HTTP:</strong> Even with CORS limitations, this tool teaches you about important HTTP concepts and security best practices.</p>
+                        <p><strong>🛡️ Security Awareness:</strong> Understand what security headers should be present and why they're important.</p>
+                        <p><strong>🔍 Manual Testing Skills:</strong> Learn how to use browser developer tools for detailed HTTP analysis.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
