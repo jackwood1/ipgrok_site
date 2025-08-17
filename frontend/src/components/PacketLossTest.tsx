@@ -29,11 +29,14 @@ export function PacketLossTest({ onDataUpdate }: PacketLossTestProps) {
     failed: 0
   });
   
+  // Check if we're in development mode
+  const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
   const testIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<number>(0);
   const latencyMeasurementsRef = useRef<number[]>([]);
   const testCountRef = useRef(0);
-  const totalTests = 100; // Number of packets to send
+  const totalTests = isDevelopment ? 50 : 100; // Fewer tests in development mode
   const packetSize = 1024; // 1KB packets
 
   const simulatePacketLoss = async (): Promise<{ success: boolean; latency: number }> => {
@@ -220,6 +223,22 @@ export function PacketLossTest({ onDataUpdate }: PacketLossTestProps) {
 
   return (
     <div className="space-y-6">
+      {/* Development Mode Warning */}
+      {isDevelopment && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-600 dark:text-yellow-400">⚠️</span>
+            <div>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Development Mode</h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Running locally - using simulated packet loss testing. 
+                Results will be representative but not real-world accurate.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Test Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Button

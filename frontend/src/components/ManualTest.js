@@ -7,6 +7,7 @@ import { ConfigInfo } from "./ConfigInfo";
 import { PingTest } from "./PingTest";
 import { TracerouteTest } from "./TracerouteTest";
 import { JitterTest } from "./JitterTest";
+import { LocalNetworkTest } from "./LocalNetworkTest";
 import { PacketLossTest } from "./PacketLossTest";
 export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdate }) {
     const [testStatus, setTestStatus] = useState({
@@ -25,7 +26,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
         ping: null,
         traceroute: null,
         jitter: null,
-        packetLoss: null
+        packetLoss: null,
+        localNetwork: null
     });
     const [activeTest, setActiveTest] = useState(null);
     const [viewingResults, setViewingResults] = useState(null);
@@ -76,7 +78,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
             ping: 'not-started',
             traceroute: 'not-started',
             jitter: 'not-started',
-            packetLoss: 'not-started'
+            packetLoss: 'not-started',
+            localNetwork: 'not-started'
         });
         setTestData({
             network: null,
@@ -85,7 +88,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
             ping: null,
             traceroute: null,
             jitter: null,
-            packetLoss: null
+            packetLoss: null,
+            localNetwork: null
         });
         setActiveTest(null);
         setViewingResults(null);
@@ -142,6 +146,13 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
             description: 'Test network reliability and data delivery',
             duration: '20-40 seconds',
             icon: '📦'
+        },
+        {
+            id: 'localNetwork',
+            name: 'Local Network Test',
+            description: 'Test local system performance offline',
+            duration: '15-30 seconds',
+            icon: '🏠'
         }
     ];
     return (_jsxs("div", { className: "space-y-8", children: [_jsx(Card, { title: "Manual Test Suite", subtitle: "Choose which tests to run individually", children: _jsxs("div", { className: "flex flex-col sm:flex-row gap-4 mb-6", children: [_jsx(Button, { onClick: resetAllTests, variant: "secondary", size: "sm", children: "\uD83D\uDD04 Reset All Tests" }), _jsxs("div", { className: "text-sm text-gray-600 dark:text-gray-400 flex items-center", children: [_jsx("span", { className: "mr-2", children: "Active Test:" }), _jsx(Badge, { variant: activeTest ? 'info' : 'default', children: activeTest ? tests.find(t => t.id === activeTest)?.name : 'None' })] })] }) }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6", children: tests.map((test) => {
@@ -154,7 +165,7 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
                                         isCompleted ? 'Completed' :
                                             isFailed ? 'Retry' :
                                                 `Run ${test.name}` }), isCompleted && testData[test.id] && (_jsxs("div", { className: "p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors", onClick: () => handleViewResults(test.id), children: [_jsx("div", { className: "text-sm font-medium text-green-900 dark:text-green-100 mb-1", children: "Test Results Available" }), _jsx("div", { className: "text-xs text-green-700 dark:text-green-300", children: viewingResults === test.id ? 'Click to hide results' : 'Click to view detailed results' })] })), isFailed && (_jsxs("div", { className: "p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md", children: [_jsx("div", { className: "text-sm font-medium text-red-900 dark:text-red-100 mb-1", children: "Test Failed" }), _jsx("div", { className: "text-xs text-red-700 dark:text-red-300", children: "Click retry to run again" })] }))] }) }, test.id));
-                }) }), activeTest && (_jsx(Card, { title: `Running: ${tests.find(t => t.id === activeTest)?.name}`, subtitle: "Test in progress...", children: _jsxs("div", { className: "space-y-4", children: [activeTest === 'network' && (_jsx(NetworkTest, { permissionsStatus: permissionsStatus, onDataUpdate: (data) => handleTestComplete('network', data), autoStart: true })), activeTest === 'media' && (_jsx(MediaTest, { permissionsStatus: permissionsStatus, onPermissionsChange: onPermissionsChange, onDataUpdate: (data) => handleTestComplete('media', data) })), activeTest === 'system' && (_jsx(ConfigInfo, { onDataUpdate: (data) => handleTestComplete('system', data) })), activeTest === 'ping' && (_jsx(PingTest, { onDataUpdate: (data) => handleTestComplete('ping', data) })), activeTest === 'traceroute' && (_jsx(TracerouteTest, { onDataUpdate: (data) => handleTestComplete('traceroute', data) })), activeTest === 'jitter' && (_jsx(JitterTest, { onDataUpdate: (data) => handleTestComplete('jitter', data) })), activeTest === 'packetLoss' && (_jsx(PacketLossTest, { onDataUpdate: (data) => handleTestComplete('packetLoss', data) }))] }) })), viewingResults && testData[viewingResults] && (_jsx(Card, { title: `${tests.find(t => t.id === viewingResults)?.name} - Detailed Results`, subtitle: "Complete test results and analysis", children: _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex justify-between items-center", children: [_jsx("h3", { className: "text-lg font-medium text-gray-900 dark:text-white", children: "Test Data" }), _jsx(Button, { onClick: () => setViewingResults(null), variant: "secondary", size: "sm", children: "Close Results" })] }), _jsx("div", { className: "bg-gray-50 dark:bg-gray-800 p-4 rounded-lg", children: _jsx("pre", { className: "text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap overflow-x-auto", children: JSON.stringify(testData[viewingResults], null, 2) }) }), _jsxs("div", { className: "flex gap-2", children: [_jsx(Button, { onClick: () => {
+                }) }), activeTest && (_jsx(Card, { title: `Running: ${tests.find(t => t.id === activeTest)?.name}`, subtitle: "Test in progress...", children: _jsxs("div", { className: "space-y-4", children: [activeTest === 'network' && (_jsx(NetworkTest, { permissionsStatus: permissionsStatus, onDataUpdate: (data) => handleTestComplete('network', data), autoStart: true })), activeTest === 'media' && (_jsx(MediaTest, { permissionsStatus: permissionsStatus, onPermissionsChange: onPermissionsChange, onDataUpdate: (data) => handleTestComplete('media', data) })), activeTest === 'system' && (_jsx(ConfigInfo, { onDataUpdate: (data) => handleTestComplete('system', data) })), activeTest === 'ping' && (_jsx(PingTest, { onDataUpdate: (data) => handleTestComplete('ping', data) })), activeTest === 'traceroute' && (_jsx(TracerouteTest, { onDataUpdate: (data) => handleTestComplete('traceroute', data) })), activeTest === 'jitter' && (_jsx(JitterTest, { onDataUpdate: (data) => handleTestComplete('jitter', data) })), activeTest === 'packetLoss' && (_jsx(PacketLossTest, { onDataUpdate: (data) => handleTestComplete('packetLoss', data) })), activeTest === 'localNetwork' && (_jsx(LocalNetworkTest, { onDataUpdate: (data) => handleTestComplete('localNetwork', data) }))] }) })), viewingResults && testData[viewingResults] && (_jsx(Card, { title: `${tests.find(t => t.id === viewingResults)?.name} - Detailed Results`, subtitle: "Complete test results and analysis", children: _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex justify-between items-center", children: [_jsx("h3", { className: "text-lg font-medium text-gray-900 dark:text-white", children: "Test Data" }), _jsx(Button, { onClick: () => setViewingResults(null), variant: "secondary", size: "sm", children: "Close Results" })] }), _jsx("div", { className: "bg-gray-50 dark:bg-gray-800 p-4 rounded-lg", children: _jsx("pre", { className: "text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap overflow-x-auto", children: JSON.stringify(testData[viewingResults], null, 2) }) }), _jsxs("div", { className: "flex gap-2", children: [_jsx(Button, { onClick: () => {
                                         const data = testData[viewingResults];
                                         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                                         const url = URL.createObjectURL(blob);

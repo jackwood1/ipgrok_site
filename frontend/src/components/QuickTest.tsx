@@ -34,7 +34,14 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
   // Handle network test completion
   const handleNetworkComplete = (data: any) => {
     console.log('QuickTest: Network test completed with data:', data);
-    setNetworkData(data);
+    
+    // Extract the actual data from the standardized format
+    let networkDataToSet = data;
+    if (data && data.testType === 'networkTest' && data.data) {
+      networkDataToSet = data.data;
+    }
+    
+    setNetworkData(networkDataToSet);
     setCurrentStep('system');
     setNetworkProgress("Network test completed!");
   };
@@ -46,7 +53,15 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
 
   // Handle system info completion
   const handleSystemComplete = (data: any) => {
-    setSystemData(data);
+    console.log('QuickTest: System info completed with data:', data);
+    
+    // Extract the actual data from the standardized format
+    let systemDataToSet = data;
+    if (data && data.testType === 'systemInfo' && data.data) {
+      systemDataToSet = data.data;
+    }
+    
+    setSystemData(systemDataToSet);
     setCurrentStep('complete');
     setSystemProgress("System information gathered!");
   };
@@ -377,6 +392,16 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                     )}
                   </div>
 
+                  {/* Debug Information - Always show for now to help troubleshoot */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">🐛 Debug Info</h4>
+                    <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                      <div>Network Data: {JSON.stringify(networkData, null, 2)}</div>
+                      <div>System Data: {JSON.stringify(systemData, null, 2)}</div>
+                      <div>Current Step: {currentStep}</div>
+                    </div>
+                  </div>
+                  
                   {/* Overall Assessment */}
                   <div className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">

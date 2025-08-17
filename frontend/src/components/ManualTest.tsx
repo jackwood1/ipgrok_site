@@ -6,6 +6,7 @@ import { ConfigInfo } from "./ConfigInfo";
 import { PingTest } from "./PingTest";
 import { TracerouteTest } from "./TracerouteTest";
 import { JitterTest } from "./JitterTest";
+import { LocalNetworkTest } from "./LocalNetworkTest";
 import { PacketLossTest } from "./PacketLossTest";
 
 interface ManualTestProps {
@@ -22,6 +23,7 @@ interface TestStatus {
   traceroute: 'not-started' | 'running' | 'completed' | 'failed';
   jitter: 'not-started' | 'running' | 'completed' | 'failed';
   packetLoss: 'not-started' | 'running' | 'completed' | 'failed';
+  localNetwork: 'not-started' | 'running' | 'completed' | 'failed';
 }
 
 export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdate }: ManualTestProps) {
@@ -32,7 +34,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
     ping: 'not-started',
     traceroute: 'not-started',
     jitter: 'not-started',
-    packetLoss: 'not-started'
+    packetLoss: 'not-started',
+    localNetwork: 'not-started'
   });
 
   const [testData, setTestData] = useState<any>({
@@ -42,7 +45,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
     ping: null,
     traceroute: null,
     jitter: null,
-    packetLoss: null
+    packetLoss: null,
+    localNetwork: null
   });
 
   const [activeTest, setActiveTest] = useState<string | null>(null);
@@ -101,7 +105,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
       ping: 'not-started',
       traceroute: 'not-started',
       jitter: 'not-started',
-      packetLoss: 'not-started'
+      packetLoss: 'not-started',
+      localNetwork: 'not-started'
     });
     setTestData({
       network: null,
@@ -110,7 +115,8 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
       ping: null,
       traceroute: null,
       jitter: null,
-      packetLoss: null
+      packetLoss: null,
+      localNetwork: null
     });
     setActiveTest(null);
     setViewingResults(null);
@@ -169,6 +175,13 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
       description: 'Test network reliability and data delivery',
       duration: '20-40 seconds',
       icon: '📦'
+    },
+    {
+      id: 'localNetwork',
+      name: 'Local Network Test',
+      description: 'Test local system performance offline',
+      duration: '15-30 seconds',
+      icon: '🏠'
     }
   ];
 
@@ -310,6 +323,12 @@ export function ManualTest({ permissionsStatus, onPermissionsChange, onDataUpdat
             {activeTest === 'packetLoss' && (
               <PacketLossTest
                 onDataUpdate={(data) => handleTestComplete('packetLoss', data)}
+              />
+            )}
+            
+            {activeTest === 'localNetwork' && (
+              <LocalNetworkTest
+                onDataUpdate={(data) => handleTestComplete('localNetwork', data)}
               />
             )}
           </div>

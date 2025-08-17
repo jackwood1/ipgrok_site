@@ -11,6 +11,7 @@ export { EmailResults } from "./EmailResults";
 export { Help } from "./Help";
 export { JitterTest } from "./JitterTest";
 export { LandingPage } from "./LandingPage";
+export { LocalNetworkTest } from "./LocalNetworkTest";
 export { ManualTest } from "./ManualTest";
 export { PacketLossTest } from "./PacketLossTest";
 export { ShareResults } from "./ShareResults";
