@@ -57,14 +57,15 @@ export function DnsTests() {
   const runDnsTest = useCallback(async () => {
     if (!dnsDomain.trim()) return;
     
+    // Clear previous results when starting a new test
+    setDnsResults([]);
+    
     setIsLoading(true);
     setActiveTest('dns');
     
     const providers = [
       { name: 'Cloudflare', url: 'https://cloudflare-dns.com/dns-query' },
-      { name: 'Google', url: 'https://dns.google/resolve' },
-      { name: 'OpenDNS', url: 'https://doh.opendns.com/dns-query' },
-      { name: 'AdGuard', url: 'https://dns.adguard-dns.com/dns-query' }
+      { name: 'Google', url: 'https://dns.google/resolve' }
     ];
     
     const results: DnsResult[] = [];
@@ -368,8 +369,22 @@ export function DnsTests() {
                   </div>
                   
                   {dnsResults.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <h4 className="font-medium text-gray-900 dark:text-white">DNS Results for {dnsDomain}</h4>
+                      
+                      {/* Results Explanation */}
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <h5 className="font-medium text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                          📊 Understanding Your DNS Results
+                        </h5>
+                        <div className="text-sm text-green-800 dark:text-green-200 space-y-2">
+                          <p><strong>🔍 What This Test Shows:</strong> DNS resolution maps domain names to IP addresses and provides essential network configuration information.</p>
+                          <p><strong>🌐 Multiple Providers:</strong> Testing with both Cloudflare and Google DNS helps identify any provider-specific issues.</p>
+                          <p><strong>⚡ Response Times:</strong> Lower response times indicate faster DNS resolution, which improves website loading speed.</p>
+                          <p><strong>💡 Common Issues:</strong> If one provider fails but another succeeds, there may be network routing or firewall issues.</p>
+                        </div>
+                      </div>
+                      
                       {dnsResults.map((result, index) => (
                         <div key={index} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
                           <div className="flex items-center justify-between mb-2">
@@ -378,17 +393,38 @@ export function DnsTests() {
                               {result.status === 'success' ? 'Success' : 'Error'}
                             </Badge>
                           </div>
+                          
+                          {/* Provider-specific insights */}
+                          {result.status === 'success' && (
+                            <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-800 dark:text-blue-200">
+                              <strong>💡 {result.provider} Insights:</strong> {
+                                result.provider === 'Cloudflare' 
+                                  ? 'Cloudflare DNS is optimized for speed and privacy, often providing the fastest response times.'
+                                  : 'Google DNS offers excellent reliability and global distribution, with consistent performance worldwide.'
+                              }
+                            </div>
+                          )}
                           {result.status === 'success' ? (
                             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                               <div className="grid grid-cols-1 gap-2">
-                                <div className="font-medium text-gray-700 dark:text-gray-300">IP Addresses (A Records):</div>
+                                <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                  IP Addresses (A Records)
+                                  <span className="text-xs text-gray-500 dark:text-gray-400" title="A Records map domain names to IPv4 addresses. These are the actual server locations for the website.">
+                                    ℹ️
+                                  </span>
+                                </div>
                                 <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                   {result.ipAddresses.length > 0 ? result.ipAddresses.join('\n') : 'None'}
                                 </div>
                                 
                                 {result.cnameRecords.length > 0 && (
                                   <>
-                                    <div className="font-medium text-gray-700 dark:text-gray-300">CNAME Records:</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                      CNAME Records
+                                      <span className="text-xs text-gray-500 dark:text-gray-400" title="CNAME records create aliases for domain names. They redirect one domain to another.">
+                                        ℹ️
+                                      </span>
+                                    </div>
                                     <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                       {result.cnameRecords.join('\n')}
                                     </div>
@@ -397,7 +433,12 @@ export function DnsTests() {
                                 
                                 {result.mxRecords.length > 0 && (
                                   <>
-                                    <div className="font-medium text-gray-700 dark:text-gray-300">MX Records (Mail Servers):</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                      MX Records (Mail Servers)
+                                      <span className="text-xs text-gray-500 dark:text-gray-400" title="MX records specify which servers handle email for this domain. Lower priority numbers have higher priority.">
+                                        ℹ️
+                                      </span>
+                                    </div>
                                     <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                       {result.mxRecords.join('\n')}
                                     </div>
@@ -406,7 +447,12 @@ export function DnsTests() {
                                 
                                 {result.txtRecords.length > 0 && (
                                   <>
-                                    <div className="font-medium text-gray-700 dark:text-gray-300">TXT Records:</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                      TXT Records
+                                      <span className="text-xs text-gray-500 dark:text-gray-400" title="TXT records contain text information, often used for SPF (email security), DKIM verification, or other domain verification purposes.">
+                                        ℹ️
+                                      </span>
+                                    </div>
                                     <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                       {result.txtRecords.map((txt, idx) => (
                                         <div key={idx} className="break-all">{txt}</div>
@@ -417,7 +463,12 @@ export function DnsTests() {
                                 
                                 {result.nsRecords.length > 0 && (
                                   <>
-                                    <div className="font-medium text-gray-700 dark:text-gray-300">Name Servers (NS):</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                      Name Servers (NS)
+                                      <span className="text-xs text-gray-500 dark:text-gray-400" title="NS records specify which servers are authoritative for this domain's DNS zone. These are the servers that know the domain's DNS information.">
+                                        ℹ️
+                                      </span>
+                                    </div>
                                     <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                       {result.nsRecords.join('\n')}
                                     </div>
@@ -426,7 +477,12 @@ export function DnsTests() {
                                 
                                 {result.soaRecord && (
                                   <>
-                                    <div className="font-medium text-gray-700 dark:text-gray-300">SOA Record:</div>
+                                    <div className="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                      SOA Record
+                                      <span className="text-xs text-gray-500 dark:text-gray-400" title="SOA (Start of Authority) records contain administrative information about the DNS zone, including transfer settings and contact information.">
+                                        ℹ️
+                                      </span>
+                                    </div>
                                     <div className="pl-2 text-xs font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded">
                                       <div>Primary NS: {result.soaRecord.mname}</div>
                                       <div>Admin Email: {result.soaRecord.rname}</div>
@@ -440,8 +496,11 @@ export function DnsTests() {
                                 )}
                                 
                                 <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-                                  <div className="text-gray-500 dark:text-gray-400">
+                                  <div className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                     Response Time: {result.responseTime}ms
+                                    <span className="text-xs" title="Response time shows how quickly this DNS provider resolved the domain. Lower times are better for faster website loading.">
+                                      ℹ️
+                                    </span>
                                   </div>
                                 </div>
                               </div>
