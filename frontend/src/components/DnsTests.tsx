@@ -205,25 +205,61 @@ export function DnsTests() {
       const startTime = performance.now();
       const testUrl = httpUrl.startsWith('http') ? httpUrl : `https://${httpUrl}`;
       
-      // Try to get detailed information using a proxy or backend approach
-      // For now, we'll use a more comprehensive approach that works around CORS
-      const response = await fetch(testUrl, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'User-Agent': 'IPGrok-HTTP-Tester/1.0'
+      // Try multiple approaches to get HTTP information
+      let response: Response | null = null;
+      let headers: Record<string, string> = {};
+      let statusCode = 0;
+      let statusText = '';
+      let finalUrl = testUrl;
+      
+      try {
+        // First attempt: Try with CORS mode
+        response = await fetch(testUrl, {
+          method: 'HEAD',
+          mode: 'cors',
+          credentials: 'omit',
+          headers: {
+            'User-Agent': 'IPGrok-HTTP-Tester/1.0'
+          }
+        });
+        
+        statusCode = response.status;
+        statusText = response.statusText;
+        finalUrl = response.url;
+        
+        // Extract headers
+        response.headers.forEach((value, key) => {
+          headers[key.toLowerCase()] = value;
+        });
+        
+      } catch (corsError) {
+        // CORS failed, try with no-cors mode for basic info
+        try {
+          response = await fetch(testUrl, {
+            method: 'HEAD',
+            mode: 'no-cors',
+            credentials: 'omit'
+          });
+          
+          // With no-cors, we get limited information
+          statusCode = response.status || 0;
+          statusText = response.statusText || 'Unknown';
+          
+          // Try to get some basic headers that might be available
+          if (response.headers) {
+            response.headers.forEach((value, key) => {
+              headers[key.toLowerCase()] = value;
+            });
+          }
+          
+        } catch (noCorsError) {
+          // Both attempts failed, create a basic result
+          throw new Error('Unable to connect to the website. This could be due to CORS restrictions, network issues, or the site being unavailable.');
         }
-      });
+      }
       
       const endTime = performance.now();
       const responseTime = Math.round(endTime - startTime);
-      
-      // Extract headers
-      const headers: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        headers[key.toLowerCase()] = value;
-      });
       
       // Parse security headers
       const securityHeaders = {
@@ -279,14 +315,14 @@ export function DnsTests() {
       // Generate troubleshooting tips
       const troubleshooting: string[] = [];
       
-      if (response.status >= 400) {
-        if (response.status === 404) {
+      if (statusCode >= 400) {
+        if (statusCode === 404) {
           troubleshooting.push('Page not found - check if the URL is correct');
-        } else if (response.status === 403) {
+        } else if (statusCode === 403) {
           troubleshooting.push('Access forbidden - the server is blocking requests');
-        } else if (response.status === 500) {
+        } else if (statusCode === 500) {
           troubleshooting.push('Server error - the website is experiencing issues');
-        } else if (response.status >= 500) {
+        } else if (statusCode >= 500) {
           troubleshooting.push('Server error - contact the website administrator');
         }
       }
@@ -303,13 +339,20 @@ export function DnsTests() {
         troubleshooting.push('Missing CSP header - consider adding Content Security Policy for security');
       }
       
+      // Add CORS-specific tips if we had limited access
+      if (Object.keys(headers).length === 0) {
+        troubleshooting.push('Limited header information available due to CORS restrictions');
+        troubleshooting.push('This is normal for cross-origin requests from web browsers');
+        troubleshooting.push('For full analysis, consider using server-side testing tools');
+      }
+      
       const result: HttpResult = {
         url: testUrl,
-        finalUrl: response.url,
-        statusCode: response.status,
-        statusText: response.statusText,
+        finalUrl: finalUrl,
+        statusCode: statusCode,
+        statusText: statusText,
         responseTime,
-        protocol: 'HTTP/' + (response.headers.get('x-http-version') || '1.1'),
+        protocol: 'HTTP/' + (response?.headers?.get('x-http-version') || '1.1'),
         server: headers['server'] || 'Unknown',
         contentType: headers['content-type'] || 'Unknown',
         contentLength: headers['content-length'] || 'Unknown',
@@ -325,11 +368,12 @@ export function DnsTests() {
       setHttpResults([result]);
       
     } catch (error) {
-      // Handle CORS or other errors gracefully
+      // Handle all errors gracefully
       const troubleshooting: string[] = [
         'CORS policy blocked this request - this is normal for cross-origin requests',
-        'Try testing from the same domain or use a CORS proxy',
-        'Some headers may not be visible due to browser security restrictions'
+        'Try testing from the same domain or use server-side testing tools',
+        'Some websites block automated requests for security reasons',
+        'Consider using browser developer tools for detailed header analysis'
       ];
       
       setHttpResults([{
@@ -726,6 +770,18 @@ export function DnsTests() {
                           <p><strong>🛡️ Security Analysis:</strong> Checks for important security headers like HSTS, CSP, and X-Frame-Options that protect against common web attacks.</p>
                           <p><strong>⚡ Performance Insights:</strong> Analyzes caching headers, compression, and CDN usage to understand website optimization.</p>
                           <p><strong>💡 Troubleshooting:</strong> Provides specific recommendations based on the test results to improve website security and performance.</p>
+                        </div>
+                      </div>
+                      
+                      {/* CORS Information */}
+                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <h5 className="font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+                          ⚠️ Browser Security Limitations
+                        </h5>
+                        <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
+                          <p><strong>🌐 CORS Restrictions:</strong> Due to browser security policies, some websites may block cross-origin requests, limiting the information we can retrieve.</p>
+                          <p><strong>📊 What You'll See:</strong> We'll show available information and clearly indicate when data is limited due to CORS restrictions.</p>
+                          <p><strong>🔧 Alternative Testing:</strong> For comprehensive analysis, consider using browser developer tools, server-side tools, or testing from the same domain.</p>
                         </div>
                       </div>
                       
