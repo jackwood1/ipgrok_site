@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
+import { getClientUUID } from "./utils";
 
 function App() {
   const { darkMode, toggleDarkMode } = useDarkMode();
@@ -19,19 +20,28 @@ function App() {
   const [showClientInfo, setShowClientInfo] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [isQuickTestMode, setIsQuickTestMode] = useState(false);
-            const [completedTests, setCompletedTests] = useState({
+    const [clientUUID, setClientUUID] = useState<string>("");
+  const [completedTests, setCompletedTests] = useState({
     quickTest: false,
     networkTest: false,
     mediaTest: false,
   });
   const [runningTests, setRunningTests] = useState<string[]>([]);
 
+  // Initialize client UUID on component mount
+  useEffect(() => {
+    const uuid = getClientUUID();
+    setClientUUID(uuid);
+    console.log('Client UUID initialized:', uuid);
+  }, []);
+
   // Data management for export functionality
-          const [exportData, setExportData] = useState({
-          networkData: null as any,
-          mediaData: null as any,
-          systemData: null as any,
-        });
+  const [exportData, setExportData] = useState({
+    networkData: null as any,
+    mediaData: null as any,
+    systemData: null as any,
+    clientUUID: clientUUID,
+  });
 
   const updateExportData = (type: string, data: any) => {
     setExportData(prev => ({
@@ -95,6 +105,7 @@ function App() {
       networkData: null,
       mediaData: null,
       systemData: null,
+      clientUUID: clientUUID,
     });
     setCompletedTests({
       quickTest: false,
@@ -166,6 +177,7 @@ function App() {
     // Create export data object
     const exportDataObj = {
       timestamp: new Date().toISOString(),
+      clientUUID: exportData.clientUUID,
       networkData: exportData.networkData,
       mediaData: exportData.mediaData,
       systemData: exportData.systemData,

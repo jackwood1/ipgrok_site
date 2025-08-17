@@ -1,4 +1,5 @@
 import { Button } from "./ui";
+import { getClientUUID } from "../utils";
 
 export function ClientInfo() {
   return (
@@ -15,6 +16,36 @@ export function ClientInfo() {
       </div>
 
       <div className="space-y-6">
+        {/* Client Identifier */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            🆔 Client Identifier
+          </h4>
+          <div className="space-y-3">
+            <div>
+              <h5 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Unique Client ID</h5>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">UUID:</span>
+                  <code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
+                    {getClientUUID()}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(getClientUUID())}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                    title="Copy to clipboard"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              <p>This unique identifier helps track your test results and maintain privacy. It's stored locally in your browser and not shared with external servers.</p>
+            </div>
+          </div>
+        </div>
+
         {/* System Information */}
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2">

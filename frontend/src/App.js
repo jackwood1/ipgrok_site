@@ -1,8 +1,9 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo } from "./components";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
+import { getClientUUID } from "./utils";
 function App() {
     const { darkMode, toggleDarkMode } = useDarkMode();
     const [permissionsStatus, setPermissionsStatus] = useState(() => localStorage.getItem("mediaPermissions") || "unknown");
@@ -15,17 +16,25 @@ function App() {
     const [showClientInfo, setShowClientInfo] = useState(false);
     const [currentTest, setCurrentTest] = useState("");
     const [isQuickTestMode, setIsQuickTestMode] = useState(false);
+    const [clientUUID, setClientUUID] = useState("");
     const [completedTests, setCompletedTests] = useState({
         quickTest: false,
         networkTest: false,
         mediaTest: false,
     });
     const [runningTests, setRunningTests] = useState([]);
+    // Initialize client UUID on component mount
+    useEffect(() => {
+        const uuid = getClientUUID();
+        setClientUUID(uuid);
+        console.log('Client UUID initialized:', uuid);
+    }, []);
     // Data management for export functionality
     const [exportData, setExportData] = useState({
         networkData: null,
         mediaData: null,
         systemData: null,
+        clientUUID: clientUUID,
     });
     const updateExportData = (type, data) => {
         setExportData(prev => ({
@@ -77,6 +86,7 @@ function App() {
             networkData: null,
             mediaData: null,
             systemData: null,
+            clientUUID: clientUUID,
         });
         setCompletedTests({
             quickTest: false,
@@ -135,6 +145,7 @@ function App() {
         // Create export data object
         const exportDataObj = {
             timestamp: new Date().toISOString(),
+            clientUUID: exportData.clientUUID,
             networkData: exportData.networkData,
             mediaData: exportData.mediaData,
             systemData: exportData.systemData,
