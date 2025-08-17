@@ -248,6 +248,19 @@ export function DnsTests() {
         subtitle="Test DNS resolution, HTTP status, and SSL certificates"
       >
         <div className="space-y-4">
+          {/* Usage Instructions */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+              💡 How to Use DNS Tests
+            </h4>
+            <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+              <p><strong>🔍 DNS Resolution:</strong> Enter a domain name (e.g., google.com) to check how different DNS providers resolve it. This helps identify DNS issues and compare response times.</p>
+              <p><strong>🌐 HTTP Status:</strong> Test any website URL to check if it's accessible, get response codes, and measure response times. Useful for monitoring website availability.</p>
+              <p><strong>🔒 SSL Certificate:</strong> Check SSL certificate details including issuer, validity dates, and days until expiration. Important for security and compliance.</p>
+              <p><strong>💡 Tip:</strong> Start with common domains like google.com or github.com to test the functionality, then try your own domains.</p>
+            </div>
+          </div>
+
           {!activeTest ? (
             <div className="text-center py-8">
               <div className="text-6xl mb-4">🌐</div>
