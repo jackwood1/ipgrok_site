@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -16,6 +16,7 @@ function App() {
 
   const [showContactUs, setShowContactUs] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
+  const [showClientInfo, setShowClientInfo] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [isQuickTestMode, setIsQuickTestMode] = useState(false);
             const [completedTests, setCompletedTests] = useState({
@@ -78,6 +79,14 @@ function App() {
 
   const toggleAboutUs = () => {
     setShowAboutUs(!showAboutUs);
+  };
+
+  const startClientInfo = () => {
+    setShowLanding(false);
+    setShowResults(false);
+    setShowShare(false);
+    setShowClientInfo(true);
+    setCurrentTest("clientInfo");
   };
 
   const startQuickTest = () => {
@@ -230,11 +239,12 @@ function App() {
         ) : showAboutUs ? (
           <AboutUs />
         ) : showLanding ? (
-          <LandingPage 
-            onStartQuickTest={startQuickTest}
-            onStartManualTest={startManualTest}
-            onStartDnsTests={startDnsTests}
-          />
+                  <LandingPage 
+          onStartQuickTest={startQuickTest}
+          onStartManualTest={startManualTest}
+          onStartDnsTests={startDnsTests}
+          onStartClientInfo={startClientInfo}
+        />
         ) : showResults ? (
           <ResultsDashboard
             networkData={exportData.networkData}
@@ -323,6 +333,9 @@ function App() {
                 )}
                 {currentTest === "dnsTests" && (
                   <DnsTests />
+                )}
+                {currentTest === "clientInfo" && (
+                  <ClientInfo />
                 )}
               </div>
 

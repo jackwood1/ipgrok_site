@@ -4,11 +4,12 @@ interface LandingPageProps {
   onStartQuickTest: () => void;
   onStartManualTest: () => void;
   onStartDnsTests: () => void;
+  onStartClientInfo: () => void;
   onShowAbout?: () => void;
   onShowContact?: () => void;
 }
 
-export function LandingPage({ onStartQuickTest, onStartManualTest, onStartDnsTests, onShowAbout, onShowContact }: LandingPageProps) {
+export function LandingPage({ onStartQuickTest, onStartManualTest, onStartDnsTests, onStartClientInfo, onShowAbout, onShowContact }: LandingPageProps) {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -45,6 +46,14 @@ export function LandingPage({ onStartQuickTest, onStartManualTest, onStartDnsTes
             className="text-lg px-8 py-4"
           >
             ⚙️ Manual Test
+          </Button>
+          <Button
+            onClick={onStartClientInfo}
+            variant="secondary"
+            size="lg"
+            className="text-lg px-8 py-4"
+          >
+            💻 Client Info
           </Button>
         </div>
         

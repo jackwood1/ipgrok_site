@@ -570,7 +570,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       
       {/* Speed Test */}
       <Card 
-        title="Detailed Advanced Analysis" 
+        title={quickTestMode ? "Network Test" : "Detailed Advanced Analysis"} 
         subtitle="Test your internet connection for video calls"
       >
         {permissionsStatus !== "granted" && (

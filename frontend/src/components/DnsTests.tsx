@@ -478,7 +478,7 @@ export function DnsTests() {
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Test DNS resolution, HTTP status, and SSL certificate information.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button
                   onClick={() => setActiveTest('dns')}
                   variant="primary"
@@ -503,14 +503,7 @@ export function DnsTests() {
                 >
                   🔒 SSL Certificate
                 </Button>
-                <Button
-                  onClick={() => setActiveTest('clientInfo')}
-                  variant="primary"
-                  size="lg"
-                  className="px-6"
-                >
-                  💻 Client Info
-                </Button>
+
               </div>
             </div>
           ) : (
