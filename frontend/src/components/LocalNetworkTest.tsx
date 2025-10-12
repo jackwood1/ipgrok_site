@@ -420,3 +420,4 @@ export function LocalNetworkTest({ onDataUpdate }: LocalNetworkTestProps) {
     </div>
   );
 }
+

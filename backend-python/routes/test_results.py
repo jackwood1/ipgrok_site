@@ -81,7 +81,8 @@ def get_test_results():
         filters = schema.load(request.args)
         
         limit = int(filters.get('limit', 50))
-        del filters['limit'] if 'limit' in filters else None
+        if 'limit' in filters:
+            del filters['limit']
         
         # Get results
         results = TestResult.get_with_filters(filters, limit)
