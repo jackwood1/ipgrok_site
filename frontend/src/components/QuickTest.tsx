@@ -276,6 +276,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
                   )}
                   
                   <NetworkTest 
+                    key="quick-test-network" 
                     permissionsStatus={permissionsStatus}
                     onDataUpdate={handleNetworkComplete}
                     onProgressUpdate={handleNetworkProgress}

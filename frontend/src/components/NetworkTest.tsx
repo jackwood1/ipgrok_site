@@ -106,16 +106,22 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
     setTestProgress("Testing packet loss...");
     if (onProgressUpdate) onProgressUpdate("Testing packet loss...");
     
+    console.log(`🔍 Starting packet loss test with ${testCount} HEAD requests`);
+    
     for (let i = 0; i < testCount; i++) {
       try {
         const start = performance.now();
+        console.log(`Packet loss test ${i + 1}/${testCount}: Sending HEAD request`);
+        
         // ✅ CRITICAL FIX: Use HEAD instead of GET to avoid downloading entire file!
         // This was causing 20+ full file downloads just to test packet loss
-        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test", {
+        const response = await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test", {
           method: 'HEAD', // Only fetch headers, not the file content
           signal: AbortSignal.timeout(3000), // 3 second timeout
           cache: 'no-store' // Prevent caching
         });
+        
+        console.log(`Packet loss test ${i + 1}: Response received, method was HEAD, status: ${response.status}`);
         const end = performance.now();
         
         // Simulate some packet loss based on network conditions
@@ -414,14 +420,17 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
   };
 
   const runTest = async () => {
-    console.log('runTest called - starting network test');
+    const timestamp = new Date().toISOString();
+    console.log(`🚀 [${timestamp}] runTest called - starting network test`);
+    console.log(`📊 Current state: loading=${loading}, testStarted=${testStarted}, testInitiatedRef=${testInitiatedRef.current}`);
     
     // Prevent multiple simultaneous runs
     if (loading || testStarted) {
-      console.log('Test already running or started, skipping runTest');
+      console.error(`❌ Test already running or started, skipping runTest! loading=${loading}, testStarted=${testStarted}`);
       return;
     }
     
+    console.log('✅ Proceeding with test...');
     setTestStarted(true);
     setLoading(true);
     
