@@ -37,6 +37,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   const lastDataSentRef = useRef<string>('');
+  const testInitiatedRef = useRef<boolean>(false); // Track if test has been initiated
   
   // Debug logging on component mount
   console.log('NetworkTest component mounted with props:', { autoStart, quickTestMode, detailedAnalysisMode });
@@ -73,15 +74,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
 
   // Auto-start test if autoStart is true - runs ONCE on mount
   useEffect(() => {
-    if (autoStart) {
+    if (autoStart && !testInitiatedRef.current) {
       console.log('Auto-starting network test (once on mount)...');
+      testInitiatedRef.current = true; // Mark as initiated immediately
+      
       // Small delay to ensure component is fully mounted
       const timer = setTimeout(() => {
         console.log('Calling runTest from auto-start...');
         runTest();
       }, 100);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+      };
+    } else if (autoStart && testInitiatedRef.current) {
+      console.log('Test already initiated, skipping auto-start');
     }
   }, []); // Empty deps array - run only once on mount
 
@@ -408,6 +415,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
 
   const runTest = async () => {
     console.log('runTest called - starting network test');
+    
+    // Prevent multiple simultaneous runs
+    if (loading || testStarted) {
+      console.log('Test already running or started, skipping runTest');
+      return;
+    }
+    
     setTestStarted(true);
     setLoading(true);
     
