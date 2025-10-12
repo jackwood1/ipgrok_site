@@ -36,7 +36,7 @@ export function QuickTest({ permissionsStatus, onPermissionsChange, onDataUpdate
       
       onDataUpdate(testData);
     }
-  }, [networkData, systemData, onDataUpdate]);
+  }, [networkData, systemData]); // Removed onDataUpdate to prevent infinite loops
 
   // Handle network test completion
   const handleNetworkComplete = (data: any) => {

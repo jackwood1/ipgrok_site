@@ -87,7 +87,71 @@ This will create:
 - `ipgrok-test-results` - Stores test results
 - `ipgrok-analytics` - Stores analytics data
 
-### 4. Start the Application
+### 4. Create Speed Test Files
+
+The application requires test files in S3 for accurate download speed testing.
+
+#### Create Test Files
+
+Run one of these commands in the `backend/scripts` directory:
+
+**Option 1: Using Python (Recommended)**
+```bash
+cd backend/scripts
+python3 create-test-files.py
+```
+
+**Option 2: Using Shell Script**
+```bash
+cd backend/scripts
+./create-test-files.sh
+```
+
+**Option 3: Manual Creation**
+```bash
+# Mac/Linux
+dd if=/dev/urandom of=10MB.test bs=1m count=10
+
+# Or using Python one-liner
+python3 -c "import os; open('10MB.test', 'wb').write(os.urandom(10 * 1024 * 1024))"
+```
+
+#### Upload to S3
+
+```bash
+# Upload the test file
+aws s3 cp 10MB.test s3://download-test-files-ipgrok/10MB.test --acl public-read
+
+# Verify it's accessible
+curl -I https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/10MB.test
+```
+
+#### Configure S3 CORS
+
+Ensure your S3 bucket has proper CORS configuration:
+
+```json
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["*"],
+      "AllowedMethods": ["GET", "HEAD"],
+      "AllowedHeaders": ["*"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}
+```
+
+Apply CORS configuration:
+```bash
+# Save the above JSON to cors-config.json, then:
+aws s3api put-bucket-cors --bucket download-test-files-ipgrok --cors-configuration file://cors-config.json
+```
+
+> **⚠️ Important**: Without these test files, the speed test will fall back to simulated speeds in development mode, which won't be accurate.
+
+### 5. Start the Application
 
 #### Terminal 1 - Backend
 ```bash

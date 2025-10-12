@@ -41,22 +41,6 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
   // Debug logging on component mount
   console.log('NetworkTest component mounted with props:', { autoStart, quickTestMode, detailedAnalysisMode });
 
-  // Component mount effect
-  useEffect(() => {
-    console.log('NetworkTest: Component mounted, autoStart:', autoStart);
-    
-    // Force start test in quick test mode after a short delay
-    if (quickTestMode && autoStart) {
-      console.log('NetworkTest: Quick test mode detected, forcing test start');
-      setTimeout(() => {
-        if (!testStarted && !loading) {
-          console.log('NetworkTest: Force starting test in quick test mode');
-          runTest();
-        }
-      }, 500);
-    }
-  }, []);
-
   // Update export data when results change
   useEffect(() => {
     if (onDataUpdate && (results || pingData || tracerouteData)) {
@@ -85,31 +69,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         lastDataSentRef.current = currentData;
       }
     }
-  }, [results, pingData, tracerouteData, onDataUpdate]);
+  }, [results, pingData, tracerouteData]); // Removed onDataUpdate to prevent infinite loops
 
-  // Auto-start test if autoStart is true
+  // Auto-start test if autoStart is true - runs ONCE on mount
   useEffect(() => {
-    console.log('Auto-start effect triggered:', { autoStart, testStarted, loading });
-    if (autoStart && !testStarted && !loading) {
-      console.log('Auto-starting network test...');
-      // Start immediately and also with a timeout as backup
-      if (!testStarted && !loading) {
-        console.log('Calling runTest immediately...');
+    if (autoStart) {
+      console.log('Auto-starting network test (once on mount)...');
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        console.log('Calling runTest from auto-start...');
         runTest();
-      }
+      }, 100);
       
-      // Backup timeout in case immediate start doesn't work
-      setTimeout(() => {
-        console.log('Executing runTest after timeout...');
-        if (!testStarted && !loading) {
-          console.log('Calling runTest from timeout...');
-          runTest();
-        } else {
-          console.log('Test already started or loading, skipping runTest');
-        }
-      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [autoStart]);
+  }, []); // Empty deps array - run only once on mount
 
   const calculateBandwidthScore = (downloadMbps: number, uploadMbps: number): string => {
     const downloadScore = Math.min(100, (downloadMbps / 100) * 100);
@@ -119,7 +93,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
   };
 
   const simulatePacketLoss = async (): Promise<number> => {
-    const testCount = 20;
+    const testCount = 10; // Reduced from 20 for faster testing
     let successfulPings = 0;
     
     setTestProgress("Testing packet loss...");
@@ -128,28 +102,33 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
     for (let i = 0; i < testCount; i++) {
       try {
         const start = performance.now();
-        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/5MB.test", {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000), // 5 second timeout
+        // ✅ CRITICAL FIX: Use HEAD instead of GET to avoid downloading entire file!
+        // This was causing 20+ full file downloads just to test packet loss
+        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test", {
+          method: 'HEAD', // Only fetch headers, not the file content
+          signal: AbortSignal.timeout(3000), // 3 second timeout
+          cache: 'no-store' // Prevent caching
         });
         const end = performance.now();
         
         // Simulate some packet loss based on network conditions
         const responseTime = end - start;
-        const lossProbability = Math.min(0.1, responseTime / 10000); // Higher latency = higher loss probability
+        const lossProbability = Math.min(0.05, responseTime / 20000); // Very low loss
         
         if (Math.random() > lossProbability) {
           successfulPings++;
         }
         
         // Small delay between pings
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
       } catch {
         // Count as lost packet
+        console.log(`Packet loss test ${i + 1}: failed`);
       }
     }
     
     const packetLossRate = ((testCount - successfulPings) / testCount) * 100;
+    console.log(`Packet loss: ${successfulPings}/${testCount} successful (${packetLossRate.toFixed(1)}% loss)`);
     return Math.round(packetLossRate * 100) / 100; // Round to 2 decimal places
   };
 
@@ -448,11 +427,75 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       const start = performance.now();
       let downloadMbps: number;
       try {
-        await fetch("https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/100MB.test");
+        // Use 50MB file for accurate testing on fast connections
+        // Add cache busting to prevent browser caching
+        const cacheBuster = Date.now();
+        const url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test?t=${cacheBuster}`;
+        
+        console.log("Fetching test file:", url);
+        const response = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        console.log("Response received, starting to read body...");
+        console.log("Content-Length header:", response.headers.get('Content-Length'));
+        
+        // Actually read the response body to measure true download time
+        const reader = response.body?.getReader();
+        let receivedBytes = 0;
+        const fileSizeMB = 50; // 50MB file
+        let chunkCount = 0;
+        
+        if (reader) {
+          const readStart = performance.now();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            receivedBytes += value.length;
+            chunkCount++;
+            
+            // Log progress every 10MB
+            if (receivedBytes % (10 * 1024 * 1024) < 16384) { // Roughly every 10MB
+              console.log(`Downloaded: ${(receivedBytes / (1024 * 1024)).toFixed(2)} MB`);
+            }
+          }
+          const readEnd = performance.now();
+          console.log(`Read ${chunkCount} chunks in ${((readEnd - readStart) / 1000).toFixed(2)} seconds`);
+        }
+        
         const end = performance.now();
         const timeSec = (end - start) / 1000;
-        downloadMbps = (100 * 8) / timeSec; // Fixed: 100MB file, not 5MB
-        console.log("Download test completed, speed:", downloadMbps, "Mbps");
+        
+        console.log("Raw timing data:", {
+          startTime: start,
+          endTime: end,
+          durationMs: end - start,
+          durationSec: timeSec,
+          receivedBytes,
+          receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2)
+        });
+        
+        // Calculate speed in Mbps (Megabits per second)
+        // Note: Internet speeds use decimal (base-10), not binary (base-2)
+        // 1 Megabit = 1,000,000 bits (not 1,048,576)
+        // Formula: (bytes * 8) / 1,000,000 / seconds = Mbps
+        const megabits = (receivedBytes * 8) / 1000000;
+        downloadMbps = megabits / timeSec;
+        
+        console.log("Download test completed:", {
+          receivedBytes,
+          timeSec: timeSec.toFixed(2),
+          megabits: megabits.toFixed(2),
+          speed: downloadMbps.toFixed(2) + " Mbps",
+          calculation: `(${receivedBytes} * 8) / 1000000 / ${timeSec.toFixed(2)} = ${downloadMbps.toFixed(2)}`
+        });
       } catch (downloadError) {
         console.error("Download test failed:", downloadError);
         if (isDevelopment) {
