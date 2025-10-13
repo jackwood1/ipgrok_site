@@ -4,6 +4,7 @@ import { Card, Button, Badge } from "./ui";
 import { NetworkMetrics } from "./NetworkMetrics";
 import { PingTest } from "./PingTest";
 import { TracerouteTest } from "./TracerouteTest";
+import { apiService } from "../services/api";
 
 interface NetworkTestProps {
   permissionsStatus: string;
@@ -441,7 +442,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
     
     try {
       // First gather system information
-      await gatherSystemInfo();
+      const systemInfo = await gatherSystemInfo();
       
       // Download test
       setTestProgress("Testing download speed...");
@@ -577,6 +578,24 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       console.log("Network test completed!");
       setTestProgress("Network test completed!");
       if (onProgressUpdate) onProgressUpdate("Network test completed!");
+      
+      // Save results to backend database
+      try {
+        const testType = quickTestMode ? 'quickTest' : (detailedAnalysisMode ? 'detailedAnalysis' : 'manualTest');
+        await apiService.saveTestResult({
+          testType: testType as 'quickTest' | 'detailedAnalysis' | 'manualTest',
+          networkData: {
+            speedTest: testResults
+          },
+          systemData: systemInfo,
+          ipAddress: systemInfo?.ipAddress,
+          userAgent: navigator.userAgent
+        });
+        console.log('✅ Test results saved to database');
+      } catch (apiError) {
+        console.error('❌ Failed to save results to database:', apiError);
+        // Don't fail the test if backend save fails
+      }
       
     } catch (err) {
       setResults({ 
