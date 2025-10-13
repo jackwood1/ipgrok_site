@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useCallback, useEffect } from "react";
-import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent } from "./components";
+import { Header, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent, AdminLogin, AdminDashboard } from "./components";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
 import { checkAndUpdateMetadata } from "./utils";
@@ -14,6 +14,8 @@ function App() {
     const [showContactUs, setShowContactUs] = useState(false);
     const [showAboutUs, setShowAboutUs] = useState(false);
     const [showClientInfo, setShowClientInfo] = useState(false);
+    const [showAdmin, setShowAdmin] = useState(false);
+    const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
     const [currentTest, setCurrentTest] = useState("");
     const [isQuickTestMode, setIsQuickTestMode] = useState(false);
     const [clientUUID, setClientUUID] = useState("");
@@ -31,6 +33,11 @@ function App() {
             console.log('Client metadata updated:', changes);
         }
         console.log('Client info initialized:', clientInfo);
+        // Check if admin is already logged in
+        const adminToken = localStorage.getItem('adminToken');
+        if (adminToken) {
+            setIsAdminAuthenticated(true);
+        }
     }, []);
     // Data management for export functionality
     const [exportData, setExportData] = useState({
@@ -69,6 +76,27 @@ function App() {
     };
     const toggleHelp = () => {
         setShowHelp(!showHelp);
+    };
+    const handleAdminLogin = (token) => {
+        setIsAdminAuthenticated(true);
+        setShowAdmin(true);
+        setShowLanding(false);
+    };
+    const handleAdminLogout = () => {
+        setIsAdminAuthenticated(false);
+        setShowAdmin(false);
+        setShowLanding(true);
+    };
+    const startAdmin = () => {
+        if (isAdminAuthenticated) {
+            setShowAdmin(true);
+            setShowLanding(false);
+        }
+        else {
+            // Show login page
+            setShowAdmin(true);
+            setShowLanding(false);
+        }
     };
     const toggleContactUs = () => {
         setShowContactUs(!showContactUs);
@@ -173,10 +201,12 @@ function App() {
         setShowHelp(false);
         setShowContactUs(false);
         setShowAboutUs(false);
+        setShowAdmin(false);
         setIsQuickTestMode(false);
         setCurrentTest("");
         setRunningTests([]);
         // Don't reset exportData here - let user keep their results
+        // Don't reset admin authentication - keep logged in
     };
     const memoizedQuickTestUpdate = useCallback((data) => {
         // Handle quick test data - it contains both network and system data
@@ -197,7 +227,7 @@ function App() {
     const memoizedNetworkTestUpdate = useCallback((data) => {
         updateExportData('networkData', data);
     }, []);
-    return (_jsxs("div", { className: "min-h-screen bg-gray-50 dark:bg-gray-900", children: [_jsx(Header, { darkMode: darkMode, onToggleDarkMode: toggleDarkMode, onShowHelp: toggleHelp, onGoHome: goHome }), _jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: showHelp ? (_jsx(Help, {})) : showContactUs ? (_jsx(ContactUs, {})) : showAboutUs ? (_jsx(AboutUs, {})) : showLanding ? (_jsx(LandingPage, { onStartQuickTest: startQuickTest, onStartManualTest: startManualTest, onStartDnsTests: startDnsTests, onStartClientInfo: startClientInfo })) : showResults ? (_jsx(ResultsDashboard, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData, onShareResults: showShareResults, onExportResults: handleExportResults })) : showShare ? (_jsx(ShareResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })) : (_jsxs("div", { className: "space-y-8", children: [_jsxs("div", { className: "flex flex-wrap gap-4", children: [_jsx(Button, { onClick: goHome, variant: "secondary", size: "sm", children: "\uD83C\uDFE0 Home" }), _jsx(Button, { onClick: showResultsDashboard, variant: "secondary", size: "sm", children: "\uD83D\uDCCA Results" }), _jsx(Button, { onClick: showShareResults, variant: "secondary", size: "sm", children: "\uD83D\uDCE4 Share" })] }), currentTest !== "quickTest" && currentTest !== "manualTest" && currentTest !== "dnsTests" && currentTest !== "clientInfo" && (_jsx(TestProgress, { completedTests: completedTests, currentTest: currentTest, runningTests: runningTests, onTestClick: handleTestClick })), _jsx("div", { className: "grid grid-cols-1 gap-8", children: _jsxs("div", { className: "lg:col-span-1", children: [currentTest === "quickTest" && (_jsx(QuickTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedQuickTestUpdate })), currentTest === "email" && (_jsx(EmailResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })), currentTest === "manualTest" && (_jsx(ManualTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: (data) => {
+    return (_jsxs("div", { className: "min-h-screen bg-gray-50 dark:bg-gray-900", children: [_jsx(Header, { darkMode: darkMode, onToggleDarkMode: toggleDarkMode, onShowHelp: toggleHelp, onGoHome: goHome, onShowAdmin: startAdmin, isAdminAuthenticated: isAdminAuthenticated }), _jsx("main", { className: "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: showHelp ? (_jsx(Help, {})) : showContactUs ? (_jsx(ContactUs, {})) : showAboutUs ? (_jsx(AboutUs, {})) : showAdmin ? (isAdminAuthenticated ? (_jsx(AdminDashboard, { onLogout: handleAdminLogout })) : (_jsx(AdminLogin, { onLogin: handleAdminLogin }))) : showLanding ? (_jsx(LandingPage, { onStartQuickTest: startQuickTest, onStartManualTest: startManualTest, onStartDnsTests: startDnsTests, onStartClientInfo: startClientInfo })) : showResults ? (_jsx(ResultsDashboard, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData, onShareResults: showShareResults, onExportResults: handleExportResults })) : showShare ? (_jsx(ShareResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })) : (_jsxs("div", { className: "space-y-8", children: [_jsxs("div", { className: "flex flex-wrap gap-4", children: [_jsx(Button, { onClick: goHome, variant: "secondary", size: "sm", children: "\uD83C\uDFE0 Home" }), _jsx(Button, { onClick: showResultsDashboard, variant: "secondary", size: "sm", children: "\uD83D\uDCCA Results" }), _jsx(Button, { onClick: showShareResults, variant: "secondary", size: "sm", children: "\uD83D\uDCE4 Share" })] }), currentTest !== "quickTest" && currentTest !== "manualTest" && currentTest !== "dnsTests" && currentTest !== "clientInfo" && (_jsx(TestProgress, { completedTests: completedTests, currentTest: currentTest, runningTests: runningTests, onTestClick: handleTestClick })), _jsx("div", { className: "grid grid-cols-1 gap-8", children: _jsxs("div", { className: "lg:col-span-1", children: [currentTest === "quickTest" && (_jsx(QuickTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: memoizedQuickTestUpdate })), currentTest === "email" && (_jsx(EmailResults, { networkData: exportData.networkData, mediaData: exportData.mediaData, systemData: exportData.systemData })), currentTest === "manualTest" && (_jsx(ManualTest, { permissionsStatus: permissionsStatus, onPermissionsChange: setPermissionsStatus, onDataUpdate: (data) => {
                                             // Handle manual test data
                                             if (data.testName === 'network') {
                                                 updateExportData('networkData', data.data);

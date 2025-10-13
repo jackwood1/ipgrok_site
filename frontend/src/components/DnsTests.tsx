@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { Card, Button, Badge } from "./ui";
-import { addTestResult } from "../utils";
 
 interface DnsResult {
   domain: string;
@@ -189,14 +188,6 @@ export function DnsTests() {
     }
     
     setDnsResults(results);
-    
-    // Add DNS test result to client tracking
-    addTestResult('dnsTest', {
-      domain: dnsDomain,
-      results: results,
-      provider: 'Cloudflare, Google'
-    });
-    
     setIsLoading(false);
   }, [dnsDomain]);
 
@@ -330,13 +321,6 @@ export function DnsTests() {
       };
       
       setHttpResults([result]);
-      
-      // Add HTTP test result to client tracking
-      addTestResult('httpTest', {
-        url: httpUrl,
-        result: result
-      });
-      
     } catch (error) {
       // Handle any other errors
       const troubleshooting: string[] = [
@@ -419,12 +403,6 @@ export function DnsTests() {
           };
           
           setSslResults([result]);
-          
-          // Add SSL test result to client tracking
-          addTestResult('sslTest', {
-            domain: sslDomain,
-            result: result
-          });
         } else {
           setSslResults([{
             domain: sslDomain,
