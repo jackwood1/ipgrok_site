@@ -1,0 +1,42 @@
+{
+    "production": {
+        "app_function": "app.app",
+        "aws_region": "us-east-2",
+        "profile_name": "default",
+        "project_name": "ipgrok-backend",
+        "runtime": "python3.9",
+        "s3_bucket": "zappa-ipgrok-backend",
+        "keep_warm": false,
+        "environment_variables": {
+            "NODE_ENV": "production",
+            "AWS_REGION": "us-east-2",
+            "TEST_RESULTS_TABLE": "ipgrok-test-results",
+            "ANALYTICS_TABLE": "ipgrok-analytics"
+        },
+        "cors": true,
+        "cors_allow_headers": ["Content-Type", "Authorization"],
+        "timeout_seconds": 30,
+        "memory_size": 512,
+        "log_level": "INFO"
+    },
+    "dev": {
+        "app_function": "app.app",
+        "aws_region": "us-east-2",
+        "profile_name": "default",
+        "project_name": "ipgrok-backend",
+        "runtime": "python3.9",
+        "s3_bucket": "zappa-ipgrok-backend-dev",
+        "keep_warm": false,
+        "environment_variables": {
+            "NODE_ENV": "development",
+            "AWS_REGION": "us-east-2",
+            "TEST_RESULTS_TABLE": "ipgrok-test-results",
+            "ANALYTICS_TABLE": "ipgrok-analytics"
+        },
+        "cors": true,
+        "cors_allow_headers": ["Content-Type", "Authorization"],
+        "timeout_seconds": 30,
+        "memory_size": 256
+    }
+}
+
