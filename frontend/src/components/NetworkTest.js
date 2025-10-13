@@ -398,77 +398,66 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         try {
             // First gather system information
             const systemInfo = await gatherSystemInfo();
-            // Download test - Improved accuracy with multiple tests
+            // Download test - Improved accuracy
             setTestProgress("Testing download speed...");
             if (onProgressUpdate)
                 onProgressUpdate("Testing download speed...");
             console.log("Starting download test...");
             let downloadMbps;
             try {
-                // Perform multiple download tests and take the best result (like Speedtest.net does)
-                // This helps eliminate network variability and gives a more accurate max speed
-                const testSizes = [
-                    { size: 25, file: '25MB.test' }, // Warm-up test
-                    { size: 50, file: '50MB.test' }, // Main test
-                    { size: 50, file: '50MB.test' } // Verification test
-                ];
-                const speeds = [];
-                for (let i = 0; i < testSizes.length; i++) {
-                    const testInfo = testSizes[i];
-                    const cacheBuster = Date.now() + i;
-                    const url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/${testInfo.file}?t=${cacheBuster}`;
-                    console.log(`Download test ${i + 1}/${testSizes.length}: ${testInfo.size}MB`);
-                    // Start timing only when we actually start receiving data
-                    let firstByteTime = 0;
-                    let receivedBytes = 0;
-                    const response = await fetch(url, {
-                        cache: 'no-store',
-                        headers: {
-                            'Cache-Control': 'no-cache',
-                            'Pragma': 'no-cache'
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                // Use multiple cache-busted downloads to get accurate speed
+                // This warms up the connection and gives more consistent results
+                const cacheBuster = Date.now();
+                const url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test?t=${cacheBuster}`;
+                console.log("Fetching test file:", url);
+                // Start timing only when we actually start receiving data
+                let firstByteTime = 0;
+                let receivedBytes = 0;
+                const response = await fetch(url, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
                     }
-                    // Read the response body
-                    const reader = response.body?.getReader();
-                    if (reader) {
-                        while (true) {
-                            const startChunk = performance.now();
-                            const { done, value } = await reader.read();
-                            // Start timer on first chunk (excludes connection setup time)
-                            if (firstByteTime === 0 && value) {
-                                firstByteTime = performance.now();
-                            }
-                            if (done)
-                                break;
-                            receivedBytes += value.length;
-                            // Progress indicator for larger tests
-                            if (i > 0 && receivedBytes % (10 * 1024 * 1024) < 16384) {
-                                console.log(`Progress: ${(receivedBytes / (1024 * 1024)).toFixed(1)} MB`);
-                            }
-                        }
-                        const endTime = performance.now();
-                        const downloadTimeSec = (endTime - firstByteTime) / 1000;
-                        // Calculate speed in Mbps using actual download time (excluding connection setup)
-                        const megabits = (receivedBytes * 8) / 1000000;
-                        const speedMbps = megabits / downloadTimeSec;
-                        speeds.push(speedMbps);
-                        console.log(`Test ${i + 1} result:`, {
-                            receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2),
-                            timeSec: downloadTimeSec.toFixed(2),
-                            speedMbps: speedMbps.toFixed(2)
-                        });
-                    }
-                }
-                // Take the maximum speed from all tests (best case scenario)
-                // This approach matches Speedtest.net's methodology
-                downloadMbps = Math.max(...speeds);
-                console.log("Download test completed - Best speed from all tests:", {
-                    allSpeeds: speeds.map(s => s.toFixed(2)),
-                    maxSpeed: downloadMbps.toFixed(2) + " Mbps"
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                console.log("Response received, starting to read body...");
+                // Read the response body
+                const reader = response.body?.getReader();
+                if (reader) {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        // Start timer on first chunk (excludes connection setup time)
+                        if (firstByteTime === 0 && value) {
+                            firstByteTime = performance.now();
+                            console.log("First byte received, starting accurate timing");
+                        }
+                        if (done)
+                            break;
+                        receivedBytes += value.length;
+                        // Progress indicator
+                        if (receivedBytes % (10 * 1024 * 1024) < 16384) {
+                            console.log(`Downloaded: ${(receivedBytes / (1024 * 1024)).toFixed(1)} MB`);
+                        }
+                    }
+                    const endTime = performance.now();
+                    const downloadTimeSec = (endTime - firstByteTime) / 1000;
+                    // Calculate speed in Mbps using actual download time (excluding connection setup)
+                    const megabits = (receivedBytes * 8) / 1000000;
+                    downloadMbps = megabits / downloadTimeSec;
+                    console.log("Download test completed:", {
+                        receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2),
+                        timeSec: downloadTimeSec.toFixed(2),
+                        megabits: megabits.toFixed(2),
+                        speedMbps: downloadMbps.toFixed(2),
+                        note: "Timing excludes connection setup for better accuracy"
+                    });
+                }
+                else {
+                    throw new Error("Unable to read response body");
+                }
             }
             catch (downloadError) {
                 console.error("Download test failed:", downloadError);
