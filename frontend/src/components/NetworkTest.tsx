@@ -577,7 +577,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       // Save results to backend database
       try {
         const testType = quickTestMode ? 'quickTest' : (detailedAnalysisMode ? 'detailedAnalysis' : 'manualTest');
-        await apiService.saveTestResult({
+        const payload = {
           testType: testType as 'quickTest' | 'detailedAnalysis' | 'manualTest',
           networkData: {
             speedTest: testResults
@@ -585,11 +585,24 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           systemData: systemInfo,
           ipAddress: systemInfo?.ipAddress,
           userAgent: navigator.userAgent
+        };
+        
+        console.log('📤 Sending test results to backend:', {
+          testType,
+          hasNetworkData: !!payload.networkData,
+          hasSystemData: !!payload.systemData,
+          ipAddress: payload.ipAddress
         });
-        console.log('✅ Test results saved to database');
+        
+        await apiService.saveTestResult(payload);
+        console.log('✅ Test results saved to database successfully');
       } catch (apiError) {
         console.error('❌ Failed to save results to database:', apiError);
-        // Don't fail the test if backend save fails
+        if (apiError instanceof Error) {
+          console.error('Error message:', apiError.message);
+          console.error('Error stack:', apiError.stack);
+        }
+        // Don't fail the test if backend save fails - silently continue
       }
       
     } catch (err) {

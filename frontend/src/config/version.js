@@ -1,5 +1,14 @@
-export const APP_VERSION = '1.0.7';
+export const APP_VERSION = '1.0.8';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.8',
+        date: '2025-10-13',
+        changes: [
+            'Fixed 403 error in download speed test',
+            'Fixed 500 error in backend API logging',
+            'Improved error handling and debugging'
+        ]
+    },
     {
         version: '1.0.7',
         date: '2025-10-13',
