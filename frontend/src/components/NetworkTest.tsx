@@ -579,7 +579,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       setTestProgress("Network test completed!");
       if (onProgressUpdate) onProgressUpdate("Network test completed!");
       
-      // Save results to backend database
+      // Save results to backend database - Temporarily disabled due to backend issues
+      // TODO: Re-enable once backend /test-results endpoint is fixed
+      /*
       try {
         const testType = quickTestMode ? 'quickTest' : (detailedAnalysisMode ? 'detailedAnalysis' : 'manualTest');
         await apiService.saveTestResult({
@@ -596,6 +598,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         console.error('❌ Failed to save results to database:', apiError);
         // Don't fail the test if backend save fails
       }
+      */
       
     } catch (err) {
       setResults({ 
