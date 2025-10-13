@@ -1,6 +1,17 @@
-export const APP_VERSION = '1.0.6';
+export const APP_VERSION = '1.0.7';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.7',
+    date: '2025-10-13',
+    changes: [
+      'Added comprehensive DNS Tests feature',
+      'Re-enabled backend API logging for test results',
+      'Improved download speed test accuracy',
+      'Fixed 500 error issues',
+      'Enhanced Quick Test with collapsible debug section'
+    ]
+  },
   {
     version: '1.0.6',
     date: '2025-08-17',
