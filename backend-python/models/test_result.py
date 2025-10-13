@@ -12,8 +12,9 @@ class TestResult:
     
     def __init__(self, data=None):
         """Initialize test result"""
-        self.test_id = data.get('testId') if data else str(uuid4())
-        self.timestamp = data.get('timestamp') if data else datetime.utcnow().isoformat() + 'Z'
+        data = data or {}
+        self.test_id = data.get('testId', str(uuid4()))
+        self.timestamp = data.get('timestamp', datetime.utcnow().isoformat() + 'Z')
         self.user_id = data.get('userId', 'anonymous')
         self.test_type = data.get('testType')  # 'quickTest', 'detailedAnalysis', 'manualTest'
         self.network_data = data.get('networkData')
@@ -54,12 +55,22 @@ class TestResult:
             raise Exception('Failed to save test result')
     
     @staticmethod
-    def get_by_id(test_id):
+    def get_by_id(test_id, timestamp=None):
         """Get test result by ID"""
         table = get_table(TABLES['TEST_RESULTS'])
         
         try:
-            response = table.get_item(Key={'testId': test_id})
+            if timestamp:
+                # If timestamp provided, use both keys
+                response = table.get_item(Key={'testId': test_id, 'timestamp': timestamp})
+            else:
+                # Query by testId only (will return all items with this testId)
+                response = table.query(
+                    KeyConditionExpression=Key('testId').eq(test_id),
+                    Limit=1
+                )
+                return response.get('Items', [{}])[0] if response.get('Items') else None
+            
             return response.get('Item')
         except Exception as e:
             print(f'Error getting test result: {str(e)}')
