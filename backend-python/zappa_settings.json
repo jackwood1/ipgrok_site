@@ -11,10 +11,14 @@
             "NODE_ENV": "production",
             "AWS_REGION": "us-east-2",
             "TEST_RESULTS_TABLE": "ipgrok-test-results",
-            "ANALYTICS_TABLE": "ipgrok-analytics"
+            "ANALYTICS_TABLE": "ipgrok-analytics",
+            "FRONTEND_URL": "https://www.ipgrok.com"
         },
         "cors": true,
-        "cors_allow_headers": ["Content-Type", "Authorization"],
+        "cors_allow_origin": "*",
+        "cors_allow_headers": "Content-Type,Authorization",
+        "cors_allow_methods": "GET,POST,PUT,DELETE,OPTIONS",
+        "cors_allow_credentials": "true",
         "timeout_seconds": 30,
         "memory_size": 512,
         "log_level": "INFO"

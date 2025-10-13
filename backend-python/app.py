@@ -23,11 +23,19 @@ load_dotenv()
 app = Flask(__name__)
 
 # CORS configuration
+allowed_origins = [
+    os.getenv('FRONTEND_URL', 'http://localhost:5173'),
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://www.ipgrok.com'
+]
+
 CORS(app, resources={
-    r"/api/*": {
-        "origins": os.getenv('FRONTEND_URL', 'http://localhost:5173'),
-        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+    r"/*": {
+        "origins": allowed_origins,
+        "methods": ["GET", "POST", "DELETE", "OPTIONS", "PUT"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
     }
 })
 
