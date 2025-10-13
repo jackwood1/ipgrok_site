@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent } from "./components";
+import { Header, NetworkTest, MediaTest, Footer, EmailResults, Help, LandingPage, ShareResults, TestProgress, ResultsDashboard, QuickTest, ManualTest, DnsTests, ContactUs, AboutUs, ClientInfo as ClientInfoComponent, AdminLogin, AdminDashboard } from "./components";
 import { ConfigInfo } from "./components/ConfigInfo";
 import { Button } from "./components/ui";
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -18,6 +18,8 @@ function App() {
   const [showContactUs, setShowContactUs] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [showClientInfo, setShowClientInfo] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>("");
   const [isQuickTestMode, setIsQuickTestMode] = useState(false);
     const [clientUUID, setClientUUID] = useState<string>("");
@@ -37,6 +39,12 @@ function App() {
       console.log('Client metadata updated:', changes);
     }
     console.log('Client info initialized:', clientInfo);
+    
+    // Check if admin is already logged in
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      setIsAdminAuthenticated(true);
+    }
   }, []);
 
   // Data management for export functionality
@@ -85,6 +93,29 @@ function App() {
 
   const toggleHelp = () => {
     setShowHelp(!showHelp);
+  };
+
+  const handleAdminLogin = (token: string) => {
+    setIsAdminAuthenticated(true);
+    setShowAdmin(true);
+    setShowLanding(false);
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    setShowAdmin(false);
+    setShowLanding(true);
+  };
+
+  const startAdmin = () => {
+    if (isAdminAuthenticated) {
+      setShowAdmin(true);
+      setShowLanding(false);
+    } else {
+      // Show login page
+      setShowAdmin(true);
+      setShowLanding(false);
+    }
   };
 
   const toggleContactUs = () => {
@@ -211,10 +242,12 @@ function App() {
     setShowHelp(false);
     setShowContactUs(false);
     setShowAboutUs(false);
+    setShowAdmin(false);
     setIsQuickTestMode(false);
     setCurrentTest("");
     setRunningTests([]);
     // Don't reset exportData here - let user keep their results
+    // Don't reset admin authentication - keep logged in
   };
 
   const memoizedQuickTestUpdate = useCallback((data: any) => {
@@ -244,7 +277,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} onShowHelp={toggleHelp} onGoHome={goHome} />
+      <Header 
+        darkMode={darkMode} 
+        onToggleDarkMode={toggleDarkMode} 
+        onShowHelp={toggleHelp} 
+        onGoHome={goHome}
+        onShowAdmin={startAdmin}
+        isAdminAuthenticated={isAdminAuthenticated}
+      />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -254,6 +294,12 @@ function App() {
           <ContactUs />
         ) : showAboutUs ? (
           <AboutUs />
+        ) : showAdmin ? (
+          isAdminAuthenticated ? (
+            <AdminDashboard onLogout={handleAdminLogout} />
+          ) : (
+            <AdminLogin onLogin={handleAdminLogin} />
+          )
         ) : showLanding ? (
                   <LandingPage 
           onStartQuickTest={startQuickTest}

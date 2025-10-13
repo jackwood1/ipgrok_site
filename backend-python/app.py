@@ -13,6 +13,7 @@ from datetime import datetime
 
 from routes.test_results import test_results_bp
 from routes.analytics import analytics_bp
+from routes.auth import auth_bp
 from config.dynamodb import init_dynamodb
 
 # Load environment variables
@@ -48,6 +49,7 @@ init_dynamodb()
 # Register blueprints
 app.register_blueprint(test_results_bp, url_prefix='/api/test-results')
 app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
 # Health check endpoint
 @app.route('/health', methods=['GET'])

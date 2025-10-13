@@ -23,4 +23,6 @@ export { DetailedTestConfirm } from "./DetailedTestConfirm";
 export { AdvancedNetworkTests } from "./AdvancedNetworkTests";
 export { AboutUs } from "./AboutUs";
 export { ContactUs } from "./ContactUs";
-export { ClientInfo } from "./ClientInfo"; 
+export { ClientInfo } from "./ClientInfo";
+export { AdminLogin } from "./AdminLogin";
+export { AdminDashboard } from "./AdminDashboard"; 

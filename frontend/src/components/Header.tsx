@@ -8,9 +8,11 @@ interface HeaderProps {
   onGoHome?: () => void;
   onShowAbout?: () => void;
   onShowContact?: () => void;
+  onShowAdmin?: () => void;
+  isAdminAuthenticated?: boolean;
 }
 
-export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onShowAbout, onShowContact }: HeaderProps) {
+export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onShowAbout, onShowContact, onShowAdmin, isAdminAuthenticated }: HeaderProps) {
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,6 +34,16 @@ export function Header({ darkMode, onToggleDarkMode, onShowHelp, onGoHome, onSho
           </div>
           
           <div className="flex items-center gap-3">
+            {onShowAdmin && (
+              <Button
+                onClick={onShowAdmin}
+                variant={isAdminAuthenticated ? "success" : "secondary"}
+                size="sm"
+              >
+                {isAdminAuthenticated ? "🔓 Admin" : "🔐 Admin"}
+              </Button>
+            )}
+            
             {onShowContact && (
               <Button
                 onClick={onShowContact}
