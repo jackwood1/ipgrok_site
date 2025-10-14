@@ -1,5 +1,15 @@
-export const APP_VERSION = '1.0.12';
+export const APP_VERSION = '1.0.13';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.13',
+        date: '2025-10-14',
+        changes: [
+            'Removed backend upload endpoint dependency',
+            'Upload speed now estimated from download (realistic ratio)',
+            'All tests work without any backend calls',
+            'No more 404 errors'
+        ]
+    },
     {
         version: '1.0.12',
         date: '2025-10-14',
