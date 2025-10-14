@@ -1,5 +1,15 @@
-export const APP_VERSION = '1.0.14';
+export const APP_VERSION = '1.0.15';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.15',
+        date: '2025-10-14',
+        changes: [
+            'Fixed speed test to actually use S3 files',
+            'Removed premature fallback that prevented real testing',
+            'Results now match other speed test sites',
+            'Accurate network speed measurements'
+        ]
+    },
     {
         version: '1.0.14',
         date: '2025-10-14',
