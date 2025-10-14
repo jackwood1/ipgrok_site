@@ -468,51 +468,51 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         const expectedSize = 50 * 1024 * 1024; // 50MB
         
         if (reader) {
-          let lastUIUpdate = 0;
+          // Use requestAnimationFrame for UI updates (doesn't block download loop)
+          let animationFrameId: number;
+          const updateUI = () => {
+            if (receivedBytes > 0 && firstByteTime > 0) {
+              const elapsed = (performance.now() - firstByteTime) / 1000;
+              const currentSpeedCalc = (receivedBytes * 8) / 1000000 / elapsed;
+              const targetSize = contentLength || expectedSize;
+              const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
+              
+              setCurrentSpeed(currentSpeedCalc);
+              setDownloadProgress(progress);
+              setTestProgress(`Downloading... ${progress}%`);
+              if (onProgressUpdate) onProgressUpdate(`Downloading... ${progress}%`);
+            }
+            
+            if (receivedBytes < 10 * 1024 * 1024) {
+              animationFrameId = requestAnimationFrame(updateUI);
+            }
+          };
           
+          // Start UI update loop
+          animationFrameId = requestAnimationFrame(updateUI);
+          
+          // Download loop - runs at full speed without UI blocking
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
-            // START TIMER ON FIRST BYTE (excludes DNS, connection, SSL overhead)
+            // START TIMER ON FIRST BYTE
             if (firstByteTime === 0 && value) {
               firstByteTime = performance.now();
-              lastUpdateTime = firstByteTime;
-              lastUIUpdate = firstByteTime;
-              console.log("⏱️  Started timer on first data byte (excludes connection overhead)");
+              console.log("⏱️  Timer started on first byte");
             }
             
             receivedBytes += value.length;
-            const currentTime = performance.now();
             
-            // Update UI only every 250ms to avoid slowing down the download
-            // This is the KEY FIX - updating UI on every chunk was causing 10x slowdown!
-            if (currentTime - lastUIUpdate > 250) {
-              // Calculate current speed
-              const timeDelta = (currentTime - lastUpdateTime) / 1000;
-              const bytesDelta = receivedBytes - lastReceivedBytes;
-              const instantSpeed = (bytesDelta * 8) / 1000000 / timeDelta;
-              
-              setCurrentSpeed(instantSpeed);
-              
-              // Update progress
-              const targetSize = contentLength || expectedSize;
-              const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
-              setDownloadProgress(progress);
-              setTestProgress(`Downloading... ${progress}%`);
-              if (onProgressUpdate) onProgressUpdate(`Downloading... ${progress}%`);
-              
-              lastUpdateTime = currentTime;
-              lastReceivedBytes = receivedBytes;
-              lastUIUpdate = currentTime;
-            }
-            
-            // Stop after downloading 10MB for faster test
+            // Stop after 10MB
             if (receivedBytes >= 10 * 1024 * 1024) {
-              console.log("Downloaded 10MB - sufficient for accurate measurement");
+              console.log("Downloaded 10MB");
               break;
             }
           }
+          
+          // Stop UI updates
+          cancelAnimationFrame(animationFrameId);
         }
         
         const end = performance.now();

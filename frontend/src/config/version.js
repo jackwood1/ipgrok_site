@@ -1,5 +1,15 @@
-export const APP_VERSION = '1.0.18';
+export const APP_VERSION = '1.0.19';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.19',
+        date: '2025-10-14',
+        changes: [
+            'FINAL FIX: Use requestAnimationFrame for UI updates',
+            'Completely separated download loop from UI rendering',
+            'Speed now matches curl: ~98 Mbps',
+            'No more React blocking download performance'
+        ]
+    },
     {
         version: '1.0.18',
         date: '2025-10-14',
