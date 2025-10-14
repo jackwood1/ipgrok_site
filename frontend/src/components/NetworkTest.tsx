@@ -460,68 +460,31 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log("Response received, waiting for first data byte...");
+        console.log("Response received, downloading at full speed...");
         
-        // Read response with real-time progress tracking
-        const reader = response.body?.getReader();
-        const contentLength = parseInt(response.headers.get('Content-Length') || '0');
-        const expectedSize = 50 * 1024 * 1024; // 50MB
+        // Simulate progress during download (can't track real progress with arrayBuffer)
+        const progressInterval = setInterval(() => {
+          setDownloadProgress(prev => Math.min(95, prev + 15));
+        }, 200);
         
-        if (reader) {
-          // Use requestAnimationFrame for UI updates (doesn't block download loop)
-          let animationFrameId: number;
-          const updateUI = () => {
-            if (receivedBytes > 0 && firstByteTime > 0) {
-              const elapsed = (performance.now() - firstByteTime) / 1000;
-              const currentSpeedCalc = (receivedBytes * 8) / 1000000 / elapsed;
-              const targetSize = contentLength || expectedSize;
-              const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
-              
-              setCurrentSpeed(currentSpeedCalc);
-              setDownloadProgress(progress);
-              setTestProgress(`Downloading... ${progress}%`);
-              if (onProgressUpdate) onProgressUpdate(`Downloading... ${progress}%`);
-            }
-            
-            if (receivedBytes < 10 * 1024 * 1024) {
-              animationFrameId = requestAnimationFrame(updateUI);
-            }
-          };
-          
-          // Start UI update loop
-          animationFrameId = requestAnimationFrame(updateUI);
-          
-          // Download loop - runs at full speed without UI blocking
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            // START TIMER ON FIRST BYTE
-            if (firstByteTime === 0 && value) {
-              firstByteTime = performance.now();
-              console.log("⏱️  Timer started on first byte");
-            }
-            
-            receivedBytes += value.length;
-            
-            // Stop after 10MB
-            if (receivedBytes >= 10 * 1024 * 1024) {
-              console.log("Downloaded 10MB");
-              break;
-            }
-          }
-          
-          // Stop UI updates
-          cancelAnimationFrame(animationFrameId);
-        }
+        // Use arrayBuffer() for FAST download (like curl does)
+        // This is much faster than reading chunks one by one
+        firstByteTime = performance.now();
+        const arrayBuffer = await response.arrayBuffer();
+        receivedBytes = arrayBuffer.byteLength;
         
         const end = performance.now();
-        const timeSec = (end - firstByteTime) / 1000; // Use firstByteTime instead of start!
+        
+        // Stop progress simulation
+        clearInterval(progressInterval);
+        
+        const timeSec = (end - firstByteTime) / 1000;
         
         // Calculate final speed in Mbps
         const megabits = (receivedBytes * 8) / 1000000;
         downloadMbps = megabits / timeSec;
         
+        // Set final UI state
         setDownloadProgress(100);
         setCurrentSpeed(downloadMbps);
         
