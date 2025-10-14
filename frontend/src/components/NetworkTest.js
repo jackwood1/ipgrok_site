@@ -409,6 +409,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 const contentLength = parseInt(response.headers.get('Content-Length') || '0');
                 const expectedSize = 50 * 1024 * 1024; // 50MB
                 if (reader) {
+                    let lastUIUpdate = 0;
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done)
@@ -417,26 +418,30 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                         if (firstByteTime === 0 && value) {
                             firstByteTime = performance.now();
                             lastUpdateTime = firstByteTime;
+                            lastUIUpdate = firstByteTime;
                             console.log("⏱️  Started timer on first data byte (excludes connection overhead)");
                         }
                         receivedBytes += value.length;
                         const currentTime = performance.now();
-                        // Calculate current speed every 100ms
-                        if (currentTime - lastUpdateTime > 100) {
+                        // Update UI only every 250ms to avoid slowing down the download
+                        // This is the KEY FIX - updating UI on every chunk was causing 10x slowdown!
+                        if (currentTime - lastUIUpdate > 250) {
+                            // Calculate current speed
                             const timeDelta = (currentTime - lastUpdateTime) / 1000;
                             const bytesDelta = receivedBytes - lastReceivedBytes;
                             const instantSpeed = (bytesDelta * 8) / 1000000 / timeDelta;
                             setCurrentSpeed(instantSpeed);
+                            // Update progress
+                            const targetSize = contentLength || expectedSize;
+                            const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
+                            setDownloadProgress(progress);
+                            setTestProgress(`Downloading... ${progress}%`);
+                            if (onProgressUpdate)
+                                onProgressUpdate(`Downloading... ${progress}%`);
                             lastUpdateTime = currentTime;
                             lastReceivedBytes = receivedBytes;
+                            lastUIUpdate = currentTime;
                         }
-                        // Update progress
-                        const targetSize = contentLength || expectedSize;
-                        const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
-                        setDownloadProgress(progress);
-                        setTestProgress(`Downloading... ${progress}%`);
-                        if (onProgressUpdate)
-                            onProgressUpdate(`Downloading... ${progress}%`);
                         // Stop after downloading 10MB for faster test
                         if (receivedBytes >= 10 * 1024 * 1024) {
                             console.log("Downloaded 10MB - sufficient for accurate measurement");

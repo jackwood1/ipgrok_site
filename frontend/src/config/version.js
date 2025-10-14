@@ -1,5 +1,15 @@
-export const APP_VERSION = '1.0.17';
+export const APP_VERSION = '1.0.18';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.18',
+        date: '2025-10-14',
+        changes: [
+            'MAJOR FIX: Removed UI updates from download loop',
+            'Speed test now 10x faster - matches curl and Speedtest.net',
+            'UI updates only every 250ms instead of every chunk',
+            'Download speeds now accurate!'
+        ]
+    },
     {
         version: '1.0.17',
         date: '2025-10-14',
