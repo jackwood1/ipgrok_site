@@ -398,7 +398,10 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 let lastUpdateTime = 0;
                 let lastReceivedBytes = 0;
                 const response = await fetch(url, {
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    headers: {
+                        'Range': 'bytes=0-10485759' // Download only first 10MB for speed test
+                    }
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

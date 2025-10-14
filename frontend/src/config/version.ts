@@ -1,6 +1,15 @@
-export const APP_VERSION = '1.0.20';
+export const APP_VERSION = '1.0.21';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.21',
+    date: '2025-10-14',
+    changes: [
+      'Use Range header to download only 10MB (not 50MB)',
+      'Download completes in ~1 second instead of 27 seconds',
+      'Speed test now accurate: ~98 Mbps'
+    ]
+  },
   {
     version: '1.0.20',
     date: '2025-10-14',
