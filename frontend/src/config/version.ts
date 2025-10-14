@@ -1,6 +1,15 @@
-export const APP_VERSION = '1.0.16';
+export const APP_VERSION = '1.0.17';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.17',
+    date: '2025-10-14',
+    changes: [
+      'FIXED: Start timer on first data byte (not on fetch start)',
+      'Speed now accurate - matches curl and Speedtest.net',
+      'Excludes connection overhead from measurements'
+    ]
+  },
   {
     version: '1.0.16',
     date: '2025-10-14',

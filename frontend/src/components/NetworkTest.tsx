@@ -447,9 +447,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Starting download speed test from S3:", url);
         
-        const start = performance.now();
         let receivedBytes = 0;
-        let lastUpdateTime = start;
+        let firstByteTime = 0; // Will be set when first byte arrives
+        let lastUpdateTime = 0;
         let lastReceivedBytes = 0;
         
         const response = await fetch(url, {
@@ -460,6 +460,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
+        console.log("Response received, waiting for first data byte...");
+        
         // Read response with real-time progress tracking
         const reader = response.body?.getReader();
         const contentLength = parseInt(response.headers.get('Content-Length') || '0');
@@ -469,6 +471,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            
+            // START TIMER ON FIRST BYTE (excludes DNS, connection, SSL overhead)
+            if (firstByteTime === 0 && value) {
+              firstByteTime = performance.now();
+              lastUpdateTime = firstByteTime;
+              console.log("⏱️  Started timer on first data byte (excludes connection overhead)");
+            }
             
             receivedBytes += value.length;
             const currentTime = performance.now();
@@ -500,7 +509,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         }
         
         const end = performance.now();
-        const timeSec = (end - start) / 1000;
+        const timeSec = (end - firstByteTime) / 1000; // Use firstByteTime instead of start!
         
         // Calculate final speed in Mbps
         const megabits = (receivedBytes * 8) / 1000000;
@@ -513,22 +522,19 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         console.log("Raw Data:", {
           receivedBytes: receivedBytes,
           receivedMB: (receivedBytes / (1024 * 1024)).toFixed(4),
-          receivedMiB: (receivedBytes / (1000 * 1000)).toFixed(4),
-          startTime: start,
+          firstByteTime: firstByteTime,
           endTime: end,
-          durationMs: (end - start).toFixed(2),
-          durationSec: timeSec.toFixed(4)
+          downloadOnlyDurationSec: timeSec.toFixed(4),
+          note: "Timer started on first byte, excludes connection overhead"
         });
         console.log("Speed Calculation:", {
           bytes: receivedBytes,
-          bits: receivedBytes * 8,
           megabits: megabits.toFixed(4),
           timeSec: timeSec.toFixed(4),
-          formula: `(${receivedBytes} * 8) / 1000000 / ${timeSec.toFixed(4)}`,
+          formula: `(${receivedBytes} bytes × 8) ÷ 1,000,000 ÷ ${timeSec.toFixed(4)}s = ${downloadMbps.toFixed(2)} Mbps`,
           speedMbps: downloadMbps.toFixed(2),
-          speedMBps: (downloadMbps / 8).toFixed(2) + " MB/s"
+          expectedCurlSpeed: "~98 Mbps"
         });
-        console.log("Expected: curl showed ~98 Mbps for 10MB in 0.85s");
         console.log("===============================================================");
       } catch (downloadError) {
         console.error("❌ Download test failed - this should not happen!", downloadError);
