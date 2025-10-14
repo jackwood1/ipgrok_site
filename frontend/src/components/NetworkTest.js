@@ -11,6 +11,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
     const [pingData, setPingData] = useState(null);
     const [tracerouteData, setTracerouteData] = useState(null);
     const [testProgress, setTestProgress] = useState("");
+    const [downloadProgress, setDownloadProgress] = useState(0);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [currentSpeed, setCurrentSpeed] = useState(0);
     // Check if we're in development mode
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const lastDataSentRef = useRef('');
@@ -213,13 +216,29 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         return { grade, score: Math.round(score), recommendations };
     };
     const runUploadTest = async () => {
-        // Use 5MB for upload test (faster and more reliable)
-        const testSizeBytes = 5 * 1024 * 1024;
-        const blob = new Blob([new Uint8Array(testSizeBytes)]);
+        // Use 5MB for upload test
+        const testSizeMB = 5;
+        const testSizeBytes = testSizeMB * 1024 * 1024;
+        // Create random data to prevent compression
+        const uploadData = new Uint8Array(testSizeBytes);
+        crypto.getRandomValues(uploadData);
+        const blob = new Blob([uploadData]);
         try {
-            console.log("Starting upload speed test with Cloudflare CDN...");
+            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+            const url = `${apiBaseUrl}/speed-test/upload`;
+            console.log("Starting upload test to backend:", url);
+            // Simulate upload progress (since fetch doesn't provide upload progress easily)
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 95) {
+                        clearInterval(progressInterval);
+                        return prev;
+                    }
+                    return prev + 5;
+                });
+            }, 50);
             const start = performance.now();
-            const response = await fetch('https://speed.cloudflare.com/__up', {
+            const response = await fetch(url, {
                 method: 'POST',
                 body: blob,
                 headers: {
@@ -227,6 +246,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 },
                 cache: 'no-store'
             });
+            clearInterval(progressInterval);
+            setUploadProgress(100);
             const end = performance.now();
             const timeSec = (end - start) / 1000;
             if (response.ok) {
@@ -234,7 +255,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 const megabits = (testSizeBytes * 8) / 1000000;
                 const uploadMbps = megabits / timeSec;
                 console.log("Upload test completed:", {
-                    uploadedMB: (testSizeBytes / (1024 * 1024)).toFixed(2),
+                    uploadedMB: testSizeMB,
                     timeSec: timeSec.toFixed(2),
                     speedMbps: uploadMbps.toFixed(2)
                 });
@@ -247,7 +268,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         catch (uploadError) {
             console.error("Upload test failed:", uploadError);
             console.warn("Using conservative upload estimate");
-            // Conservative estimate - typically 10-20% of download speed
+            // Conservative estimate
             return "25.00";
         }
     };
@@ -384,20 +405,24 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         try {
             // First gather system information
             const systemInfo = await gatherSystemInfo();
-            // Download test - Accurate measurement like Speedtest.net
+            // Download test - Using backend API for accurate network speed
             setTestProgress("Testing download speed...");
+            setDownloadProgress(0);
+            setCurrentSpeed(0);
             if (onProgressUpdate)
-                onProgressUpdate("Testing download speed...");
+                onProgressUpdate("Testing download speed... 0%");
             console.log("Starting download test...");
             let downloadMbps;
             try {
+                const testSizeMB = 25; // 25MB test for accurate measurement
+                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
                 const cacheBuster = Date.now();
-                // Use Cloudflare's speed test infrastructure (same as Speedtest.net uses)
-                // Test with 25MB to get accurate results on various connection speeds
-                const testSizeBytes = 25 * 1024 * 1024; // 25 MB
-                const url = `https://speed.cloudflare.com/__down?bytes=${testSizeBytes}`;
-                console.log("Starting download speed test with Cloudflare CDN...");
+                const url = `${apiBaseUrl}/speed-test/download?size=${testSizeMB}&t=${cacheBuster}`;
+                console.log("Fetching test data from backend:", url);
                 const start = performance.now();
+                let receivedBytes = 0;
+                let lastUpdateTime = start;
+                let lastReceivedBytes = 0;
                 const response = await fetch(url, {
                     cache: 'no-store',
                     headers: {
@@ -406,41 +431,70 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                     }
                 });
                 if (!response.ok) {
-                    throw new Error(`Download test failed: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                // Read the entire response to measure actual download time
-                const arrayBuffer = await response.arrayBuffer();
+                // Read response with real-time progress tracking
+                const reader = response.body?.getReader();
+                const contentLength = parseInt(response.headers.get('Content-Length') || '0');
+                if (reader) {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done)
+                            break;
+                        receivedBytes += value.length;
+                        const currentTime = performance.now();
+                        // Calculate current speed every 100ms
+                        if (currentTime - lastUpdateTime > 100) {
+                            const timeDelta = (currentTime - lastUpdateTime) / 1000;
+                            const bytesDelta = receivedBytes - lastReceivedBytes;
+                            const instantSpeed = (bytesDelta * 8) / 1000000 / timeDelta;
+                            setCurrentSpeed(instantSpeed);
+                            lastUpdateTime = currentTime;
+                            lastReceivedBytes = receivedBytes;
+                        }
+                        // Update progress
+                        if (contentLength > 0) {
+                            const progress = Math.min(100, Math.round((receivedBytes / contentLength) * 100));
+                            setDownloadProgress(progress);
+                            setTestProgress(`Downloading... ${progress}%`);
+                            if (onProgressUpdate)
+                                onProgressUpdate(`Downloading... ${progress}%`);
+                        }
+                    }
+                }
                 const end = performance.now();
-                const actualBytes = arrayBuffer.byteLength;
                 const timeSec = (end - start) / 1000;
-                // Calculate speed in Mbps (Megabits per second)
-                // Formula: (bytes * 8) / 1,000,000 / seconds = Mbps
-                const megabits = (actualBytes * 8) / 1000000;
+                // Calculate final speed in Mbps
+                const megabits = (receivedBytes * 8) / 1000000;
                 downloadMbps = megabits / timeSec;
+                setDownloadProgress(100);
+                setCurrentSpeed(downloadMbps);
                 console.log("Download test completed:", {
-                    actualMB: (actualBytes / (1024 * 1024)).toFixed(2),
+                    receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2),
                     timeSec: timeSec.toFixed(2),
-                    megabits: megabits.toFixed(2),
-                    speedMbps: downloadMbps.toFixed(2),
-                    note: "Using Cloudflare CDN for accurate testing"
+                    speedMbps: downloadMbps.toFixed(2)
                 });
             }
             catch (downloadError) {
                 console.error("Download test failed:", downloadError);
-                // Use reasonable fallback speed estimation
-                console.warn("Download test failed, using conservative estimate");
-                downloadMbps = 50; // Conservative estimate
+                setDownloadProgress(0);
+                setCurrentSpeed(0);
+                downloadMbps = 100; // Reasonable default estimate
             }
             // Upload test
             setTestProgress("Testing upload speed...");
+            setUploadProgress(0);
+            setDownloadProgress(0); // Reset download progress
             if (onProgressUpdate)
                 onProgressUpdate("Testing upload speed...");
             let uploadMbps;
             try {
                 uploadMbps = await runUploadTest();
+                setUploadProgress(100);
             }
             catch (uploadError) {
                 console.error("Upload test failed:", uploadError);
+                setUploadProgress(0);
                 if (isDevelopment) {
                     console.log("Development mode: Using simulated upload speed");
                     uploadMbps = (Math.random() * 50 + 10).toFixed(2); // Random between 10-60 Mbps
@@ -547,5 +601,5 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
             default: return 'default';
         }
     };
-    return (_jsxs("div", { className: "space-y-8", children: [isDevelopment && (_jsx("div", { className: "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4", children: _jsxs("div", { className: "flex items-center gap-2", children: [_jsx("span", { className: "text-yellow-600 dark:text-yellow-400", children: "\u26A0\uFE0F" }), _jsxs("div", { children: [_jsx("h4", { className: "font-medium text-yellow-800 dark:text-yellow-200", children: "Development Mode" }), _jsx("p", { className: "text-sm text-yellow-700 dark:text-yellow-300", children: "Running locally - some external services may be unavailable. Tests will use fallback data when possible." })] })] }) })), _jsxs(Card, { title: quickTestMode ? "" : "Detailed Advanced Analysis", subtitle: quickTestMode ? "" : "Test your internet connection for video calls", children: [permissionsStatus !== "granted" && !quickTestMode && (_jsx("div", { className: "mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md", children: _jsxs("div", { className: "flex items-center", children: [_jsx(Badge, { variant: "warning", className: "mr-2", children: "\u26A0\uFE0F" }), _jsx("span", { className: "text-sm text-yellow-800 dark:text-yellow-200", children: "Camera and mic permissions are not granted." })] }) })), !quickTestMode && (_jsx("div", { className: "flex flex-col sm:flex-row gap-3 mb-6", children: _jsx(Button, { onClick: runTest, loading: loading, size: "lg", className: "flex-1", children: loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Tests" }) })), quickTestMode && loading && (_jsx("div", { className: "mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: _jsx("div", { className: "flex items-center justify-center", children: _jsxs("div", { className: "text-blue-600 dark:text-blue-400 text-center", children: [_jsx("div", { className: "text-lg mb-2", children: "\uD83D\uDD04" }), _jsx("div", { className: "font-medium", children: testProgress || "Running network test..." })] }) }) })), results && (_jsxs("div", { className: "space-y-6", children: [_jsxs("div", { className: "p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsx("h4", { className: "text-lg font-medium text-gray-900 dark:text-white", children: "Connection Quality Score" }), _jsx("p", { className: "text-sm text-gray-600 dark:text-gray-400", children: "Overall assessment for video call performance" })] }), _jsxs("div", { className: "text-center", children: [_jsx("div", { className: "text-4xl font-bold text-gray-900 dark:text-white mb-1", children: results.connectionQuality }), _jsxs(Badge, { variant: getQualityColor(results.connectionQuality || 'F'), children: [results.qualityScore, "/100"] })] })] }), results.bandwidthScore && (_jsxs("div", { className: "mt-4 p-3 bg-white dark:bg-gray-800 rounded-md", children: [_jsxs("div", { className: "flex justify-between items-center", children: [_jsx("span", { className: "text-sm font-medium text-gray-700 dark:text-gray-300", children: "Bandwidth Score" }), _jsxs("span", { className: "text-lg font-bold text-gray-900 dark:text-white", children: [results.bandwidthScore, "/100"] })] }), _jsx("div", { className: "mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2", children: _jsx("div", { className: "bg-blue-500 h-2 rounded-full transition-all duration-300", style: { width: `${results.bandwidthScore}%` } }) })] })), results.packetLossRate !== undefined && (_jsx("div", { className: "mt-3 p-3 bg-white dark:bg-gray-800 rounded-md", children: _jsxs("div", { className: "flex justify-between items-center", children: [_jsx("span", { className: "text-sm font-medium text-gray-700 dark:text-gray-300", children: "Packet Loss Rate" }), _jsxs("div", { className: "flex items-center space-x-2", children: [_jsxs("span", { className: "text-lg font-bold text-gray-900 dark:text-white", children: [results.packetLossRate, "%"] }), _jsx(Badge, { variant: results.packetLossRate <= 1 ? 'success' : results.packetLossRate <= 3 ? 'warning' : 'danger', children: results.packetLossRate <= 1 ? 'Excellent' : results.packetLossRate <= 3 ? 'Good' : 'Poor' })] })] }) }))] }), results.recommendations && results.recommendations.length > 0 && (_jsxs("div", { className: "p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg", children: [_jsx("h4", { className: "font-medium text-yellow-900 dark:text-yellow-100 mb-2", children: "Recommendations" }), _jsx("ul", { className: "text-sm text-yellow-800 dark:text-yellow-200 space-y-1", children: results.recommendations.map((rec, index) => (_jsxs("li", { className: "flex items-start", children: [_jsx("span", { className: "mr-2", children: "\u2022" }), _jsx("span", { children: rec })] }, index))) })] })), _jsx(NetworkMetrics, { results: results })] }))] }), !quickTestMode && !detailedAnalysisMode && (_jsx(PingTest, { onDataUpdate: setPingData })), !quickTestMode && !detailedAnalysisMode && (_jsx(TracerouteTest, { onDataUpdate: setTracerouteData }))] }));
+    return (_jsxs("div", { className: "space-y-8", children: [isDevelopment && (_jsx("div", { className: "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4", children: _jsxs("div", { className: "flex items-center gap-2", children: [_jsx("span", { className: "text-yellow-600 dark:text-yellow-400", children: "\u26A0\uFE0F" }), _jsxs("div", { children: [_jsx("h4", { className: "font-medium text-yellow-800 dark:text-yellow-200", children: "Development Mode" }), _jsx("p", { className: "text-sm text-yellow-700 dark:text-yellow-300", children: "Running locally - some external services may be unavailable. Tests will use fallback data when possible." })] })] }) })), _jsxs(Card, { title: quickTestMode ? "" : "Detailed Advanced Analysis", subtitle: quickTestMode ? "" : "Test your internet connection for video calls", children: [permissionsStatus !== "granted" && !quickTestMode && (_jsx("div", { className: "mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md", children: _jsxs("div", { className: "flex items-center", children: [_jsx(Badge, { variant: "warning", className: "mr-2", children: "\u26A0\uFE0F" }), _jsx("span", { className: "text-sm text-yellow-800 dark:text-yellow-200", children: "Camera and mic permissions are not granted." })] }) })), !quickTestMode && (_jsx("div", { className: "flex flex-col sm:flex-row gap-3 mb-6", children: _jsx(Button, { onClick: runTest, loading: loading, size: "lg", className: "flex-1", children: loading ? testProgress || "Running test..." : testStarted ? "Re-run Test" : "Start Tests" }) })), quickTestMode && loading && (_jsx("div", { className: "mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "text-center", children: [_jsxs("div", { className: "text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2", children: [currentSpeed > 0 ? currentSpeed.toFixed(1) : '—', _jsx("span", { className: "text-2xl ml-2", children: "Mbps" })] }), _jsx("div", { className: "text-sm text-gray-600 dark:text-gray-400", children: testProgress || "Initializing test..." })] }), downloadProgress > 0 && (_jsxs("div", { className: "space-y-2", children: [_jsxs("div", { className: "flex justify-between text-xs text-gray-600 dark:text-gray-400", children: [_jsx("span", { children: "Download Progress" }), _jsxs("span", { children: [downloadProgress, "%"] })] }), _jsx("div", { className: "h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden", children: _jsx("div", { className: "h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out relative", style: { width: `${downloadProgress}%` }, children: _jsx("div", { className: "absolute inset-0 bg-white/20 animate-pulse" }) }) }), _jsxs("div", { className: "grid grid-cols-3 gap-2 text-center text-xs", children: [_jsxs("div", { className: "p-2 bg-blue-100 dark:bg-blue-900/30 rounded", children: [_jsxs("div", { className: "font-medium text-blue-600 dark:text-blue-400", children: [((downloadProgress / 100) * 25).toFixed(1), " MB"] }), _jsx("div", { className: "text-gray-500 dark:text-gray-400", children: "Downloaded" })] }), _jsxs("div", { className: "p-2 bg-purple-100 dark:bg-purple-900/30 rounded", children: [_jsxs("div", { className: "font-medium text-purple-600 dark:text-purple-400", children: [currentSpeed > 0 ? currentSpeed.toFixed(0) : '—', " Mbps"] }), _jsx("div", { className: "text-gray-500 dark:text-gray-400", children: "Current Speed" })] }), _jsxs("div", { className: "p-2 bg-green-100 dark:bg-green-900/30 rounded", children: [_jsx("div", { className: "font-medium text-green-600 dark:text-green-400", children: "25 MB" }), _jsx("div", { className: "text-gray-500 dark:text-gray-400", children: "Total Size" })] })] })] })), uploadProgress > 0 && (_jsxs("div", { className: "space-y-2", children: [_jsxs("div", { className: "flex justify-between text-xs text-gray-600 dark:text-gray-400", children: [_jsx("span", { children: "Upload Progress" }), _jsxs("span", { children: [uploadProgress, "%"] })] }), _jsx("div", { className: "h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden", children: _jsx("div", { className: "h-full bg-gradient-to-r from-green-500 to-teal-500 transition-all duration-300 ease-out relative", style: { width: `${uploadProgress}%` }, children: _jsx("div", { className: "absolute inset-0 bg-white/20 animate-pulse" }) }) })] })), downloadProgress === 0 && uploadProgress === 0 && (_jsx("div", { className: "flex items-center justify-center", children: _jsx("div", { className: "animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400" }) }))] }) })), results && (_jsxs("div", { className: "space-y-6", children: [_jsxs("div", { className: "p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsx("h4", { className: "text-lg font-medium text-gray-900 dark:text-white", children: "Connection Quality Score" }), _jsx("p", { className: "text-sm text-gray-600 dark:text-gray-400", children: "Overall assessment for video call performance" })] }), _jsxs("div", { className: "text-center", children: [_jsx("div", { className: "text-4xl font-bold text-gray-900 dark:text-white mb-1", children: results.connectionQuality }), _jsxs(Badge, { variant: getQualityColor(results.connectionQuality || 'F'), children: [results.qualityScore, "/100"] })] })] }), results.bandwidthScore && (_jsxs("div", { className: "mt-4 p-3 bg-white dark:bg-gray-800 rounded-md", children: [_jsxs("div", { className: "flex justify-between items-center", children: [_jsx("span", { className: "text-sm font-medium text-gray-700 dark:text-gray-300", children: "Bandwidth Score" }), _jsxs("span", { className: "text-lg font-bold text-gray-900 dark:text-white", children: [results.bandwidthScore, "/100"] })] }), _jsx("div", { className: "mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2", children: _jsx("div", { className: "bg-blue-500 h-2 rounded-full transition-all duration-300", style: { width: `${results.bandwidthScore}%` } }) })] })), results.packetLossRate !== undefined && (_jsx("div", { className: "mt-3 p-3 bg-white dark:bg-gray-800 rounded-md", children: _jsxs("div", { className: "flex justify-between items-center", children: [_jsx("span", { className: "text-sm font-medium text-gray-700 dark:text-gray-300", children: "Packet Loss Rate" }), _jsxs("div", { className: "flex items-center space-x-2", children: [_jsxs("span", { className: "text-lg font-bold text-gray-900 dark:text-white", children: [results.packetLossRate, "%"] }), _jsx(Badge, { variant: results.packetLossRate <= 1 ? 'success' : results.packetLossRate <= 3 ? 'warning' : 'danger', children: results.packetLossRate <= 1 ? 'Excellent' : results.packetLossRate <= 3 ? 'Good' : 'Poor' })] })] }) }))] }), results.recommendations && results.recommendations.length > 0 && (_jsxs("div", { className: "p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg", children: [_jsx("h4", { className: "font-medium text-yellow-900 dark:text-yellow-100 mb-2", children: "Recommendations" }), _jsx("ul", { className: "text-sm text-yellow-800 dark:text-yellow-200 space-y-1", children: results.recommendations.map((rec, index) => (_jsxs("li", { className: "flex items-start", children: [_jsx("span", { className: "mr-2", children: "\u2022" }), _jsx("span", { children: rec })] }, index))) })] })), _jsx(NetworkMetrics, { results: results })] }))] }), !quickTestMode && !detailedAnalysisMode && (_jsx(PingTest, { onDataUpdate: setPingData })), !quickTestMode && !detailedAnalysisMode && (_jsx(TracerouteTest, { onDataUpdate: setTracerouteData }))] }));
 }

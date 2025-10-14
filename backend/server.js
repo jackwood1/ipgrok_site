@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const testResultsRoutes = require('./routes/testResults');
 const analyticsRoutes = require('./routes/analytics');
+const speedTestRoutes = require('./routes/speedTest');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +46,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/test-results', testResultsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/speed-test', speedTestRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

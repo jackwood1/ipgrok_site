@@ -33,6 +33,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
   const [pingData, setPingData] = useState<any>(null);
   const [tracerouteData, setTracerouteData] = useState<any>(null);
   const [testProgress, setTestProgress] = useState<string>("");
+  const [downloadProgress, setDownloadProgress] = useState<number>(0);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   
   // Check if we're in development mode
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -250,15 +253,34 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
 
 
   const runUploadTest = async (): Promise<string> => {
-    // Use 5MB for upload test (faster and more reliable)
-    const testSizeBytes = 5 * 1024 * 1024;
-    const blob = new Blob([new Uint8Array(testSizeBytes)]);
+    // Use 5MB for upload test
+    const testSizeMB = 5;
+    const testSizeBytes = testSizeMB * 1024 * 1024;
+    
+    // Create random data to prevent compression
+    const uploadData = new Uint8Array(testSizeBytes);
+    crypto.getRandomValues(uploadData);
+    const blob = new Blob([uploadData]);
     
     try {
-      console.log("Starting upload speed test with Cloudflare CDN...");
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const url = `${apiBaseUrl}/speed-test/upload`;
+      
+      console.log("Starting upload test to backend:", url);
+      
+      // Simulate upload progress (since fetch doesn't provide upload progress easily)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 50);
       
       const start = performance.now();
-      const response = await fetch('https://speed.cloudflare.com/__up', {
+      const response = await fetch(url, {
         method: 'POST',
         body: blob,
         headers: {
@@ -266,6 +288,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         },
         cache: 'no-store'
       });
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
       
       const end = performance.now();
       const timeSec = (end - start) / 1000;
@@ -276,7 +301,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         const uploadMbps = megabits / timeSec;
         
         console.log("Upload test completed:", {
-          uploadedMB: (testSizeBytes / (1024 * 1024)).toFixed(2),
+          uploadedMB: testSizeMB,
           timeSec: timeSec.toFixed(2),
           speedMbps: uploadMbps.toFixed(2)
         });
@@ -288,7 +313,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
     } catch (uploadError) {
       console.error("Upload test failed:", uploadError);
       console.warn("Using conservative upload estimate");
-      // Conservative estimate - typically 10-20% of download speed
+      // Conservative estimate
       return "25.00";
     }
   };
@@ -433,23 +458,27 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       // First gather system information
       const systemInfo = await gatherSystemInfo();
       
-      // Download test - Accurate measurement like Speedtest.net
+      // Download test - Using backend API for accurate network speed
       setTestProgress("Testing download speed...");
-      if (onProgressUpdate) onProgressUpdate("Testing download speed...");
+      setDownloadProgress(0);
+      setCurrentSpeed(0);
+      if (onProgressUpdate) onProgressUpdate("Testing download speed... 0%");
       console.log("Starting download test...");
       
       let downloadMbps: number;
       try {
+        const testSizeMB = 25; // 25MB test for accurate measurement
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const cacheBuster = Date.now();
+        const url = `${apiBaseUrl}/speed-test/download?size=${testSizeMB}&t=${cacheBuster}`;
         
-        // Use Cloudflare's speed test infrastructure (same as Speedtest.net uses)
-        // Test with 25MB to get accurate results on various connection speeds
-        const testSizeBytes = 25 * 1024 * 1024; // 25 MB
-        const url = `https://speed.cloudflare.com/__down?bytes=${testSizeBytes}`;
-        
-        console.log("Starting download speed test with Cloudflare CDN...");
+        console.log("Fetching test data from backend:", url);
         
         const start = performance.now();
+        let receivedBytes = 0;
+        let lastUpdateTime = start;
+        let lastReceivedBytes = 0;
+        
         const response = await fetch(url, {
           cache: 'no-store',
           headers: {
@@ -459,43 +488,76 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         });
         
         if (!response.ok) {
-          throw new Error(`Download test failed: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Read the entire response to measure actual download time
-        const arrayBuffer = await response.arrayBuffer();
-        const end = performance.now();
+        // Read response with real-time progress tracking
+        const reader = response.body?.getReader();
+        const contentLength = parseInt(response.headers.get('Content-Length') || '0');
         
-        const actualBytes = arrayBuffer.byteLength;
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            receivedBytes += value.length;
+            const currentTime = performance.now();
+            
+            // Calculate current speed every 100ms
+            if (currentTime - lastUpdateTime > 100) {
+              const timeDelta = (currentTime - lastUpdateTime) / 1000;
+              const bytesDelta = receivedBytes - lastReceivedBytes;
+              const instantSpeed = (bytesDelta * 8) / 1000000 / timeDelta;
+              
+              setCurrentSpeed(instantSpeed);
+              lastUpdateTime = currentTime;
+              lastReceivedBytes = receivedBytes;
+            }
+            
+            // Update progress
+            if (contentLength > 0) {
+              const progress = Math.min(100, Math.round((receivedBytes / contentLength) * 100));
+              setDownloadProgress(progress);
+              setTestProgress(`Downloading... ${progress}%`);
+              if (onProgressUpdate) onProgressUpdate(`Downloading... ${progress}%`);
+            }
+          }
+        }
+        
+        const end = performance.now();
         const timeSec = (end - start) / 1000;
         
-        // Calculate speed in Mbps (Megabits per second)
-        // Formula: (bytes * 8) / 1,000,000 / seconds = Mbps
-        const megabits = (actualBytes * 8) / 1000000;
+        // Calculate final speed in Mbps
+        const megabits = (receivedBytes * 8) / 1000000;
         downloadMbps = megabits / timeSec;
         
+        setDownloadProgress(100);
+        setCurrentSpeed(downloadMbps);
+        
         console.log("Download test completed:", {
-          actualMB: (actualBytes / (1024 * 1024)).toFixed(2),
+          receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2),
           timeSec: timeSec.toFixed(2),
-          megabits: megabits.toFixed(2),
-          speedMbps: downloadMbps.toFixed(2),
-          note: "Using Cloudflare CDN for accurate testing"
+          speedMbps: downloadMbps.toFixed(2)
         });
       } catch (downloadError) {
         console.error("Download test failed:", downloadError);
-        // Use reasonable fallback speed estimation
-        console.warn("Download test failed, using conservative estimate");
-        downloadMbps = 50; // Conservative estimate
+        setDownloadProgress(0);
+        setCurrentSpeed(0);
+        downloadMbps = 100; // Reasonable default estimate
       }
       
       // Upload test
       setTestProgress("Testing upload speed...");
+      setUploadProgress(0);
+      setDownloadProgress(0); // Reset download progress
       if (onProgressUpdate) onProgressUpdate("Testing upload speed...");
       let uploadMbps: string;
       try {
         uploadMbps = await runUploadTest();
+        setUploadProgress(100);
       } catch (uploadError) {
         console.error("Upload test failed:", uploadError);
+        setUploadProgress(0);
         if (isDevelopment) {
           console.log("Development mode: Using simulated upload speed");
           uploadMbps = (Math.random() * 50 + 10).toFixed(2); // Random between 10-60 Mbps
@@ -659,14 +721,84 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           </div>
         )}
         
-        {/* Show progress in quick test mode */}
+        {/* Show enhanced progress visualization */}
         {quickTestMode && loading && (
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <div className="flex items-center justify-center">
-              <div className="text-blue-600 dark:text-blue-400 text-center">
-                <div className="text-lg mb-2">🔄</div>
-                <div className="font-medium">{testProgress || "Running network test..."}</div>
+          <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="space-y-4">
+              {/* Current Speed Display */}
+              <div className="text-center">
+                <div className="text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  {currentSpeed > 0 ? currentSpeed.toFixed(1) : '—'}
+                  <span className="text-2xl ml-2">Mbps</span>
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {testProgress || "Initializing test..."}
+                </div>
               </div>
+              
+              {/* Download Progress Bar */}
+              {downloadProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                    <span>Download Progress</span>
+                    <span>{downloadProgress}%</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 ease-out relative"
+                      style={{ width: `${downloadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  {/* Data transferred indicator */}
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded">
+                      <div className="font-medium text-blue-600 dark:text-blue-400">
+                        {((downloadProgress / 100) * 25).toFixed(1)} MB
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">Downloaded</div>
+                    </div>
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded">
+                      <div className="font-medium text-purple-600 dark:text-purple-400">
+                        {currentSpeed > 0 ? currentSpeed.toFixed(0) : '—'} Mbps
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">Current Speed</div>
+                    </div>
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded">
+                      <div className="font-medium text-green-600 dark:text-green-400">
+                        25 MB
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">Total Size</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Upload Progress Bar */}
+              {uploadProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                    <span>Upload Progress</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-green-500 to-teal-500 transition-all duration-300 ease-out relative"
+                      style={{ width: `${uploadProgress}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Animated spinner for other tests */}
+              {downloadProgress === 0 && uploadProgress === 0 && (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                </div>
+              )}
             </div>
           </div>
         )}

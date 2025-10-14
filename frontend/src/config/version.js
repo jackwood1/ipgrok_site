@@ -1,5 +1,14 @@
-export const APP_VERSION = '1.0.10';
+export const APP_VERSION = '1.0.11';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.11',
+        date: '2025-10-14',
+        changes: [
+            'Removed 3rd party CDN dependencies (no more CORS errors)',
+            'Enhanced download progress visualization',
+            'Speed tests now use in-memory data generation'
+        ]
+    },
     {
         version: '1.0.10',
         date: '2025-10-14',
