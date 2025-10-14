@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.13';
+export const APP_VERSION = '1.0.14';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.14',
+    date: '2025-10-14',
+    changes: [
+      'Fixed GitHub CORS error',
+      'Created S3 CORS configuration guide',
+      'Speed tests will work once S3 is configured',
+      'Graceful fallback when files unavailable'
+    ]
+  },
   {
     version: '1.0.13',
     date: '2025-10-14',

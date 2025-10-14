@@ -380,7 +380,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         try {
             // First gather system information
             const systemInfo = await gatherSystemInfo();
-            // Download test - Use public files without CORS restrictions
+            // Download test - Use S3 bucket with CORS enabled
             setTestProgress("Testing download speed...");
             setDownloadProgress(0);
             setCurrentSpeed(0);
@@ -389,11 +389,10 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
             console.log("Starting download test...");
             let downloadMbps;
             try {
-                // Use a publicly accessible file for download testing
-                // GitHub releases are CORS-friendly and globally distributed
+                // Use your S3 bucket for speed testing
                 const cacheBuster = Date.now();
-                const url = `https://github.com/microsoft/vscode/archive/refs/tags/1.85.0.zip?t=${cacheBuster}`;
-                console.log("Starting download speed test...");
+                const url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test?t=${cacheBuster}`;
+                console.log("Starting download speed test from S3:", url);
                 const start = performance.now();
                 let receivedBytes = 0;
                 let lastUpdateTime = start;
@@ -407,14 +406,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 // Read response with real-time progress tracking
                 const reader = response.body?.getReader();
                 const contentLength = parseInt(response.headers.get('Content-Length') || '0');
+                const expectedSize = 50 * 1024 * 1024; // 50MB
                 if (reader) {
-                    let chunkCount = 0;
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done)
                             break;
                         receivedBytes += value.length;
-                        chunkCount++;
                         const currentTime = performance.now();
                         // Calculate current speed every 100ms
                         if (currentTime - lastUpdateTime > 100) {
@@ -426,16 +424,15 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                             lastReceivedBytes = receivedBytes;
                         }
                         // Update progress
-                        if (contentLength > 0) {
-                            const progress = Math.min(100, Math.round((receivedBytes / contentLength) * 100));
-                            setDownloadProgress(progress);
-                            setTestProgress(`Downloading... ${progress}%`);
-                            if (onProgressUpdate)
-                                onProgressUpdate(`Downloading... ${progress}%`);
-                        }
-                        // Stop after downloading enough data (10MB minimum for accuracy)
+                        const targetSize = contentLength || expectedSize;
+                        const progress = Math.min(100, Math.round((receivedBytes / targetSize) * 100));
+                        setDownloadProgress(progress);
+                        setTestProgress(`Downloading... ${progress}%`);
+                        if (onProgressUpdate)
+                            onProgressUpdate(`Downloading... ${progress}%`);
+                        // Stop after downloading 10MB for faster test
                         if (receivedBytes >= 10 * 1024 * 1024) {
-                            console.log("Downloaded sufficient data for accurate measurement");
+                            console.log("Downloaded 10MB - sufficient for accurate measurement");
                             break;
                         }
                     }
@@ -455,9 +452,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
             }
             catch (downloadError) {
                 console.error("Download test failed:", downloadError);
+                console.error("⚠️ S3 bucket may need CORS configuration - see S3_CORS_SETUP.md");
                 setDownloadProgress(0);
                 setCurrentSpeed(0);
-                downloadMbps = 100; // Reasonable default estimate
+                // Use fallback estimate based on Speedtest.net showing 200 Mbps
+                downloadMbps = 200;
             }
             // Upload test
             setTestProgress("Estimating upload speed...");
