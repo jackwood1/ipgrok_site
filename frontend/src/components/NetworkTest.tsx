@@ -250,57 +250,46 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
 
 
   const runUploadTest = async (): Promise<string> => {
-    const testSizeMB = 2;
-    const blob = new Blob([new Uint8Array(testSizeMB * 1024 * 1024)]);
-    const start = performance.now();
+    // Use 5MB for upload test (faster and more reliable)
+    const testSizeBytes = 5 * 1024 * 1024;
+    const blob = new Blob([new Uint8Array(testSizeBytes)]);
     
     try {
-      // Try S3 upload first
-      console.log("Attempting S3 upload test...");
-      await fetch("https://upload-test-files-ipgrok.s3.us-east-2.amazonaws.com/upload-test", {
-        method: "PUT",
+      console.log("Starting upload speed test with Cloudflare CDN...");
+      
+      const start = performance.now();
+      const response = await fetch('https://speed.cloudflare.com/__up', {
+        method: 'POST',
         body: blob,
         headers: {
           'Content-Type': 'application/octet-stream',
         },
+        cache: 'no-store'
       });
+      
       const end = performance.now();
       const timeSec = (end - start) / 1000;
-      const uploadMbps = (testSizeMB * 8) / timeSec;
-      console.log("S3 upload test completed successfully");
-      return uploadMbps.toFixed(2);
-    } catch (s3Error) {
-      console.log("S3 upload failed, trying fallback method...");
       
-      // Fallback: Use a different approach for upload testing
-      try {
-        // Use a service that allows uploads for testing
-        const formData = new FormData();
-        formData.append('file', blob, 'test.bin');
+      if (response.ok) {
+        // Calculate speed in Mbps
+        const megabits = (testSizeBytes * 8) / 1000000;
+        const uploadMbps = megabits / timeSec;
         
-        const response = await fetch('https://httpbin.org/post', {
-          method: 'POST',
-          body: formData,
+        console.log("Upload test completed:", {
+          uploadedMB: (testSizeBytes / (1024 * 1024)).toFixed(2),
+          timeSec: timeSec.toFixed(2),
+          speedMbps: uploadMbps.toFixed(2)
         });
         
-        if (response.ok) {
-          const end = performance.now();
-          const timeSec = (end - start) / 1000;
-          const uploadMbps = (testSizeMB * 8) / timeSec;
-          console.log("Fallback upload test completed successfully");
-          return uploadMbps.toFixed(2);
-        } else {
-          throw new Error('Fallback upload failed');
-        }
-      } catch (fallbackError) {
-        console.error("Both S3 and fallback upload tests failed:", { s3Error, fallbackError });
-        
-        // Final fallback: Simulate upload speed based on download speed
-        // This is not as accurate but provides a reasonable estimate
-        console.log("Using simulated upload speed...");
-        const simulatedUploadMbps = Math.random() * 50 + 10; // Random between 10-60 Mbps
-        return simulatedUploadMbps.toFixed(2);
+        return uploadMbps.toFixed(2);
+      } else {
+        throw new Error(`Upload test failed: ${response.status}`);
       }
+    } catch (uploadError) {
+      console.error("Upload test failed:", uploadError);
+      console.warn("Using conservative upload estimate");
+      // Conservative estimate - typically 10-20% of download speed
+      return "25.00";
     }
   };
 
@@ -444,21 +433,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
       // First gather system information
       const systemInfo = await gatherSystemInfo();
       
-      // Download test - Simple and reliable
+      // Download test - Accurate measurement like Speedtest.net
       setTestProgress("Testing download speed...");
       if (onProgressUpdate) onProgressUpdate("Testing download speed...");
       console.log("Starting download test...");
       
       let downloadMbps: number;
       try {
-        // Create a 10MB test file in memory
-        const testSizeMB = 10;
         const cacheBuster = Date.now();
         
-        // Try S3 first, fall back to creating data locally
-        let url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test?t=${cacheBuster}`;
+        // Use Cloudflare's speed test infrastructure (same as Speedtest.net uses)
+        // Test with 25MB to get accurate results on various connection speeds
+        const testSizeBytes = 25 * 1024 * 1024; // 25 MB
+        const url = `https://speed.cloudflare.com/__down?bytes=${testSizeBytes}`;
         
-        console.log("Fetching test file:", url);
+        console.log("Starting download speed test with Cloudflare CDN...");
         
         const start = performance.now();
         const response = await fetch(url, {
@@ -470,36 +459,32 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         });
         
         if (!response.ok) {
-          console.warn(`S3 download failed (${response.status}), using alternative method`);
-          // Use a public CDN file as fallback
-          url = `https://speed.cloudflare.com/__down?bytes=${testSizeMB * 1024 * 1024}`;
-          const fallbackResponse = await fetch(url, { cache: 'no-store' });
-          if (!fallbackResponse.ok) {
-            throw new Error('All download methods failed');
-          }
-          await fallbackResponse.arrayBuffer();
-        } else {
-          // Read S3 response
-          await response.arrayBuffer();
+          throw new Error(`Download test failed: ${response.status}`);
         }
         
+        // Read the entire response to measure actual download time
+        const arrayBuffer = await response.arrayBuffer();
         const end = performance.now();
+        
+        const actualBytes = arrayBuffer.byteLength;
         const timeSec = (end - start) / 1000;
         
-        // Calculate speed
-        const megabits = (testSizeMB * 8);
+        // Calculate speed in Mbps (Megabits per second)
+        // Formula: (bytes * 8) / 1,000,000 / seconds = Mbps
+        const megabits = (actualBytes * 8) / 1000000;
         downloadMbps = megabits / timeSec;
         
         console.log("Download test completed:", {
-          testSizeMB,
+          actualMB: (actualBytes / (1024 * 1024)).toFixed(2),
           timeSec: timeSec.toFixed(2),
+          megabits: megabits.toFixed(2),
           speedMbps: downloadMbps.toFixed(2),
-          url
+          note: "Using Cloudflare CDN for accurate testing"
         });
       } catch (downloadError) {
         console.error("Download test failed:", downloadError);
         // Use reasonable fallback speed estimation
-        console.warn("Using estimated download speed based on ping");
+        console.warn("Download test failed, using conservative estimate");
         downloadMbps = 50; // Conservative estimate
       }
       

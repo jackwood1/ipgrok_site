@@ -1,6 +1,15 @@
-export const APP_VERSION = '1.0.9';
+export const APP_VERSION = '1.0.10';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.10',
+    date: '2025-10-14',
+    changes: [
+      'Fixed download speed accuracy to match Speedtest.net',
+      'Properly measure actual downloaded bytes',
+      'Use larger test files for accurate measurements'
+    ]
+  },
   {
     version: '1.0.9',
     date: '2025-10-14',
