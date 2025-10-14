@@ -509,11 +509,27 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         setDownloadProgress(100);
         setCurrentSpeed(downloadMbps);
         
-        console.log("Download test completed:", {
-          receivedMB: (receivedBytes / (1024 * 1024)).toFixed(2),
-          timeSec: timeSec.toFixed(2),
-          speedMbps: downloadMbps.toFixed(2)
+        console.log("==================== DOWNLOAD TEST COMPLETED ====================");
+        console.log("Raw Data:", {
+          receivedBytes: receivedBytes,
+          receivedMB: (receivedBytes / (1024 * 1024)).toFixed(4),
+          receivedMiB: (receivedBytes / (1000 * 1000)).toFixed(4),
+          startTime: start,
+          endTime: end,
+          durationMs: (end - start).toFixed(2),
+          durationSec: timeSec.toFixed(4)
         });
+        console.log("Speed Calculation:", {
+          bytes: receivedBytes,
+          bits: receivedBytes * 8,
+          megabits: megabits.toFixed(4),
+          timeSec: timeSec.toFixed(4),
+          formula: `(${receivedBytes} * 8) / 1000000 / ${timeSec.toFixed(4)}`,
+          speedMbps: downloadMbps.toFixed(2),
+          speedMBps: (downloadMbps / 8).toFixed(2) + " MB/s"
+        });
+        console.log("Expected: curl showed ~98 Mbps for 10MB in 0.85s");
+        console.log("===============================================================");
       } catch (downloadError) {
         console.error("❌ Download test failed - this should not happen!", downloadError);
         console.error("S3 CORS is configured but download still failed");

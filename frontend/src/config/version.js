@@ -1,5 +1,14 @@
-export const APP_VERSION = '1.0.15';
+export const APP_VERSION = '1.0.16';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.16',
+        date: '2025-10-14',
+        changes: [
+            'Added detailed download logging',
+            'Fixed speed calculation accuracy',
+            'Enhanced error reporting'
+        ]
+    },
     {
         version: '1.0.15',
         date: '2025-10-14',
