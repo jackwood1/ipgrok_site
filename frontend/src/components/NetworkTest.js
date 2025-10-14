@@ -407,15 +407,14 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 console.log("Response received, downloading at full speed...");
-                // Simulate progress during download (can't track real progress with arrayBuffer)
+                // Simulate progress during download
                 const progressInterval = setInterval(() => {
                     setDownloadProgress(prev => Math.min(95, prev + 15));
                 }, 200);
-                // Use arrayBuffer() for FAST download (like curl does)
-                // This is much faster than reading chunks one by one
+                // Use blob() which might be faster than arrayBuffer()
                 firstByteTime = performance.now();
-                const arrayBuffer = await response.arrayBuffer();
-                receivedBytes = arrayBuffer.byteLength;
+                const blob = await response.blob();
+                receivedBytes = blob.size;
                 const end = performance.now();
                 // Stop progress simulation
                 clearInterval(progressInterval);

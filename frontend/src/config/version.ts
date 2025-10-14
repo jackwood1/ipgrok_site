@@ -1,6 +1,15 @@
-export const APP_VERSION = '1.0.21';
+export const APP_VERSION = '1.0.22';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.22',
+    date: '2025-10-14',
+    changes: [
+      'Try blob() instead of arrayBuffer() for faster download',
+      'Blob might have less processing overhead',
+      'Testing if this improves speed to match curl'
+    ]
+  },
   {
     version: '1.0.21',
     date: '2025-10-14',
