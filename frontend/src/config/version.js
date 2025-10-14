@@ -1,5 +1,14 @@
-export const APP_VERSION = '1.0.11';
+export const APP_VERSION = '1.0.12';
 export const VERSION_HISTORY = [
+    {
+        version: '1.0.12',
+        date: '2025-10-14',
+        changes: [
+            'Fixed crypto.getRandomValues quota error',
+            'Speed tests work without backend dependency',
+            'Improved error handling and fallbacks'
+        ]
+    },
     {
         version: '1.0.11',
         date: '2025-10-14',

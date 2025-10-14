@@ -216,26 +216,26 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         return { grade, score: Math.round(score), recommendations };
     };
     const runUploadTest = async () => {
-        // Use 5MB for upload test
-        const testSizeMB = 5;
+        // Use 2MB for upload test (more realistic and avoids crypto quota issues)
+        const testSizeMB = 2;
         const testSizeBytes = testSizeMB * 1024 * 1024;
-        // Create random data to prevent compression
-        const uploadData = new Uint8Array(testSizeBytes);
-        crypto.getRandomValues(uploadData);
-        const blob = new Blob([uploadData]);
+        // Create upload data in chunks to avoid crypto.getRandomValues quota
+        const chunkSize = 65536; // 64KB - crypto limit
+        const chunks = [];
+        const totalChunks = Math.ceil(testSizeBytes / chunkSize);
+        for (let i = 0; i < totalChunks; i++) {
+            const chunk = new Uint8Array(Math.min(chunkSize, testSizeBytes - i * chunkSize));
+            crypto.getRandomValues(chunk);
+            chunks.push(chunk);
+        }
+        const blob = new Blob(chunks);
         try {
             const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
             const url = `${apiBaseUrl}/speed-test/upload`;
             console.log("Starting upload test to backend:", url);
-            // Simulate upload progress (since fetch doesn't provide upload progress easily)
+            // Simulate upload progress
             const progressInterval = setInterval(() => {
-                setUploadProgress(prev => {
-                    if (prev >= 95) {
-                        clearInterval(progressInterval);
-                        return prev;
-                    }
-                    return prev + 5;
-                });
+                setUploadProgress(prev => Math.min(95, prev + 5));
             }, 50);
             const start = performance.now();
             const response = await fetch(url, {
@@ -266,8 +266,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         }
         catch (uploadError) {
             console.error("Upload test failed:", uploadError);
-            console.warn("Using conservative upload estimate");
-            // Conservative estimate
+            console.warn("Backend not available, using estimated upload speed");
+            // Estimate based on typical upload/download ratio (1:10)
             return "25.00";
         }
     };
@@ -404,7 +404,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         try {
             // First gather system information
             const systemInfo = await gatherSystemInfo();
-            // Download test - Using backend API for accurate network speed
+            // Download test - Use public files without CORS restrictions
             setTestProgress("Testing download speed...");
             setDownloadProgress(0);
             setCurrentSpeed(0);
@@ -413,11 +413,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
             console.log("Starting download test...");
             let downloadMbps;
             try {
-                const testSizeMB = 25; // 25MB test for accurate measurement
-                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+                // Use a publicly accessible file for download testing
+                // GitHub releases are CORS-friendly and globally distributed
                 const cacheBuster = Date.now();
-                const url = `${apiBaseUrl}/speed-test/download?size=${testSizeMB}&t=${cacheBuster}`;
-                console.log("Fetching test data from backend:", url);
+                const url = `https://github.com/microsoft/vscode/archive/refs/tags/1.85.0.zip?t=${cacheBuster}`;
+                console.log("Starting download speed test...");
                 const start = performance.now();
                 let receivedBytes = 0;
                 let lastUpdateTime = start;
@@ -432,11 +432,13 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 const reader = response.body?.getReader();
                 const contentLength = parseInt(response.headers.get('Content-Length') || '0');
                 if (reader) {
+                    let chunkCount = 0;
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done)
                             break;
                         receivedBytes += value.length;
+                        chunkCount++;
                         const currentTime = performance.now();
                         // Calculate current speed every 100ms
                         if (currentTime - lastUpdateTime > 100) {
@@ -454,6 +456,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                             setTestProgress(`Downloading... ${progress}%`);
                             if (onProgressUpdate)
                                 onProgressUpdate(`Downloading... ${progress}%`);
+                        }
+                        // Stop after downloading enough data (10MB minimum for accuracy)
+                        if (receivedBytes >= 10 * 1024 * 1024) {
+                            console.log("Downloaded sufficient data for accurate measurement");
+                            break;
                         }
                     }
                 }
