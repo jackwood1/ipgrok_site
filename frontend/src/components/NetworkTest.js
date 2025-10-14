@@ -242,9 +242,8 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 method: 'POST',
                 body: blob,
                 headers: {
-                    'Content-Type': 'application/octet-stream',
-                },
-                cache: 'no-store'
+                    'Content-Type': 'application/octet-stream'
+                }
             });
             clearInterval(progressInterval);
             setUploadProgress(100);
@@ -424,11 +423,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 let lastUpdateTime = start;
                 let lastReceivedBytes = 0;
                 const response = await fetch(url, {
-                    cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
+                    cache: 'no-store'
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
