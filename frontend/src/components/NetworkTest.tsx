@@ -458,14 +458,25 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log("Response received, starting timer on first byte...");
+        console.log("Response received, reading stream...");
         
-        // Start timer NOW - after connection is established, before data download
-        const startTime = performance.now();
+        const reader = response.body!.getReader();
+        let receivedBytes = 0;
+        let startTime = 0;
         
-        // ZERO state updates during download - absolute minimum overhead
-        const blob = await response.blob();
-        const receivedBytes = blob.size;
+        // Read all chunks - NO state updates, just count bytes
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          // Start timer on first chunk
+          if (startTime === 0) {
+            startTime = performance.now();
+          }
+          
+          receivedBytes += value.length;
+          // NO state updates here - absolutely nothing
+        }
         
         const endTime = performance.now();
         const timeSec = (endTime - startTime) / 1000;
@@ -485,7 +496,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           startTime: startTime,
           endTime: endTime,
           durationSec: timeSec.toFixed(4),
-          note: "Timer starts AFTER connection (excludes DNS/SSL overhead)"
+          note: "Timer starts on first chunk arrival, NO state updates during download"
         });
         console.log("Speed Calculation:", {
           bytes: receivedBytes,

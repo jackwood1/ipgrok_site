@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.30';
+export const APP_VERSION = '1.0.31';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.31',
+    date: '2025-10-18',
+    changes: [
+      'Use ReadableStream instead of blob() for accurate measurement',
+      'Start timer on first chunk arrival (not on blob() call)',
+      'Zero state updates during chunk reading loop',
+      'Measures actual network streaming speed'
+    ]
+  },
   {
     version: '1.0.30',
     date: '2025-10-18',
