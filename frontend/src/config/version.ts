@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.25';
+export const APP_VERSION = '1.0.26';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.26',
+    date: '2025-10-18',
+    changes: [
+      'Added simulated bandwidth meter during download',
+      'Odometer-style speed display with ramp-up and fluctuation',
+      'Visual feedback without impacting download performance',
+      'Pure native download still used for accurate final measurement'
+    ]
+  },
   {
     version: '1.0.25',
     date: '2025-10-18',

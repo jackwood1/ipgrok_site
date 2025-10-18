@@ -464,9 +464,24 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Response received, downloading...");
         
-        // Show smooth progress animation (not based on actual progress)
+        // Simulate bandwidth meter - like an odometer
+        let simulatedSpeed = 0;
+        let speedDirection = 1; // 1 for ramping up, -1 for fluctuating
+        
         const progressInterval = setInterval(() => {
           setDownloadProgress(prev => Math.min(95, prev + 5));
+          
+          // Simulate speed ramping up and fluctuating (just for visual feedback)
+          if (simulatedSpeed < 80) {
+            // Ramp up phase
+            simulatedSpeed += Math.random() * 15 + 10; // Random increases
+          } else {
+            // Fluctuation phase - bounce between 60-120 Mbps
+            const fluctuation = (Math.random() - 0.5) * 30;
+            simulatedSpeed = Math.max(60, Math.min(120, simulatedSpeed + fluctuation));
+          }
+          
+          setCurrentSpeed(simulatedSpeed);
         }, 300);
         
         // Just download it - no chunk reading, no progress updates during download
