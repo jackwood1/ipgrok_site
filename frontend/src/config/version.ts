@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.28';
+export const APP_VERSION = '1.0.29';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.29',
+    date: '2025-10-18',
+    changes: [
+      'ABSOLUTE MINIMUM: Removed ALL state updates during download',
+      'Even progress bar animation was causing overhead',
+      'Pure fetch + blob with zero JavaScript interference',
+      'Maximum possible speed'
+    ]
+  },
   {
     version: '1.0.28',
     date: '2025-10-18',
