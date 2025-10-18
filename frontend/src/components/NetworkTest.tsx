@@ -447,43 +447,53 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Starting download speed test from S3:", url);
         
-        // Use XMLHttpRequest with progress events - like Fast.com does
-        const startTime = performance.now();
-        let firstByteTime = 0;
-        let receivedBytes = 0;
+        // Use fetch + Resource Timing API for browser's native measurements
+        // Let browser download at full speed, then read its timing data
+        const downloadSize = 20971520; // 20MB
         
-        const xhr = new XMLHttpRequest();
+        // Clear any existing performance entries
+        performance.clearResourceTimings();
         
-        await new Promise<void>((resolve, reject) => {
-          xhr.open('GET', url, true);
-          xhr.setRequestHeader('Range', 'bytes=0-20971519'); // Download 20MB
-          xhr.setRequestHeader('Cache-Control', 'no-cache');
-          
-          xhr.onprogress = (event) => {
-            if (firstByteTime === 0 && event.loaded > 0) {
-              firstByteTime = performance.now();
-              console.log("First byte received, timer started");
-            }
-            receivedBytes = event.loaded;
-          };
-          
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              reject(new Error(`HTTP ${xhr.status}`));
-            }
-          };
-          
-          xhr.onerror = () => reject(new Error('Network error'));
-          xhr.send();
+        // Download using fetch - browser handles at native speed
+        const response = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Range': `bytes=0-${downloadSize - 1}`
+          }
         });
         
-        const endTime = performance.now();
-        const timeSec = (endTime - (firstByteTime || startTime)) / 1000;
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Consume the response (browser already downloaded it)
+        await response.arrayBuffer();
+        
+        // NOW read the browser's native timing measurements
+        const perfEntries = performance.getEntriesByName(url) as PerformanceResourceTiming[];
+        
+        if (perfEntries.length === 0) {
+          throw new Error('No performance timing data available');
+        }
+        
+        const timing = perfEntries[perfEntries.length - 1]; // Get the most recent one
+        
+        // responseStart = first byte received
+        // responseEnd = last byte received  
+        // This is the browser's native measurement of download time
+        const downloadTimeMs = timing.responseEnd - timing.responseStart;
+        const timeSec = downloadTimeMs / 1000;
+        
+        console.log("Resource Timing (browser native):", {
+          fetchStart: timing.fetchStart,
+          responseStart: timing.responseStart,
+          responseEnd: timing.responseEnd,
+          downloadTimeMs: downloadTimeMs,
+          timeSec: timeSec
+        });
         
         // Calculate final speed in Mbps
-        const megabits = (receivedBytes * 8) / 1000000;
+        const megabits = (downloadSize * 8) / 1000000;
         downloadMbps = megabits / timeSec;
         
         // Set final UI state
@@ -492,18 +502,17 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("==================== DOWNLOAD TEST COMPLETED ====================");
         console.log("Raw Data:", {
-          receivedBytes: receivedBytes,
-          receivedMB: (receivedBytes / (1024 * 1024)).toFixed(4),
-          firstByteTime: firstByteTime,
-          endTime: endTime,
+          downloadSize: downloadSize,
+          downloadMB: (downloadSize / (1024 * 1024)).toFixed(4),
+          downloadTimeMs: timing.responseEnd - timing.responseStart,
           durationSec: timeSec.toFixed(4),
-          note: "Using XMLHttpRequest like Fast.com - timer on first byte"
+          note: "Using Resource Timing API - browser's native measurements"
         });
         console.log("Speed Calculation:", {
-          bytes: receivedBytes,
+          bytes: downloadSize,
           megabits: megabits.toFixed(4),
           timeSec: timeSec.toFixed(4),
-          formula: `(${receivedBytes} bytes × 8) ÷ 1,000,000 ÷ ${timeSec.toFixed(4)}s = ${downloadMbps.toFixed(2)} Mbps`,
+          formula: `(${downloadSize} bytes × 8) ÷ 1,000,000 ÷ ${timeSec.toFixed(4)}s = ${downloadMbps.toFixed(2)} Mbps`,
           speedMbps: downloadMbps.toFixed(2)
         });
         console.log("===============================================================");

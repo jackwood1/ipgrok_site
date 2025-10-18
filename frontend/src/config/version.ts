@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.32';
+export const APP_VERSION = '1.0.33';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.33',
+    date: '2025-10-18',
+    changes: [
+      'Use Resource Timing API for browser native measurements',
+      'fetch + arrayBuffer then read browser timing data',
+      'Zero JavaScript timing overhead',
+      'Browser measures responseStart to responseEnd natively'
+    ]
+  },
   {
     version: '1.0.32',
     date: '2025-10-18',
