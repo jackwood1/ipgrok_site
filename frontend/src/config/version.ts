@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.23';
+export const APP_VERSION = '1.0.24';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.24',
+    date: '2025-10-18',
+    changes: [
+      'PROPER FIX: ReadableStream with UI throttling (250ms)',
+      'Real-time download progress without performance penalty',
+      'Timer starts on first byte (excludes connection overhead)',
+      'Download only 10MB for faster, accurate measurements'
+    ]
+  },
   {
     version: '1.0.23',
     date: '2025-10-18',

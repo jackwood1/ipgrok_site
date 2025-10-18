@@ -453,31 +453,54 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         let lastReceivedBytes = 0;
         
         const response = await fetch(url, {
-          cache: 'no-store'
+          cache: 'no-store',
+          headers: {
+            'Range': 'bytes=0-10485759' // Download only first 10MB for speed test
+          }
         });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log("Response received, downloading at full speed...");
+        console.log("Response received, reading stream...");
         
-        // Simulate progress during download (can't track real progress with arrayBuffer)
-        const progressInterval = setInterval(() => {
-          setDownloadProgress(prev => Math.min(95, prev + 15));
-        }, 200);
+        const reader = response.body!.getReader();
+        let lastUIUpdate = 0;
         
-        // Use arrayBuffer() for FAST download (like curl does)
-        // This is much faster than reading chunks one by one
-        firstByteTime = performance.now();
-        const arrayBuffer = await response.arrayBuffer();
-        receivedBytes = arrayBuffer.byteLength;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          // START TIMER ON FIRST BYTE (excludes DNS, connection, SSL overhead)
+          if (firstByteTime === 0 && value) {
+            firstByteTime = performance.now();
+            lastUpdateTime = firstByteTime;
+            lastUIUpdate = firstByteTime;
+            console.log("⏱️  Started timer on first data byte (excludes connection overhead)");
+          }
+          
+          receivedBytes += value.length;
+          const currentTime = performance.now();
+          
+          // Update UI only every 250ms to avoid slowing down the download
+          // This is the KEY FIX - updating UI too frequently causes 10x slowdown!
+          if (currentTime - lastUIUpdate > 250) {
+            const progressPercent = (receivedBytes / 10485760) * 100;
+            setDownloadProgress(Math.min(95, progressPercent));
+            
+            // Calculate current speed for display
+            if (firstByteTime > 0) {
+              const elapsedSec = (currentTime - firstByteTime) / 1000;
+              const currentMbps = ((receivedBytes * 8) / 1000000) / elapsedSec;
+              setCurrentSpeed(currentMbps);
+            }
+            
+            lastUIUpdate = currentTime;
+          }
+        }
         
         const end = performance.now();
-        
-        // Stop progress simulation
-        clearInterval(progressInterval);
-        
         const timeSec = (end - firstByteTime) / 1000;
         
         // Calculate final speed in Mbps
