@@ -407,17 +407,30 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 console.log("Response received, downloading at full speed...");
-                // Simulate progress during download
-                const progressInterval = setInterval(() => {
-                    setDownloadProgress(prev => Math.min(95, prev + 15));
-                }, 200);
-                // Use blob() which might be faster than arrayBuffer()
-                firstByteTime = performance.now();
-                const blob = await response.blob();
-                receivedBytes = blob.size;
+                const reader = response.body.getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done)
+                        break;
+                    // Mark first byte time
+                    if (receivedBytes === 0) {
+                        firstByteTime = performance.now();
+                    }
+                    receivedBytes += value.length;
+                    // Update progress
+                    const progressPercent = (receivedBytes / 10485760) * 100;
+                    setDownloadProgress(Math.min(95, progressPercent));
+                    // Update current speed display (every ~100KB)
+                    const now = performance.now();
+                    if (now - lastUpdateTime > 100 && firstByteTime > 0) {
+                        const elapsedSec = (now - firstByteTime) / 1000;
+                        const currentMbps = ((receivedBytes * 8) / 1000000) / elapsedSec;
+                        setCurrentSpeed(currentMbps);
+                        lastUpdateTime = now;
+                        lastReceivedBytes = receivedBytes;
+                    }
+                }
                 const end = performance.now();
-                // Stop progress simulation
-                clearInterval(progressInterval);
                 const timeSec = (end - firstByteTime) / 1000;
                 // Calculate final speed in Mbps
                 const megabits = (receivedBytes * 8) / 1000000;
