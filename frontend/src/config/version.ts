@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.29';
+export const APP_VERSION = '1.0.30';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.30',
+    date: '2025-10-18',
+    changes: [
+      'CRITICAL FIX: Start timer AFTER fetch response (not before)',
+      'Timer was including DNS lookup, connection, and SSL handshake',
+      'Now measures only actual data transfer time',
+      'Should show accurate speeds matching other speed tests'
+    ]
+  },
   {
     version: '1.0.29',
     date: '2025-10-18',

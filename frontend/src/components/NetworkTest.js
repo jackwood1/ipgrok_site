@@ -393,9 +393,6 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 const cacheBuster = Date.now();
                 const url = `https://download-test-files-ipgrok.s3.us-east-2.amazonaws.com/50MB.test?t=${cacheBuster}`;
                 console.log("Starting download speed test from S3:", url);
-                // Simple approach: Just time the download, no progress tracking
-                // This is the fastest way - let the browser download natively
-                const startTime = performance.now();
                 const response = await fetch(url, {
                     cache: 'no-store',
                     headers: {
@@ -405,7 +402,9 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                console.log("Response received, downloading...");
+                console.log("Response received, starting timer on first byte...");
+                // Start timer NOW - after connection is established, before data download
+                const startTime = performance.now();
                 // ZERO state updates during download - absolute minimum overhead
                 const blob = await response.blob();
                 const receivedBytes = blob.size;
@@ -424,7 +423,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                     startTime: startTime,
                     endTime: endTime,
                     durationSec: timeSec.toFixed(4),
-                    note: "Pure download time - no progress tracking overhead"
+                    note: "Timer starts AFTER connection (excludes DNS/SSL overhead)"
                 });
                 console.log("Speed Calculation:", {
                     bytes: receivedBytes,

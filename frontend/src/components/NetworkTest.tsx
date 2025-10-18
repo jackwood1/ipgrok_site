@@ -447,10 +447,6 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Starting download speed test from S3:", url);
         
-        // Simple approach: Just time the download, no progress tracking
-        // This is the fastest way - let the browser download natively
-        const startTime = performance.now();
-        
         const response = await fetch(url, {
           cache: 'no-store',
           headers: {
@@ -462,7 +458,10 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log("Response received, downloading...");
+        console.log("Response received, starting timer on first byte...");
+        
+        // Start timer NOW - after connection is established, before data download
+        const startTime = performance.now();
         
         // ZERO state updates during download - absolute minimum overhead
         const blob = await response.blob();
@@ -486,7 +485,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           startTime: startTime,
           endTime: endTime,
           durationSec: timeSec.toFixed(4),
-          note: "Pure download time - no progress tracking overhead"
+          note: "Timer starts AFTER connection (excludes DNS/SSL overhead)"
         });
         console.log("Speed Calculation:", {
           bytes: receivedBytes,
