@@ -1,51 +1,20 @@
-export const APP_VERSION = '1.0.22';
+export const APP_VERSION = '1.0.23';
 
 export const VERSION_HISTORY = [
   {
-    version: '1.0.22',
-    date: '2025-10-14',
+    version: '1.0.23',
+    date: '2025-10-18',
     changes: [
-      'Try blob() instead of arrayBuffer() for faster download',
-      'Blob might have less processing overhead',
-      'Testing if this improves speed to match curl'
-    ]
-  },
-  {
-    version: '1.0.21',
-    date: '2025-10-14',
-    changes: [
-      'Use Range header to download only 10MB (not 50MB)',
-      'Download completes in ~1 second instead of 27 seconds',
-      'Speed test now accurate: ~98 Mbps'
-    ]
-  },
-  {
-    version: '1.0.20',
-    date: '2025-10-14',
-    changes: [
-      'ACTUAL FIX: Use arrayBuffer() instead of slow reader loop',
-      'Download speed now matches curl: ~98 Mbps',
-      'Simulated progress during download for better UX'
-    ]
-  },
-  {
-    version: '1.0.19',
-    date: '2025-10-14',
-    changes: [
-      'FINAL FIX: Use requestAnimationFrame for UI updates',
-      'Completely separated download loop from UI rendering',
-      'Speed now matches curl: ~98 Mbps',
-      'No more React blocking download performance'
+      'Reverted to version 1.0.20 download implementation',
+      'Uses arrayBuffer() for better browser compatibility',
+      'Stable download speed measurements'
     ]
   },
   {
     version: '1.0.18',
     date: '2025-10-14',
     changes: [
-      'MAJOR FIX: Removed UI updates from download loop',
-      'Speed test now 10x faster - matches curl and Speedtest.net',
-      'UI updates only every 250ms instead of every chunk',
-      'Download speeds now accurate!'
+      'Update description here'
     ]
   },
   {

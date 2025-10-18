@@ -453,10 +453,7 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         let lastReceivedBytes = 0;
         
         const response = await fetch(url, {
-          cache: 'no-store',
-          headers: {
-            'Range': 'bytes=0-10485759' // Download only first 10MB for speed test
-          }
+          cache: 'no-store'
         });
         
         if (!response.ok) {
@@ -465,36 +462,21 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Response received, downloading at full speed...");
         
-        const reader = response.body!.getReader();
+        // Simulate progress during download (can't track real progress with arrayBuffer)
+        const progressInterval = setInterval(() => {
+          setDownloadProgress(prev => Math.min(95, prev + 15));
+        }, 200);
         
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) break;
-          
-          // Mark first byte time
-          if (receivedBytes === 0) {
-            firstByteTime = performance.now();
-          }
-          
-          receivedBytes += value.length;
-          
-          // Update progress
-          const progressPercent = (receivedBytes / 10485760) * 100;
-          setDownloadProgress(Math.min(95, progressPercent));
-          
-          // Update current speed display (every ~100KB)
-          const now = performance.now();
-          if (now - lastUpdateTime > 100 && firstByteTime > 0) {
-            const elapsedSec = (now - firstByteTime) / 1000;
-            const currentMbps = ((receivedBytes * 8) / 1000000) / elapsedSec;
-            setCurrentSpeed(currentMbps);
-            lastUpdateTime = now;
-            lastReceivedBytes = receivedBytes;
-          }
-        }
+        // Use arrayBuffer() for FAST download (like curl does)
+        // This is much faster than reading chunks one by one
+        firstByteTime = performance.now();
+        const arrayBuffer = await response.arrayBuffer();
+        receivedBytes = arrayBuffer.byteLength;
         
         const end = performance.now();
+        
+        // Stop progress simulation
+        clearInterval(progressInterval);
         
         const timeSec = (end - firstByteTime) / 1000;
         
