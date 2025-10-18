@@ -447,39 +447,40 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Starting download speed test from S3:", url);
         
-        const response = await fetch(url, {
-          cache: 'no-store',
-          headers: {
-            'Range': 'bytes=0-20971519' // Download 20MB for accurate measurement
-          }
+        // Use XMLHttpRequest with progress events - like Fast.com does
+        const startTime = performance.now();
+        let firstByteTime = 0;
+        let receivedBytes = 0;
+        
+        const xhr = new XMLHttpRequest();
+        
+        await new Promise<void>((resolve, reject) => {
+          xhr.open('GET', url, true);
+          xhr.setRequestHeader('Range', 'bytes=0-20971519'); // Download 20MB
+          xhr.setRequestHeader('Cache-Control', 'no-cache');
+          
+          xhr.onprogress = (event) => {
+            if (firstByteTime === 0 && event.loaded > 0) {
+              firstByteTime = performance.now();
+              console.log("First byte received, timer started");
+            }
+            receivedBytes = event.loaded;
+          };
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`HTTP ${xhr.status}`));
+            }
+          };
+          
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.send();
         });
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        console.log("Response received, reading stream...");
-        
-        const reader = response.body!.getReader();
-        let receivedBytes = 0;
-        let startTime = 0;
-        
-        // Read all chunks - NO state updates, just count bytes
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          // Start timer on first chunk
-          if (startTime === 0) {
-            startTime = performance.now();
-          }
-          
-          receivedBytes += value.length;
-          // NO state updates here - absolutely nothing
-        }
-        
         const endTime = performance.now();
-        const timeSec = (endTime - startTime) / 1000;
+        const timeSec = (endTime - (firstByteTime || startTime)) / 1000;
         
         // Calculate final speed in Mbps
         const megabits = (receivedBytes * 8) / 1000000;
@@ -493,10 +494,10 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         console.log("Raw Data:", {
           receivedBytes: receivedBytes,
           receivedMB: (receivedBytes / (1024 * 1024)).toFixed(4),
-          startTime: startTime,
+          firstByteTime: firstByteTime,
           endTime: endTime,
           durationSec: timeSec.toFixed(4),
-          note: "Timer starts on first chunk arrival, NO state updates during download"
+          note: "Using XMLHttpRequest like Fast.com - timer on first byte"
         });
         console.log("Speed Calculation:", {
           bytes: receivedBytes,

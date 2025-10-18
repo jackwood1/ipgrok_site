@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.31';
+export const APP_VERSION = '1.0.32';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.32',
+    date: '2025-10-18',
+    changes: [
+      'Use XMLHttpRequest like Fast.com does',
+      'onprogress event to detect first byte arrival',
+      'Native browser progress tracking - no JavaScript overhead',
+      'Accurate measurement like professional speed tests'
+    ]
+  },
   {
     version: '1.0.31',
     date: '2025-10-18',
