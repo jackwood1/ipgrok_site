@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.26';
+export const APP_VERSION = '1.0.27';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.27',
+    date: '2025-10-18',
+    changes: [
+      'FIXED: Removed speed simulation during download',
+      'ANY state updates during download cause slowdown',
+      'Only progress bar animates (visual only)',
+      'Absolute minimum overhead for maximum speed'
+    ]
+  },
   {
     version: '1.0.26',
     date: '2025-10-18',
