@@ -1,6 +1,16 @@
-export const APP_VERSION = '1.0.24';
+export const APP_VERSION = '1.0.25';
 
 export const VERSION_HISTORY = [
+  {
+    version: '1.0.25',
+    date: '2025-10-18',
+    changes: [
+      'SIMPLEST FIX: Pure download with NO progress tracking',
+      'Let browser handle download natively - no chunk reading',
+      'No UI updates during download - maximum speed',
+      'Download 20MB for accurate measurements'
+    ]
+  },
   {
     version: '1.0.24',
     date: '2025-10-18',

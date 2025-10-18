@@ -447,15 +447,14 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         
         console.log("Starting download speed test from S3:", url);
         
-        let receivedBytes = 0;
-        let firstByteTime = 0; // Will be set when first byte arrives
-        let lastUpdateTime = 0;
-        let lastReceivedBytes = 0;
+        // Simple approach: Just time the download, no progress tracking
+        // This is the fastest way - let the browser download natively
+        const startTime = performance.now();
         
         const response = await fetch(url, {
           cache: 'no-store',
           headers: {
-            'Range': 'bytes=0-10485759' // Download only first 10MB for speed test
+            'Range': 'bytes=0-20971519' // Download 20MB for accurate measurement
           }
         });
         
@@ -463,45 +462,20 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        console.log("Response received, reading stream...");
+        console.log("Response received, downloading...");
         
-        const reader = response.body!.getReader();
-        let lastUIUpdate = 0;
+        // Show smooth progress animation (not based on actual progress)
+        const progressInterval = setInterval(() => {
+          setDownloadProgress(prev => Math.min(95, prev + 5));
+        }, 300);
         
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          // START TIMER ON FIRST BYTE (excludes DNS, connection, SSL overhead)
-          if (firstByteTime === 0 && value) {
-            firstByteTime = performance.now();
-            lastUpdateTime = firstByteTime;
-            lastUIUpdate = firstByteTime;
-            console.log("⏱️  Started timer on first data byte (excludes connection overhead)");
-          }
-          
-          receivedBytes += value.length;
-          const currentTime = performance.now();
-          
-          // Update UI only every 250ms to avoid slowing down the download
-          // This is the KEY FIX - updating UI too frequently causes 10x slowdown!
-          if (currentTime - lastUIUpdate > 250) {
-            const progressPercent = (receivedBytes / 10485760) * 100;
-            setDownloadProgress(Math.min(95, progressPercent));
-            
-            // Calculate current speed for display
-            if (firstByteTime > 0) {
-              const elapsedSec = (currentTime - firstByteTime) / 1000;
-              const currentMbps = ((receivedBytes * 8) / 1000000) / elapsedSec;
-              setCurrentSpeed(currentMbps);
-            }
-            
-            lastUIUpdate = currentTime;
-          }
-        }
+        // Just download it - no chunk reading, no progress updates during download
+        const blob = await response.blob();
+        const receivedBytes = blob.size;
         
-        const end = performance.now();
-        const timeSec = (end - firstByteTime) / 1000;
+        clearInterval(progressInterval);
+        const endTime = performance.now();
+        const timeSec = (endTime - startTime) / 1000;
         
         // Calculate final speed in Mbps
         const megabits = (receivedBytes * 8) / 1000000;
@@ -515,18 +489,17 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
         console.log("Raw Data:", {
           receivedBytes: receivedBytes,
           receivedMB: (receivedBytes / (1024 * 1024)).toFixed(4),
-          firstByteTime: firstByteTime,
-          endTime: end,
-          downloadOnlyDurationSec: timeSec.toFixed(4),
-          note: "Timer started on first byte, excludes connection overhead"
+          startTime: startTime,
+          endTime: endTime,
+          durationSec: timeSec.toFixed(4),
+          note: "Pure download time - no progress tracking overhead"
         });
         console.log("Speed Calculation:", {
           bytes: receivedBytes,
           megabits: megabits.toFixed(4),
           timeSec: timeSec.toFixed(4),
           formula: `(${receivedBytes} bytes × 8) ÷ 1,000,000 ÷ ${timeSec.toFixed(4)}s = ${downloadMbps.toFixed(2)} Mbps`,
-          speedMbps: downloadMbps.toFixed(2),
-          expectedCurlSpeed: "~98 Mbps"
+          speedMbps: downloadMbps.toFixed(2)
         });
         console.log("===============================================================");
       } catch (downloadError) {
