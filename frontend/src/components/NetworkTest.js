@@ -406,11 +406,11 @@ export function NetworkTest({ permissionsStatus, onDataUpdate, onTestStart, onPr
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 console.log("Response received, downloading...");
-                // Show smooth progress animation ONLY (no speed updates to avoid overhead)
+                // Show smooth progress animation (not based on actual progress)
                 const progressInterval = setInterval(() => {
                     setDownloadProgress(prev => Math.min(95, prev + 5));
                 }, 300);
-                // Just download it - no chunk reading, no state updates during download
+                // Just download it - no chunk reading, no progress updates during download
                 const blob = await response.blob();
                 const receivedBytes = blob.size;
                 clearInterval(progressInterval);
